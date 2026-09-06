@@ -1,86 +1,88 @@
 name: Build APK
+
 on:
-workflow_dispatch:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 permissions:
-contents: write
+  contents: write
+
 jobs:
-build:
-runs-on: ubuntu-latest
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
-    with:
-      lfs: true
+  build:
+    name: Build Stellar Center
+    runs-on: ubuntu-latest
 
-  - name: Set up Java
-    uses: actions/setup-java@v5
-    with:
-      distribution: temurin
-      java-version: '17'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-  - name: Verify Android toolchain
-    shell: bash
-    run: |
-      java -version
-      cd android
-      chmod +x gradlew
-      ./gradlew --version
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  - name: Build release APK
-    working-directory: android
-    run: |
-      chmod +x gradlew
-      ./gradlew clean
-      ./gradlew assembleRelease --stacktrace
+      - name: Verify Android toolchain
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          java -version
+          ./gradlew --version
 
-  - name: Verify APK
-    shell: bash
-    run: |
-      APK="android/app/build/outputs/apk/release/app-release.apk"
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew clean
+          ./gradlew assembleRelease --stacktrace
 
-      if [ ! -f "$APK" ]; then
-        echo "Release APK was not generated."
-        find android/app/build/outputs -type f -maxdepth 5 2>/dev/null || true
-        exit 1
-      fi
+      - name: Verify APK
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
 
-      echo "APK generated successfully:"
-      ls -lh "$APK"
+          if [ ! -f "$APK" ]; then
+            echo "Release APK was not generated."
+            find android/app/build/outputs -type f -maxdepth 5 2>/dev/null || true
+            exit 1
+          fi
 
-  - name: Read app version
-    id: version
-    shell: bash
-    run: |
-      VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"[^"]*".*/\1/p' android/app/build.gradle | head -n 1)
+          echo "APK generated successfully:"
+          ls -lh "$APK"
 
-      if [ -z "$VERSION" ]; then
-        echo "Could not read versionName from android/app/build.gradle"
-        exit 1
-      fi
+      - name: Read app version
+        id: version
+        run: |
+          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' android/app/build.gradle | head -n 1)
 
-      echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      echo "Building Stellar Center v$VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "Could not read versionName from android/app/build.gradle"
+            exit 1
+          fi
 
-  - name: Upload APK artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: stellar-center-${{ steps.version.outputs.version }}
-      path: android/app/build/outputs/apk/release/app-release.apk
-      if-no-files-found: error
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building Stellar Center v$VERSION"
 
-  - name: Create GitHub Release
-    uses: softprops/action-gh-release@v2
-    with:
-      tag_name: v${{ steps.version.outputs.version }}
-      name: Stellar Center v${{ steps.version.outputs.version }}
-      body: |
-        Stellar Center v${{ steps.version.outputs.version }}
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stellar-center-${{ steps.version.outputs.version }}
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
 
-        Native Android release built with Kotlin and Jetpack Compose.
-      files: android/app/build/outputs/apk/release/app-release.apk
-      make_latest: true
-      overwrite_files: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Stellar Center v${{ steps.version.outputs.version }}
+          body: |
+            Stellar Center v${{ steps.version.outputs.version }}
+
+            Native Android release built with Kotlin and Jetpack Compose.
+          files: android/app/build/outputs/apk/release/app-release.apk
+          make_latest: true
+          overwrite_files: true
 
