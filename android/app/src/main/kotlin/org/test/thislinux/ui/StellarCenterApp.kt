@@ -31,7 +31,7 @@ fun StellarCenterApp() {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
-                StellarBottomBar(
+                BottomNavBar(
                     selectedIndex = selectedIndex,
                     themeStyle = themeStyle,
                     onSelected = {
