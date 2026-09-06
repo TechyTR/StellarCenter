@@ -1,132 +1,86 @@
 name: Build APK
-
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-
+workflow_dispatch:
+push:
+branches:
+- main
 permissions:
-  contents: write
-
+contents: write
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+    with:
+      lfs: true
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
+  - name: Set up Java
+    uses: actions/setup-java@v5
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      - name: Verify benchmark video assets
-        shell: bash
-        run: |
-          set -e
-          for file in \
-            assets/Bosphorus_3840x2160_120fps_420_8bit_HEVC_RAW.mp4 \
-            assets/HoneyBee_3840x2160_120fps_420_8bit_HEVC_RAW.mp4 \
-            assets/Jockey_3840x2160_120fps_420_8bit_HEVC_RAW.mp4; do
-            if [ ! -f "$file" ]; then
-              echo "Missing benchmark asset: $file"
-              exit 1
-            fi
-            size=$(stat -c%s "$file")
-            if [ "$size" -lt 1000000 ]; then
-              echo "Benchmark asset is not a real video (likely Git LFS pointer): $file ($size bytes)"
-              exit 1
-            fi
-            echo "Verified $file: $size bytes"
-          done
+  - name: Verify Android toolchain
+    shell: bash
+    run: |
+      java -version
+      cd android
+      chmod +x gradlew
+      ./gradlew --version
 
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
+  - name: Build release APK
+    working-directory: android
+    run: |
+      chmod +x gradlew
+      ./gradlew clean
+      ./gradlew assembleRelease --stacktrace
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.0'
-          channel: stable
+  - name: Verify APK
+    shell: bash
+    run: |
+      APK="android/app/build/outputs/apk/release/app-release.apk"
 
-      - name: Create Flutter local.properties
-        run: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+      if [ ! -f "$APK" ]; then
+        echo "Release APK was not generated."
+        find android/app/build/outputs -type f -maxdepth 5 2>/dev/null || true
+        exit 1
+      fi
 
-      - name: Get dependencies
-        run: flutter pub get
+      echo "APK generated successfully:"
+      ls -lh "$APK"
 
-      - name: Generate app icon
-        run: dart run flutter_launcher_icons
+  - name: Read app version
+    id: version
+    shell: bash
+    run: |
+      VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"[^"]*".*/\1/p' android/app/build.gradle | head -n 1)
 
-      - name: Read app version
-        id: version
-        shell: bash
-        run: |
-          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+      if [ -z "$VERSION" ]; then
+        echo "Could not read versionName from android/app/build.gradle"
+        exit 1
+      fi
 
-          if [ -z "$VERSION" ]; then
-            echo "Could not read version from pubspec.yaml"
-            exit 1
-          fi
+      echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      echo "Building Stellar Center v$VERSION"
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building Stellar Center v$VERSION"
+  - name: Upload APK artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: stellar-center-${{ steps.version.outputs.version }}
+      path: android/app/build/outputs/apk/release/app-release.apk
+      if-no-files-found: error
 
-      - name: Apply compatibility fixes
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
+  - name: Create GitHub Release
+    uses: softprops/action-gh-release@v2
+    with:
+      tag_name: v${{ steps.version.outputs.version }}
+      name: Stellar Center v${{ steps.version.outputs.version }}
+      body: |
+        Stellar Center v${{ steps.version.outputs.version }}
 
-          path = Path('android/app/src/main/kotlin/org/test/thislinux/BenchmarkActivity.kt')
-          text = path.read_text()
-          text = text.replace(
-              'import androidx.media3.exoplayer.mediacodec.DecoderReuseEvaluation',
-              'import androidx.media3.exoplayer.DecoderReuseEvaluation'
-          )
-          text = text.replace(
-              'import androidx.media3.decoder.DecoderReuseEvaluation',
-              'import androidx.media3.exoplayer.DecoderReuseEvaluation'
-          )
-          path.write_text(text)
+        Native Android release built with Kotlin and Jetpack Compose.
+      files: android/app/build/outputs/apk/release/app-release.apk
+      make_latest: true
+      overwrite_files: true
 
-          path = Path('android/app/src/main/kotlin/org/test/thislinux/MainActivity.kt')
-          text = path.read_text()
-          old = '''"system" to (\n                                            it.flags and\n                                                android.content\n                                                    .pm\n                                                    .ApplicationInfo\n                                                    .FLAG_SYSTEM\n                                        ) != 0'''
-          new = '''"system" to (\n                                            (it.flags and\n                                                android.content\n                                                    .pm\n                                                    .ApplicationInfo\n                                                    .FLAG_SYSTEM) != 0\n                                        )'''
-          if old in text:
-              text = text.replace(old, new, 1)
-          path.write_text(text)
-          PY
-
-      - name: Build APK
-        run: |
-          flutter clean
-          flutter pub get
-          flutter build apk --release
-
-      - name: Verify APK
-        run: |
-          test -f build/app/outputs/flutter-apk/app-release.apk
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk-${{ steps.version.outputs.version }}
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Stellar Center v${{ steps.version.outputs.version }}
-          body: |
-            Stellar Center v${{ steps.version.outputs.version }}
-
-            Android release APK.
-          files: build/app/outputs/flutter-apk/app-release.apk
-          make_latest: true
-          overwrite_files: true
