@@ -32,7 +32,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-private val GlassShape = RoundedCornerShape(26.dp)
+private val GlassShape =
+    RoundedCornerShape(26.dp)
+
+private val IconShape =
+    RoundedCornerShape(17.dp)
 
 @Composable
 fun StellarSecureScreen(
@@ -40,18 +44,22 @@ fun StellarSecureScreen(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 20.dp,
-            end = 20.dp,
-            top = 24.dp,
-            bottom = 24.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding =
+            PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 24.dp,
+                bottom = 24.dp
+            ),
+        verticalArrangement =
+            Arrangement.spacedBy(14.dp)
     ) {
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier.fillMaxWidth(),
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
                 TextButton(
                     onClick = onBack
@@ -62,13 +70,18 @@ fun StellarSecureScreen(
                 }
 
                 Spacer(
-                    modifier = Modifier.size(4.dp)
+                    modifier =
+                        Modifier.size(4.dp)
                 )
 
                 Text(
                     text = "Stellar Secure",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    style =
+                        MaterialTheme
+                            .typography
+                            .headlineSmall,
+                    fontWeight =
+                        FontWeight.Bold
                 )
             }
         }
@@ -80,7 +93,8 @@ fun StellarSecureScreen(
         item {
             SecurityCheckCard(
                 title = "Android güvenliği",
-                description = "Android güvenlik bileşenleri kontrol edildi.",
+                description =
+                    "Android güvenlik bileşenleri kontrol edildi.",
                 status = "Kontrol hazır"
             )
         }
@@ -88,7 +102,8 @@ fun StellarSecureScreen(
         item {
             SecurityCheckCard(
                 title = "Sistem bütünlüğü",
-                description = "Sistem yapılandırması ve temel cihaz bilgileri incelenebilir.",
+                description =
+                    "Sistem yapılandırması ve temel cihaz bilgileri incelenebilir.",
                 status = "Kontrol hazır"
             )
         }
@@ -97,40 +112,48 @@ fun StellarSecureScreen(
             SecurityCheckCard(
                 title = "Güvenlik güncellemesi",
                 description =
-                    "Cihazın güvenlik yaması bilgisi Monitor bölümündeki " +
-                            "sistem verileriyle birlikte takip edilebilir.",
+                    "Cihazın güvenlik yaması bilgisi Monitor bölümündeki sistem verileriyle birlikte takip edilebilir.",
                 status = "Kontrol hazır"
             )
         }
 
         item {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = 4.dp,
-                        end = 4.dp,
-                        top = 4.dp
-                    )
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 4.dp,
+                            end = 4.dp,
+                            top = 4.dp
+                        )
             ) {
                 Text(
                     text = "Stellar Secure",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style =
+                        MaterialTheme
+                            .typography
+                            .titleMedium,
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
                 Spacer(
-                    modifier = Modifier.height(4.dp)
+                    modifier =
+                        Modifier.height(4.dp)
                 )
 
                 Text(
                     text =
-                        "Bu bölüm Stellar Center'ın cihaz güvenliği " +
-                                "teknolojisinin merkezi olacak. Gerçek zamanlı " +
-                                "güvenlik taraması ve daha gelişmiş kontroller " +
-                                "sonraki aşamalarda eklenecek.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "Bu bölüm Stellar Center'ın cihaz güvenliği teknolojisinin merkezi olacak. Gerçek zamanlı güvenlik taraması ve daha gelişmiş kontroller sonraki aşamalarda eklenecek.",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodyMedium,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
                 )
             }
         }
@@ -142,28 +165,40 @@ private fun GlassCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    val accent = MaterialTheme.colorScheme.primary
+    val accent =
+        MaterialTheme.colorScheme.primary
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(GlassShape)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.18f),
-                        Color.White.copy(alpha = 0.08f),
-                        Color.Transparent,
-                        accent.copy(alpha = 0.025f)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(GlassShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors =
+                            listOf(
+                                Color.White.copy(
+                                    alpha = 0.18f
+                                ),
+                                Color.White.copy(
+                                    alpha = 0.08f
+                                ),
+                                Color.Transparent,
+                                accent.copy(
+                                    alpha = 0.025f
+                                )
+                            )
                     )
                 )
-            )
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.48f),
-                shape = GlassShape
-            )
-            .padding(20.dp)
+                .border(
+                    width = 1.dp,
+                    color =
+                        Color.White.copy(
+                            alpha = 0.48f
+                        ),
+                    shape = GlassShape
+                )
+                .padding(20.dp)
     ) {
         content()
     }
@@ -173,81 +208,115 @@ private fun GlassCard(
 private fun SecurityStatusCard() {
     GlassCard {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
             GlassIconContainer {
                 Icon(
-                    imageVector = Icons.Default.Security,
+                    imageVector =
+                        Icons.Default.Security,
                     contentDescription = null,
-                    modifier = Modifier.size(29.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier =
+                        Modifier.size(29.dp),
+                    tint =
+                        MaterialTheme
+                            .colorScheme
+                            .primary
                 )
             }
 
             Spacer(
-                modifier = Modifier.size(14.dp)
+                modifier =
+                    Modifier.size(14.dp)
             )
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier =
+                    Modifier.weight(1f)
             ) {
                 Text(
                     text = "Stellar Secure",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style =
+                        MaterialTheme
+                            .typography
+                            .titleLarge,
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
                 Spacer(
-                    modifier = Modifier.height(3.dp)
+                    modifier =
+                        Modifier.height(3.dp)
                 )
 
                 Text(
                     text = "Güvenlik merkezi",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodyMedium,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
                 )
             }
         }
 
         Spacer(
-            modifier = Modifier.height(18.dp)
+            modifier =
+                Modifier.height(18.dp)
         )
 
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.CheckCircle,
+                imageVector =
+                    Icons.Default.CheckCircle,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier =
+                    Modifier.size(24.dp),
+                tint =
+                    MaterialTheme
+                        .colorScheme
+                        .primary
             )
 
             Spacer(
-                modifier = Modifier.size(10.dp)
+                modifier =
+                    Modifier.size(10.dp)
             )
 
             Text(
-                text = "Temel güvenlik kontrolleri hazır",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                text =
+                    "Temel güvenlik kontrolleri hazır",
+                style =
+                    MaterialTheme
+                        .typography
+                        .bodyLarge,
+                fontWeight =
+                    FontWeight.Medium
             )
         }
 
         Spacer(
-            modifier = Modifier.height(14.dp)
+            modifier =
+                Modifier.height(14.dp)
         )
 
         LinearProgressIndicator(
             progress = {
                 1f
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(7.dp)
-                .clip(
-                    RoundedCornerShape(20.dp)
-                )
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(7.dp)
+                    .clip(
+                        RoundedCornerShape(20.dp)
+                    )
         )
     }
 }
@@ -260,33 +329,117 @@ private fun SecurityCheckCard(
 ) {
     GlassCard {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
             GlassIconContainer {
                 Icon(
-                    imageVector = Icons.Default.SystemSecurityUpdateGood,
+                    imageVector =
+                        Icons.Default.SystemSecurityUpdateGood,
                     contentDescription = null,
-                    modifier = Modifier.size(27.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier =
+                        Modifier.size(27.dp),
+                    tint =
+                        MaterialTheme
+                            .colorScheme
+                            .primary
                 )
             }
 
             Spacer(
-                modifier = Modifier.size(12.dp)
+                modifier =
+                    Modifier.size(12.dp)
             )
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier =
+                    Modifier.weight(1f)
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style =
+                        MaterialTheme
+                            .typography
+                            .titleMedium,
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
                 Spacer(
-                    modifier = Modifier.height(3.dp)
+                    modifier =
+                        Modifier.height(3.dp)
                 )
 
                 Text(
                     text = description,
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodyMedium,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = status,
+                    style =
+                        MaterialTheme
+                            .typography
+                            .labelMedium,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .primary,
+                    fontWeight =
+                        FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassIconContainer(
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier =
+            Modifier
+                .size(50.dp)
+                .clip(IconShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors =
+                            listOf(
+                                Color.White.copy(
+                                    alpha = 0.20f
+                                ),
+                                Color.White.copy(
+                                    alpha = 0.07f
+                                )
+                            )
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    color =
+                        Color.White.copy(
+                            alpha = 0.42f
+                        ),
+                    shape = IconShape
+                ),
+        horizontalAlignment =
+            Alignment.CenterHorizontally,
+        verticalArrangement =
+            Arrangement.Center
+    ) {
+        content()
+    }
+}
