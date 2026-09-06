@@ -4,7 +4,7 @@ id "org.jetbrains.kotlin.plugin.compose"
 }
 android {
 namespace = "org.test.thislinux"
-compileSdk = 36
+compileSdk = 37
 
 ndkVersion = "28.2.13676358"
 
@@ -12,7 +12,7 @@ defaultConfig {
     applicationId = "org.test.thislinux"
 
     minSdk = 23
-    targetSdk = 36
+    targetSdk = 37
 
     versionCode = 1
     versionName = "3.0.0"
