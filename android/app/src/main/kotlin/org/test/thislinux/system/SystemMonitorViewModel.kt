@@ -15,7 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 import kotlin.math.max
 
 class SystemMonitorViewModel(
@@ -41,11 +43,20 @@ class SystemMonitorViewModel(
     private var previousCpuIdle = 0L
 
     fun start() {
-        if (running) return
+        if (running) {
+            return
+        }
 
         running = true
 
         monitorJob = scope.launch {
+
+            /*
+             * Sabit sistem bilgilerini yalnızca Monitor
+             * ekranına ilk girildiğinde oku.
+             */
+            val staticInfo = readStaticSystemInfo()
+
             while (isActive && running) {
 
                 val cpuUsage = readCpuUsage()
@@ -58,41 +69,39 @@ class SystemMonitorViewModel(
                     battery = battery.level,
                     temperature = battery.temperature,
 
-                    model = Build.MODEL,
-                    manufacturer = Build.MANUFACTURER,
+                    model = staticInfo.model,
+                    manufacturer = staticInfo.manufacturer,
 
-                    androidVersion = Build.VERSION.RELEASE ?: "Bilinmiyor",
-                    sdk = Build.VERSION.SDK_INT,
-                    securityPatch =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            Build.VERSION.SECURITY_PATCH ?: "Bilinmiyor"
-                        } else {
-                            "Bilinmiyor"
-                        },
+                    androidVersion = staticInfo.androidVersion,
+                    sdk = staticInfo.sdk,
+                    securityPatch = staticInfo.securityPatch,
+                    kernel = staticInfo.kernel,
 
-                    kernel = readKernelVersion(),
+                    board = staticInfo.board,
+                    device = staticInfo.device,
+                    product = staticInfo.product,
+                    hardware = staticInfo.hardware,
+                    bootloader = staticInfo.bootloader,
 
-                    board = Build.BOARD,
-                    device = Build.DEVICE,
-                    product = Build.PRODUCT,
-                    hardware = Build.HARDWARE,
-                    bootloader = Build.BOOTLOADER,
-
-                    cpuCount = Runtime.getRuntime().availableProcessors(),
-                    supportedAbis = readSupportedAbis(),
+                    cpuCount = staticInfo.cpuCount,
+                    supportedAbis = staticInfo.supportedAbis,
 
                     totalRamBytes = memory.totalBytes,
                     availableRamBytes = memory.availableBytes,
 
-                    totalStorageBytes = readTotalStorage(),
-                    availableStorageBytes = readAvailableStorage(),
+                    totalStorageBytes = staticInfo.totalStorageBytes,
+                    availableStorageBytes = staticInfo.availableStorageBytes,
 
-                    screenWidth = readScreenWidth(),
-                    screenHeight = readScreenHeight(),
-                    density = readDensity(),
-                    refreshRate = readRefreshRate()
+                    screenWidth = staticInfo.screenWidth,
+                    screenHeight = staticInfo.screenHeight,
+                    density = staticInfo.density,
+                    refreshRate = staticInfo.refreshRate
                 )
 
+                /*
+                 * Canlı veriler yalnızca Monitor açıkken
+                 * saniyede bir güncellenir.
+                 */
                 delay(1000)
             }
         }
@@ -100,9 +109,44 @@ class SystemMonitorViewModel(
 
     fun stop() {
         running = false
+
         monitorJob?.cancel()
         monitorJob = null
+
+        /*
+         * Bir sonraki Monitor oturumunda CPU ölçümü
+         * yeniden doğru şekilde başlasın.
+         */
+        previousCpuTotal = 0L
+        previousCpuIdle = 0L
     }
+
+    private data class StaticSystemInfo(
+        val model: String,
+        val manufacturer: String,
+
+        val androidVersion: String,
+        val sdk: Int,
+        val securityPatch: String,
+        val kernel: String,
+
+        val board: String,
+        val device: String,
+        val product: String,
+        val hardware: String,
+        val bootloader: String,
+
+        val cpuCount: Int,
+        val supportedAbis: String,
+
+        val totalStorageBytes: Long,
+        val availableStorageBytes: Long,
+
+        val screenWidth: Int,
+        val screenHeight: Int,
+        val density: Float,
+        val refreshRate: Float
+    )
 
     private data class MemoryInfo(
         val totalBytes: Long,
@@ -115,6 +159,57 @@ class SystemMonitorViewModel(
         val temperature: Double
     )
 
+    private fun readStaticSystemInfo(): StaticSystemInfo {
+        return StaticSystemInfo(
+            model = Build.MODEL,
+            manufacturer = Build.MANUFACTURER,
+
+            androidVersion =
+                Build.VERSION.RELEASE ?: "Bilinmiyor",
+
+            sdk = Build.VERSION.SDK_INT,
+
+            securityPatch =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Build.VERSION.SECURITY_PATCH ?: "Bilinmiyor"
+                } else {
+                    "Bilinmiyor"
+                },
+
+            kernel = readKernelVersion(),
+
+            board = Build.BOARD,
+            device = Build.DEVICE,
+            product = Build.PRODUCT,
+            hardware = Build.HARDWARE,
+            bootloader = Build.BOOTLOADER,
+
+            cpuCount =
+                Runtime.getRuntime().availableProcessors(),
+
+            supportedAbis =
+                readSupportedAbis(),
+
+            totalStorageBytes =
+                readTotalStorage(),
+
+            availableStorageBytes =
+                readAvailableStorage(),
+
+            screenWidth =
+                readScreenWidth(),
+
+            screenHeight =
+                readScreenHeight(),
+
+            density =
+                readDensity(),
+
+            refreshRate =
+                readRefreshRate()
+        )
+    }
+
     private fun readMemory(): MemoryInfo {
         return try {
             val activityManager =
@@ -122,22 +217,36 @@ class SystemMonitorViewModel(
                     Context.ACTIVITY_SERVICE
                 ) as android.app.ActivityManager
 
-            val info = android.app.ActivityManager.MemoryInfo()
+            val info =
+                android.app.ActivityManager.MemoryInfo()
 
             activityManager.getMemoryInfo(info)
 
-            val total = max(info.totalMem, 0L)
-            val available = max(info.availMem, 0L)
+            val total =
+                max(info.totalMem, 0L)
 
-            val used = max(total - available, 0L)
+            val available =
+                max(info.availMem, 0L)
 
-            val usage = if (total > 0L) {
-                ((used.toDouble() / total.toDouble()) * 100.0)
-                    .toInt()
-                    .coerceIn(0, 100)
-            } else {
-                0
-            }
+            val used =
+                max(
+                    total - available,
+                    0L
+                )
+
+            val usage =
+                if (total > 0L) {
+                    (
+                        (
+                            used.toDouble() /
+                                    total.toDouble()
+                        ) * 100.0
+                    )
+                        .toInt()
+                        .coerceIn(0, 100)
+                } else {
+                    0
+                }
 
             MemoryInfo(
                 totalBytes = total,
@@ -155,10 +264,13 @@ class SystemMonitorViewModel(
 
     private fun readBatteryInfo(): BatteryInfo {
         return try {
-            val intent = appContext.registerReceiver(
-                null,
-                IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-            )
+            val intent =
+                appContext.registerReceiver(
+                    null,
+                    IntentFilter(
+                        Intent.ACTION_BATTERY_CHANGED
+                    )
+                )
 
             if (intent == null) {
                 return BatteryInfo(
@@ -167,32 +279,42 @@ class SystemMonitorViewModel(
                 )
             }
 
-            val level = intent.getIntExtra(
-                BatteryManager.EXTRA_LEVEL,
-                0
-            )
+            val level =
+                intent.getIntExtra(
+                    BatteryManager.EXTRA_LEVEL,
+                    0
+                )
 
-            val scale = intent.getIntExtra(
-                BatteryManager.EXTRA_SCALE,
-                100
-            )
+            val scale =
+                intent.getIntExtra(
+                    BatteryManager.EXTRA_SCALE,
+                    100
+                )
 
-            val rawTemperature = intent.getIntExtra(
-                BatteryManager.EXTRA_TEMPERATURE,
-                0
-            )
+            val rawTemperature =
+                intent.getIntExtra(
+                    BatteryManager.EXTRA_TEMPERATURE,
+                    0
+                )
 
-            val percentage = if (scale > 0) {
-                ((level.toDouble() / scale.toDouble()) * 100.0)
-                    .toInt()
-                    .coerceIn(0, 100)
-            } else {
-                0
-            }
+            val percentage =
+                if (scale > 0) {
+                    (
+                        (
+                            level.toDouble() /
+                                    scale.toDouble()
+                        ) * 100.0
+                    )
+                        .toInt()
+                        .coerceIn(0, 100)
+                } else {
+                    0
+                }
 
             BatteryInfo(
                 level = percentage,
-                temperature = rawTemperature / 10.0
+                temperature =
+                    rawTemperature / 10.0
             )
         } catch (_: Exception) {
             BatteryInfo(
@@ -204,33 +326,84 @@ class SystemMonitorViewModel(
 
     private fun readCpuUsage(): Int {
         return try {
-            val stat = File("/proc/stat")
-                .readLines()
-                .firstOrNull {
-                    it.startsWith("cpu ")
-                }
-                ?: return 0
+            val reader =
+                BufferedReader(
+                    FileReader("/proc/stat")
+                )
 
-            val values = stat
-                .trim()
-                .split(Regex("\\s+"))
-                .drop(1)
-                .mapNotNull { it.toLongOrNull() }
+            val firstLine =
+                reader.useLines { lines ->
+                    lines.firstOrNull {
+                        it.startsWith("cpu ")
+                    }
+                }
+                    ?: return 0
+
+            val spaceIndex =
+                firstLine.indexOf(' ')
+
+            if (spaceIndex == -1) {
+                return 0
+            }
+
+            val values =
+                firstLine
+                    .substring(spaceIndex)
+                    .trim()
+                    .split(' ')
+                    .filter {
+                        it.isNotEmpty()
+                    }
+                    .mapNotNull {
+                        it.toLongOrNull()
+                    }
 
             if (values.size < 4) {
                 return 0
             }
 
-            val user = values.getOrElse(0) { 0L }
-            val nice = values.getOrElse(1) { 0L }
-            val system = values.getOrElse(2) { 0L }
-            val idle = values.getOrElse(3) { 0L }
-            val iowait = values.getOrElse(4) { 0L }
-            val irq = values.getOrElse(5) { 0L }
-            val softIrq = values.getOrElse(6) { 0L }
-            val steal = values.getOrElse(7) { 0L }
+            val user =
+                values.getOrElse(0) {
+                    0L
+                }
 
-            val idleTime = idle + iowait
+            val nice =
+                values.getOrElse(1) {
+                    0L
+                }
+
+            val system =
+                values.getOrElse(2) {
+                    0L
+                }
+
+            val idle =
+                values.getOrElse(3) {
+                    0L
+                }
+
+            val iowait =
+                values.getOrElse(4) {
+                    0L
+                }
+
+            val irq =
+                values.getOrElse(5) {
+                    0L
+                }
+
+            val softIrq =
+                values.getOrElse(6) {
+                    0L
+                }
+
+            val steal =
+                values.getOrElse(7) {
+                    0L
+                }
+
+            val idleTime =
+                idle + iowait
 
             val totalTime =
                 user +
@@ -243,28 +416,46 @@ class SystemMonitorViewModel(
                         steal
 
             if (previousCpuTotal == 0L) {
-                previousCpuTotal = totalTime
-                previousCpuIdle = idleTime
+                previousCpuTotal =
+                    totalTime
+
+                previousCpuIdle =
+                    idleTime
+
                 return 0
             }
 
             val totalDelta =
-                totalTime - previousCpuTotal
+                totalTime -
+                        previousCpuTotal
 
             val idleDelta =
-                idleTime - previousCpuIdle
+                idleTime -
+                        previousCpuIdle
 
-            previousCpuTotal = totalTime
-            previousCpuIdle = idleTime
+            previousCpuTotal =
+                totalTime
+
+            previousCpuIdle =
+                idleTime
 
             if (totalDelta <= 0L) {
                 return 0
             }
 
-            (((totalDelta - idleDelta).toDouble() /
-                    totalDelta.toDouble()) * 100.0)
+            val activeDelta =
+                totalDelta -
+                        idleDelta
+
+            (
+                (
+                    activeDelta.toDouble() /
+                            totalDelta.toDouble()
+                ) * 100.0
+            )
                 .toInt()
                 .coerceIn(0, 100)
+
         } catch (_: Exception) {
             0
         }
@@ -285,8 +476,12 @@ class SystemMonitorViewModel(
 
     private fun readSupportedAbis(): String {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Build.SUPPORTED_ABIS.joinToString(", ")
+            if (
+                Build.VERSION.SDK_INT >=
+                Build.VERSION_CODES.LOLLIPOP
+            ) {
+                Build.SUPPORTED_ABIS
+                    .joinToString(", ")
             } else {
                 @Suppress("DEPRECATION")
                 Build.CPU_ABI
@@ -298,9 +493,10 @@ class SystemMonitorViewModel(
 
     private fun readTotalStorage(): Long {
         return try {
-            val statFs = android.os.StatFs(
-                appContext.filesDir.absolutePath
-            )
+            val statFs =
+                android.os.StatFs(
+                    appContext.filesDir.absolutePath
+                )
 
             statFs.totalBytes
         } catch (_: Exception) {
@@ -310,9 +506,10 @@ class SystemMonitorViewModel(
 
     private fun readAvailableStorage(): Long {
         return try {
-            val statFs = android.os.StatFs(
-                appContext.filesDir.absolutePath
-            )
+            val statFs =
+                android.os.StatFs(
+                    appContext.filesDir.absolutePath
+                )
 
             statFs.availableBytes
         } catch (_: Exception) {
@@ -327,10 +524,12 @@ class SystemMonitorViewModel(
                     Context.WINDOW_SERVICE
                 ) as WindowManager
 
-            val metrics = android.util.DisplayMetrics()
+            val metrics =
+                android.util.DisplayMetrics()
 
             @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealMetrics(metrics)
+            windowManager.defaultDisplay
+                .getRealMetrics(metrics)
 
             metrics.widthPixels
         } catch (_: Exception) {
@@ -345,10 +544,12 @@ class SystemMonitorViewModel(
                     Context.WINDOW_SERVICE
                 ) as WindowManager
 
-            val metrics = android.util.DisplayMetrics()
+            val metrics =
+                android.util.DisplayMetrics()
 
             @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealMetrics(metrics)
+            windowManager.defaultDisplay
+                .getRealMetrics(metrics)
 
             metrics.heightPixels
         } catch (_: Exception) {
@@ -358,7 +559,9 @@ class SystemMonitorViewModel(
 
     private fun readDensity(): Float {
         return try {
-            appContext.resources.displayMetrics.density
+            appContext.resources
+                .displayMetrics
+                .density
         } catch (_: Exception) {
             0f
         }
@@ -372,7 +575,8 @@ class SystemMonitorViewModel(
                 ) as WindowManager
 
             @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.refreshRate
+            windowManager.defaultDisplay
+                .refreshRate
         } catch (_: Exception) {
             0f
         }
