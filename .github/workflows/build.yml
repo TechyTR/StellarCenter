@@ -26,51 +26,61 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Verify Android toolchain
-        working-directory: android
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+
+      - name: Create Flutter local.properties
         run: |
-          chmod +x gradlew
-          java -version
-          ./gradlew --version
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      - name: Build release APK
-        working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew clean
-          ./gradlew assembleRelease --stacktrace
+      - name: Get dependencies
+        run: flutter pub get
 
-      - name: Verify APK
-        run: |
-          APK="android/app/build/outputs/apk/release/app-release.apk"
-
-          if [ ! -f "$APK" ]; then
-            echo "Release APK was not generated."
-            find android/app/build/outputs -type f -maxdepth 5 2>/dev/null || true
-            exit 1
-          fi
-
-          echo "APK generated successfully:"
-          ls -lh "$APK"
+      - name: Generate app icon
+        run: dart run flutter_launcher_icons
 
       - name: Read app version
         id: version
+        shell: bash
         run: |
-          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' android/app/build.gradle | head -n 1)
+          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read versionName from android/app/build.gradle"
+            echo "Could not read version from pubspec.yaml"
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building Stellar Center v$VERSION"
 
+      - name: Build release APK
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+
+      - name: Verify APK
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "Release APK was not generated."
+            find build/app/outputs -type f -maxdepth 5 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "APK generated successfully:"
+          ls -lh "$APK"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: stellar-center-${{ steps.version.outputs.version }}
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
       - name: Create GitHub Release
@@ -81,8 +91,8 @@ jobs:
           body: |
             Stellar Center v${{ steps.version.outputs.version }}
 
-            Native Android release built with Kotlin and Jetpack Compose.
-          files: android/app/build/outputs/apk/release/app-release.apk
+            Android release APK.
+          files: build/app/outputs/flutter-apk/app-release.apk
           make_latest: true
           overwrite_files: true
 
