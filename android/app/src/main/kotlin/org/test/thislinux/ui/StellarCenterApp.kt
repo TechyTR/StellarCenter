@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import org.test.thislinux.ui.navigation.StellarNavigation
+import org.test.thislinux.ui.navigation.Navigation
 import org.test.thislinux.ui.theme.StellarAccent
 import org.test.thislinux.ui.theme.StellarTheme
 import org.test.thislinux.ui.theme.StellarThemeStyle
@@ -34,8 +34,8 @@ fun StellarCenterApp() {
                 BottomNavBar(
                     selectedIndex = selectedIndex,
                     themeStyle = themeStyle,
-                    onSelected = {
-                        selectedIndex = it
+                    onSelected = { index ->
+                        selectedIndex = index
                     }
                 )
             }
@@ -45,7 +45,7 @@ fun StellarCenterApp() {
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                StellarNavigation(
+                Navigation(
                     selectedIndex = selectedIndex
                 )
             }
