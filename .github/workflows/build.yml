@@ -20,67 +20,84 @@ jobs:
         with:
           lfs: true
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.0'
-          channel: stable
-          cache: true
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Create Flutter local.properties
-        run: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Generate app icon
-        run: dart run flutter_launcher_icons
-
-      - name: Read app version
-        id: version
+      - name: Install Android SDK
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36"
 
-          if [ -z "$VERSION" ]; then
-            echo "Could not read version from pubspec.yaml"
-            exit 1
-          fi
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building Stellar Center v$VERSION"
+      - name: Verify native Android project
+        working-directory: android
+        shell: bash
+        run: |
+          echo "Java:"
+          java -version
+
+          echo ""
+          echo "Gradle:"
+          gradle --version
+
+          echo ""
+          echo "Android project:"
+          test -f settings.gradle
+          test -f app/build.gradle
+
+          echo "Native Kotlin Android project detected."
 
       - name: Build release APK
+        working-directory: android
+        shell: bash
         run: |
-          flutter clean
-          flutter pub get
-          flutter build apk --release
+          gradle clean
+          gradle assembleRelease --stacktrace
 
       - name: Verify APK
+        shell: bash
         run: |
-          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
 
           if [ ! -f "$APK" ]; then
             echo "Release APK was not generated."
-            find build/app/outputs -type f -maxdepth 5 2>/dev/null || true
+            find android/app/build/outputs -type f 2>/dev/null || true
             exit 1
           fi
 
           echo "APK generated successfully:"
           ls -lh "$APK"
 
+      - name: Read app version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' android/app/build.gradle | head -n 1)
+
+          if [ -z "$VERSION" ]; then
+            echo "Could not read versionName from android/app/build.gradle"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building Stellar Center v$VERSION"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: stellar-center-${{ steps.version.outputs.version }}
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       - name: Create GitHub Release
@@ -91,8 +108,8 @@ jobs:
           body: |
             Stellar Center v${{ steps.version.outputs.version }}
 
-            Android release APK.
-          files: build/app/outputs/flutter-apk/app-release.apk
+            Native Android Kotlin + Jetpack Compose release APK.
+          files: android/app/build/outputs/apk/release/app-release.apk
           make_latest: true
           overwrite_files: true
 
