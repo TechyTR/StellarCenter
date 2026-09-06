@@ -44,15 +44,9 @@ jobs:
         working-directory: android
         shell: bash
         run: |
-          echo "Java:"
           java -version
-
-          echo ""
-          echo "Gradle:"
           gradle --version
 
-          echo ""
-          echo "Android project:"
           test -f settings.gradle
           test -f app/build.gradle
 
@@ -76,7 +70,6 @@ jobs:
             exit 1
           fi
 
-          echo "APK generated successfully:"
           ls -lh "$APK"
 
       - name: Read app version
@@ -86,12 +79,11 @@ jobs:
           VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' android/app/build.gradle | head -n 1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read versionName from android/app/build.gradle"
+            echo "Could not read versionName."
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building Stellar Center v$VERSION"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
