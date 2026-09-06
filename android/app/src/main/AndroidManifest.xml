@@ -1,67 +1,58 @@
-<?xml version="1.0" encoding="utf-8"?>
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Network -->
-    <uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Storage -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <!-- APK update installation -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- Shizuku discovery -->
-    <queries>
-        <package android:name="moe.shizuku.privileged.api" />
-    </queries>
+<queries>
+    <package android:name="moe.shizuku.privileged.api" />
+</queries>
 
-    <application
-        android:label="Stellar Center"
-        android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false"
-        android:supportsRtl="true"
+<application
+    android:label="Stellar Center"
+    android:allowBackup="false"
+    android:supportsRtl="true"
+    android:hardwareAccelerated="true"
+    android:theme="@style/Theme.StellarCenter">
+
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:launchMode="singleTop"
+        android:screenOrientation="unspecified"
         android:hardwareAccelerated="true"
-        android:theme="@style/Theme.StellarCenter">
+        android:windowSoftInputMode="adjustResize">
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:screenOrientation="unspecified"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+    </activity>
 
-        </activity>
+    <provider
+        android:name="rikka.shizuku.ShizukuProvider"
+        android:authorities="${applicationId}.shizuku"
+        android:multiprocess="false"
+        android:enabled="true"
+        android:exported="true"
+        android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
-        <!-- Shizuku -->
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:multiprocess="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.fileprovider"
+        android:exported="false"
+        android:grantUriPermissions="true">
 
-        <!-- APK update provider -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
 
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+    </provider>
 
-        </provider>
+</application>
 
-    </application>
 
-</manifest>
