@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -114,20 +115,55 @@ fun BottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .clip(RoundedCornerShape(32.dp))
+                .clip(
+                    RoundedCornerShape(32.dp)
+                )
+                .drawBehind {
+                    if (isGlass) {
+                        drawRoundRect(
+                            color = Color.Black.copy(
+                                alpha = if (isLight) {
+                                    0.10f
+                                } else {
+                                    0.28f
+                                }
+                            ),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                                32.dp.toPx()
+                            ),
+                            topLeft = androidx.compose.ui.geometry.Offset(
+                                0f,
+                                10.dp.toPx()
+                            ),
+                            size = size.copy(
+                                height = size.height
+                            )
+                        )
+                    }
+                }
                 .background(
                     when {
-                        isLight -> Color.White.copy(alpha = 0.22f)
-                        isDark -> Color.Black.copy(alpha = 0.28f)
-                        else -> Color.Transparent
+                        isLight ->
+                            Color.White.copy(alpha = 0.22f)
+
+                        isDark ->
+                            Color.Black.copy(alpha = 0.28f)
+
+                        else ->
+                            Color.Transparent
                     }
                 )
                 .border(
                     width = 1.dp,
                     color = when {
-                        isLight -> Color.White.copy(alpha = 0.68f)
-                        isDark -> Color.White.copy(alpha = 0.28f)
-                        else -> Color.Transparent
+                        isLight ->
+                            Color.White.copy(alpha = 0.68f)
+
+                        isDark ->
+                            Color.White.copy(alpha = 0.28f)
+
+                        else ->
+                            Color.Transparent
                     },
                     shape = RoundedCornerShape(32.dp)
                 )
@@ -152,7 +188,11 @@ fun BottomNavBar(
                                 listOf(
                                     Color.Transparent,
                                     Color.White.copy(
-                                        alpha = if (isLight) 0.80f else 0.38f
+                                        alpha = if (isLight) {
+                                            0.80f
+                                        } else {
+                                            0.38f
+                                        }
                                     ),
                                     Color.Transparent
                                 )
@@ -167,11 +207,19 @@ fun BottomNavBar(
                             Brush.verticalGradient(
                                 listOf(
                                     Color.White.copy(
-                                        alpha = if (isLight) 0.12f else 0.07f
+                                        alpha = if (isLight) {
+                                            0.12f
+                                        } else {
+                                            0.07f
+                                        }
                                     ),
                                     Color.Transparent,
                                     Color.Black.copy(
-                                        alpha = if (isLight) 0.025f else 0.08f
+                                        alpha = if (isLight) {
+                                            0.025f
+                                        } else {
+                                            0.08f
+                                        }
                                     )
                                 )
                             )
@@ -182,7 +230,8 @@ fun BottomNavBar(
             val itemWidth = maxWidth / items.size
 
             val indicatorOffset by animateDpAsState(
-                targetValue = itemWidth * selectedIndex + 5.dp,
+                targetValue =
+                    itemWidth * selectedIndex + 5.dp,
                 animationSpec = tween(
                     durationMillis = 500,
                     easing = FastOutSlowInEasing
@@ -198,7 +247,54 @@ fun BottomNavBar(
                     )
                     .width(itemWidth - 10.dp)
                     .height(56.dp)
-                    .clip(RoundedCornerShape(25.dp))
+                    .drawBehind {
+                        if (isGlass) {
+                            drawRoundRect(
+                                color = accent.copy(
+                                    alpha = if (isLight) {
+                                        0.18f
+                                    } else {
+                                        0.14f
+                                    }
+                                ),
+                                cornerRadius =
+                                    androidx.compose.ui.geometry.CornerRadius(
+                                        25.dp.toPx()
+                                    ),
+                                topLeft = androidx.compose.ui.geometry.Offset(
+                                    0f,
+                                    1.dp.toPx()
+                                ),
+                                size = size.copy(
+                                    height = size.height
+                                )
+                            )
+
+                            drawRoundRect(
+                                color = Color.White.copy(
+                                    alpha = if (isLight) {
+                                        0.10f
+                                    } else {
+                                        0.05f
+                                    }
+                                ),
+                                cornerRadius =
+                                    androidx.compose.ui.geometry.CornerRadius(
+                                        25.dp.toPx()
+                                    ),
+                                topLeft = androidx.compose.ui.geometry.Offset(
+                                    0f,
+                                    8.dp.toPx()
+                                ),
+                                size = size.copy(
+                                    height = size.height
+                                )
+                            )
+                        }
+                    }
+                    .clip(
+                        RoundedCornerShape(25.dp)
+                    )
                     .background(
                         if (isLight) {
                             Color.White.copy(alpha = 0.16f)
@@ -215,6 +311,16 @@ fun BottomNavBar(
                         },
                         shape = RoundedCornerShape(25.dp)
                     )
+                    .graphicsLayer {
+                        if (isGlass) {
+                            renderEffect =
+                                RenderEffect.createBlurEffect(
+                                    18f,
+                                    18f,
+                                    Shader.TileMode.CLAMP
+                                )
+                        }
+                    }
             ) {
                 Box(
                     modifier = Modifier
@@ -226,7 +332,11 @@ fun BottomNavBar(
                                 listOf(
                                     Color.Transparent,
                                     Color.White.copy(
-                                        alpha = if (isLight) 0.72f else 0.34f
+                                        alpha = if (isLight) {
+                                            0.72f
+                                        } else {
+                                            0.34f
+                                        }
                                     ),
                                     Color.Transparent
                                 )
@@ -241,7 +351,11 @@ fun BottomNavBar(
                             Brush.verticalGradient(
                                 listOf(
                                     Color.White.copy(
-                                        alpha = if (isLight) 0.08f else 0.04f
+                                        alpha = if (isLight) {
+                                            0.08f
+                                        } else {
+                                            0.04f
+                                        }
                                     ),
                                     Color.Transparent
                                 )
@@ -255,10 +369,16 @@ fun BottomNavBar(
             ) {
                 items.forEachIndexed { index, item ->
 
-                    val selected = selectedIndex == index
+                    val selected =
+                        selectedIndex == index
 
                     val scale by animateFloatAsState(
-                        targetValue = if (selected) 1.06f else 1f,
+                        targetValue =
+                            if (selected) {
+                                1.06f
+                            } else {
+                                1f
+                            },
                         animationSpec = tween(
                             durationMillis = 300,
                             easing = FastOutSlowInEasing
@@ -276,27 +396,32 @@ fun BottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally,
+                            verticalArrangement =
+                                Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = if (selected) {
-                                    item.selectedIcon
-                                } else {
-                                    item.icon
-                                },
-                                contentDescription = item.label,
+                                imageVector =
+                                    if (selected) {
+                                        item.selectedIcon
+                                    } else {
+                                        item.icon
+                                    },
+                                contentDescription =
+                                    item.label,
                                 modifier = Modifier
                                     .size(21.dp)
                                     .graphicsLayer {
                                         scaleX = scale
                                         scaleY = scale
                                     },
-                                tint = if (selected) {
-                                    accent
-                                } else {
-                                    mutedColor
-                                }
+                                tint =
+                                    if (selected) {
+                                        accent
+                                    } else {
+                                        mutedColor
+                                    }
                             )
 
                             Spacer(
@@ -305,17 +430,24 @@ fun BottomNavBar(
 
                             Text(
                                 text = item.label,
-                                fontSize = if (selected) 10.5.sp else 10.sp,
-                                fontWeight = if (selected) {
-                                    FontWeight.SemiBold
-                                } else {
-                                    FontWeight.Normal
-                                },
-                                color = if (selected) {
-                                    accent
-                                } else {
-                                    mutedColor
-                                }
+                                fontSize =
+                                    if (selected) {
+                                        10.5.sp
+                                    } else {
+                                        10.sp
+                                    },
+                                fontWeight =
+                                    if (selected) {
+                                        FontWeight.SemiBold
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                color =
+                                    if (selected) {
+                                        accent
+                                    } else {
+                                        mutedColor
+                                    }
                             )
                         }
                     }
@@ -324,3 +456,4 @@ fun BottomNavBar(
         }
     }
 }
+
