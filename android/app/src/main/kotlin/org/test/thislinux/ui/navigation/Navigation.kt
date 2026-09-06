@@ -7,8 +7,10 @@ fun StellarNavigation(
     selectedIndex: Int
 ) {
     when (selectedIndex) {
-        0 -> SystemMonitorScreen()
-        1 -> NotesScreen()
-        2 -> AppScreen()
+        0 -> HomeScreen()
+        1 -> SystemMonitorScreen()
+        2 -> NotesScreen()
+        3 -> AppScreen()
     }
 }
+
