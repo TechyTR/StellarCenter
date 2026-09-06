@@ -1,7 +1,7 @@
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
-    id "dev.flutter.flutter-gradle-plugin"
+    id "org.jetbrains.kotlin.plugin.compose"
 }
 
 android {
@@ -10,6 +10,32 @@ android {
     compileSdk = 36
 
     ndkVersion = "28.2.13676358"
+
+    defaultConfig {
+        applicationId = "org.test.thislinux"
+
+        minSdk = 23
+        targetSdk = 36
+
+        versionCode = 1
+        versionName = "3.0.0"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+
+        release {
+            minifyEnabled false
+            shrinkResources false
+
+            // Şimdilik mevcut debug signing.
+            // Release aşamasında gerçek Stellar keystore kullanılacak.
+            signingConfig = signingConfigs.debug
+        }
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -20,32 +46,54 @@ android {
         jvmTarget = "17"
     }
 
-    defaultConfig {
-        applicationId = "org.test.thislinux"
-
-        minSdk = 23
-
-        targetSdk = 36
-
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+    buildFeatures {
+        compose true
+        buildConfig true
     }
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.debug
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
 }
 
 dependencies {
+
+    // AndroidX
+    implementation "androidx.core:core-ktx:1.17.0"
+    implementation "androidx.activity:activity-compose:1.11.0"
+
+    // Compose
+    implementation platform("androidx.compose:compose-bom:2026.08.00")
+
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation "androidx.compose.foundation:foundation"
+
+    implementation "androidx.compose.material3:material3"
+    implementation "androidx.compose.material:material-icons-extended"
+
+    debugImplementation "androidx.compose.ui:ui-tooling"
+
+    // Lifecycle
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.9.3"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3"
+
+    // Navigation
+    implementation "androidx.navigation:navigation-compose:2.9.3"
+
+    // Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+
+    // DataStore
+    implementation "androidx.datastore:datastore-preferences:1.1.7"
+
+    // Shizuku
     implementation "dev.rikka.shizuku:api:13.1.5"
     implementation "dev.rikka.shizuku:provider:13.1.5"
 
-    implementation "androidx.media3:media3-exoplayer:1.11.0"
-    implementation "androidx.media3:media3-ui:1.11.0"
-}
-
-flutter {
-    source = "../.."
+    // Media3 - ileride sistem medya özellikleri için
+    implementation "androidx.media3:media3-exoplayer:1.9.1"
+    implementation "androidx.media3:media3-ui:1.9.1"
 }
