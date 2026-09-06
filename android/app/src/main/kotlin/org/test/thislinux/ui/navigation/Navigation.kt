@@ -3,14 +3,21 @@ package org.test.thislinux.ui.navigation
 import androidx.compose.runtime.Composable
 
 @Composable
-fun StellarNavigation(
-    selectedIndex: Int
+fun Navigation(
+    selectedIndex: Int,
+    onOpenSecurity: () -> Unit = {},
+    onOpenShizuku: () -> Unit = {}
 ) {
     when (selectedIndex) {
-        0 -> HomeScreen()
+        0 -> HomeScreen(
+            onOpenSecurity = onOpenSecurity,
+            onOpenShizuku = onOpenShizuku
+        )
+
         1 -> SystemMonitorScreen()
+
         2 -> NotesScreen()
+
         3 -> AppScreen()
     }
 }
-
