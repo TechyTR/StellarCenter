@@ -1,12 +1,35 @@
 package org.test.thislinux.ui
 
-import androidx.compose.animation.core.Animatable
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedDefaultTextStyle
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
@@ -19,67 +42,67 @@ import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.Note
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import kotlinx.coroutines.launch
 import org.test.thislinux.ui.theme.StellarThemeStyle
 
 private data class NavItem(
     val label: String,
-    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector,
-    val unselectedIcon: androidx.compose.ui.graphics.vector.ImageVector
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
 @Composable
-fun StellarBottomBar(
+fun BottomNavBar(
     selectedIndex: Int,
     themeStyle: StellarThemeStyle,
     onSelected: (Int) -> Unit
 ) {
-    val isGlass =
-        themeStyle == StellarThemeStyle.LIQUID_GLASS_LIGHT ||
-        themeStyle == StellarThemeStyle.LIQUID_GLASS_DARK
+    val isLight =
+        themeStyle == StellarThemeStyle.LIQUID_GLASS_LIGHT
 
     val isDark =
         themeStyle == StellarThemeStyle.LIQUID_GLASS_DARK
 
+    val isGlass = isLight || isDark
+
     val accent = Color(0xFF7C4DFF)
 
-    val muted = if (isDark) {
-        Color.White.copy(alpha = 0.62f)
+    val mutedColor = if (isDark) {
+        Color.White.copy(alpha = 0.82f)
     } else {
-        Color.Black.copy(alpha = 0.55f)
+        Color.Black.copy(alpha = 0.82f)
     }
 
     val items = listOf(
         NavItem(
-            "Ana Sayfa",
-            Icons.Filled.Dashboard,
-            Icons.Outlined.Dashboard
+            label = "Menü",
+            icon = Icons.Outlined.Dashboard,
+            selectedIcon = Icons.Filled.Dashboard
         ),
         NavItem(
-            "Monitor",
-            Icons.Filled.MonitorHeart,
-            Icons.Outlined.MonitorHeart
+            label = "Monitor",
+            icon = Icons.Outlined.MonitorHeart,
+            selectedIcon = Icons.Filled.MonitorHeart
         ),
         NavItem(
-            "Notlar",
-            Icons.Filled.Note,
-            Icons.Outlined.Note
+            label = "Notes",
+            icon = Icons.Outlined.Note,
+            selectedIcon = Icons.Filled.Note
         ),
         NavItem(
-            "Hakkında",
-            Icons.Filled.Info,
-            Icons.Outlined.Info
+            label = "App",
+            icon = Icons.Outlined.Info,
+            selectedIcon = Icons.Filled.Info
         )
     )
 
@@ -87,84 +110,145 @@ fun StellarBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = 28.dp,
-                end = 28.dp,
-                top = 4.dp,
-                bottom = 8.dp
+                start = 14.dp,
+                end = 14.dp,
+                top = 8.dp,
+                bottom = 10.dp
             ),
         contentAlignment = Alignment.BottomCenter
     ) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(66.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .height(70.dp)
+                .clip(RoundedCornerShape(32.dp))
                 .background(
-                    if (isDark) {
-                        Color.Black.copy(alpha = 0.18f)
-                    } else {
-                        Color.White.copy(alpha = 0.82f)
+                    when {
+                        isLight -> Color.White.copy(alpha = 0.22f)
+                        isDark -> Color.Black.copy(alpha = 0.28f)
+                        else -> Color.Transparent
                     }
                 )
                 .border(
                     width = 1.dp,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.10f)
-                    } else {
-                        Color.Black.copy(alpha = 0.06f)
+                    color = when {
+                        isLight -> Color.White.copy(alpha = 0.68f)
+                        isDark -> Color.White.copy(alpha = 0.28f)
+                        else -> Color.Transparent
                     },
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(32.dp)
                 )
-                .padding(5.dp)
+                .graphicsLayer {
+                    if (isGlass) {
+                        renderEffect = RenderEffect.createBlurEffect(
+                            30f,
+                            30f,
+                            Shader.TileMode.CLAMP
+                        )
+                    }
+                }
         ) {
-            val itemWidth = maxWidth / items.size
-
-            val animatedLeft by animateDpAsState(
-                targetValue = itemWidth * selectedIndex + 3.dp,
-                animationSpec = tween(
-                    durationMillis = 360,
-                    easing = FastOutSlowInEasing
-                ),
-                label = "selectedIndicatorPosition"
-            )
-
-            Box(
-                modifier = Modifier
-                    .offset(
-                        x = animatedLeft,
-                        y = 3.dp
-                    )
-                    .width(itemWidth - 6.dp)
-                    .height(55.dp)
-                    .clip(RoundedCornerShape(19.dp))
-                    .background(
-                        if (isDark) {
-                            Color.White.copy(alpha = 0.075f)
-                        } else {
-                            Color.White.copy(alpha = 0.24f)
-                        }
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (isDark) {
-                            Color.White.copy(alpha = 0.25f)
-                        } else {
-                            Color.White.copy(alpha = 0.68f)
-                        },
-                        shape = RoundedCornerShape(19.dp)
-                    )
-            ) {
+            if (isGlass) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.2.dp)
-                        .padding(horizontal = 12.dp)
+                        .height(1.5.dp)
+                        .padding(horizontal = 14.dp)
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
                                     Color.Transparent,
                                     Color.White.copy(
-                                        alpha = if (isDark) 0.34f else 0.72f
+                                        alpha = if (isLight) 0.80f else 0.38f
+                                    ),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(
+                                        alpha = if (isLight) 0.12f else 0.07f
+                                    ),
+                                    Color.Transparent,
+                                    Color.Black.copy(
+                                        alpha = if (isLight) 0.025f else 0.08f
+                                    )
+                                )
+                            )
+                        )
+                )
+            }
+
+            val itemWidth = maxWidth / items.size
+
+            val indicatorOffset by animateDpAsState(
+                targetValue = itemWidth * selectedIndex + 5.dp,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = FastOutSlowInEasing
+                ),
+                label = "navigationIndicatorPosition"
+            )
+
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = indicatorOffset,
+                        y = 7.dp
+                    )
+                    .width(itemWidth - 10.dp)
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(
+                        if (isLight) {
+                            Color.White.copy(alpha = 0.16f)
+                        } else {
+                            Color.White.copy(alpha = 0.08f)
+                        }
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (isLight) {
+                            Color.White.copy(alpha = 0.72f)
+                        } else {
+                            Color.White.copy(alpha = 0.32f)
+                        },
+                        shape = RoundedCornerShape(25.dp)
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.5.dp)
+                        .padding(horizontal = 10.dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(
+                                        alpha = if (isLight) 0.72f else 0.34f
+                                    ),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.White.copy(
+                                        alpha = if (isLight) 0.08f else 0.04f
                                     ),
                                     Color.Transparent
                                 )
@@ -181,24 +265,20 @@ fun StellarBottomBar(
                     val selected = selectedIndex == index
 
                     val scale by animateFloatAsState(
-                        targetValue = if (selected) 1.045f else 1f,
+                        targetValue = if (selected) 1.06f else 1f,
                         animationSpec = tween(
-                            durationMillis = 180,
+                            durationMillis = 300,
                             easing = FastOutSlowInEasing
                         ),
-                        label = "itemScale"
+                        label = "navigationItemScale"
                     )
 
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .scale(scale)
-                            .clip(RoundedCornerShape(19.dp))
                             .clickable {
-                                if (selectedIndex != index) {
-                                    onSelected(index)
-                                }
+                                onSelected(index)
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -210,27 +290,39 @@ fun StellarBottomBar(
                                 imageVector = if (selected) {
                                     item.selectedIcon
                                 } else {
-                                    item.unselectedIcon
+                                    item.icon
                                 },
                                 contentDescription = item.label,
-                                modifier = Modifier.size(22.dp),
-                                tint = if (selected) accent else muted
+                                modifier = Modifier
+                                    .size(21.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    },
+                                tint = if (selected) {
+                                    accent
+                                } else {
+                                    mutedColor
+                                }
                             )
 
                             Spacer(
-                                modifier = Modifier.height(2.dp)
+                                modifier = Modifier.height(3.dp)
                             )
 
                             Text(
                                 text = item.label,
-                                fontSize = 12.sp,
-                                lineHeight = 14.sp,
+                                fontSize = if (selected) 10.5.sp else 10.sp,
                                 fontWeight = if (selected) {
-                                    FontWeight.Bold
+                                    FontWeight.SemiBold
                                 } else {
-                                    FontWeight.Medium
+                                    FontWeight.Normal
                                 },
-                                color = if (selected) accent else muted
+                                color = if (selected) {
+                                    accent
+                                } else {
+                                    mutedColor
+                                }
                             )
                         }
                     }
@@ -239,4 +331,3 @@ fun StellarBottomBar(
         }
     }
 }
-
