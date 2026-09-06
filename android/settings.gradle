@@ -1,20 +1,4 @@
 pluginManagement {
-    def flutterSdkPath = {
-        def properties = new Properties()
-        file("local.properties").withInputStream {
-            properties.load(it)
-        }
-
-        def flutterSdkPath =
-            properties.getProperty("flutter.sdk")
-
-        assert flutterSdkPath != null
-
-        return flutterSdkPath
-    }()
-
-    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
-
     repositories {
         google()
         mavenCentral()
@@ -22,12 +6,20 @@ pluginManagement {
     }
 }
 
-plugins {
-    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
-    id "com.android.application" version "9.3.0" apply false
-
-    id "org.jetbrains.kotlin.android" version "2.2.20" apply false
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
-include ":app"
+plugins {
+    id "com.android.application" version "9.3.0" apply false
+    id "org.jetbrains.kotlin.android" version "2.2.20" apply false
+    id "org.jetbrains.kotlin.plugin.compose" version "2.2.20" apply false
+}
+
+rootProject.name = "StellarCenter"
+include(":app")
