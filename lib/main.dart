@@ -5,15 +5,11 @@ import 'services/preferences_service.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const ThisLinuxApp());
 }
 
 class ThisLinuxApp extends StatefulWidget {
-  const ThisLinuxApp({
-    super.key,
-  });
+  const ThisLinuxApp({super.key});
 
   @override
   State<ThisLinuxApp> createState() => _ThisLinuxAppState();
@@ -90,12 +86,13 @@ class _ThisLinuxAppState extends State<ThisLinuxApp> {
     }
 
     return MaterialApp(
-      title: 'Stellar Center',
+      title: 'ThisLinux',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(
         _selectedTheme,
         _selectedStyle,
       ),
+      themeMode: ThemeMode.light,
       home: BootScreen(
         selectedTheme: _selectedTheme,
         selectedStyle: _selectedStyle,

@@ -2,23 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../services/app_version.dart';
-import '../services/update_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/update_button.dart';
 import 'home_shell.dart';
 
 class BootScreen extends StatefulWidget {
   final AppThemeColor selectedTheme;
   final AppThemeStyle selectedStyle;
 
-  final Future<void> Function(
-    AppThemeColor,
-  ) onThemeChanged;
+  final Future<void> Function(AppThemeColor)
+      onThemeChanged;
 
-  final Future<void> Function(
-    AppThemeStyle,
-  ) onStyleChanged;
+  final Future<void> Function(AppThemeStyle)
+      onStyleChanged;
 
   const BootScreen({
     super.key,
@@ -36,12 +31,12 @@ class BootScreen extends StatefulWidget {
 class _BootScreenState
     extends State<BootScreen> {
   final List<String> _bootLines = [
-    '[  OK  ] Starting Stellar Center...',
+    '[  OK  ] Starting ThisLinux...',
     '[  OK  ] Initializing system...',
     '[  OK  ] Loading system information...',
     '[  OK  ] Starting system services...',
     '[  OK  ] Checking device...',
-    '[  OK  ] Stellar Center is ready.',
+    '[  OK  ] ThisLinux is ready.',
   ];
 
   final List<String> _visibleLines = [];
@@ -50,10 +45,6 @@ class _BootScreenState
 
   bool _showLogo = false;
   bool _finished = false;
-  bool _updateAvailable = false;
-
-  String get _currentVersion =>
-      AppVersion.current;
 
   int _currentLine = 0;
 
@@ -62,24 +53,6 @@ class _BootScreenState
     super.initState();
 
     _startBootAnimation();
-    _checkUpdate();
-  }
-
-  Future<void> _checkUpdate() async {
-    final update =
-        await UpdateService.checkForUpdate();
-
-    if (!mounted || update == null) {
-      return;
-    }
-
-    setState(() {
-      _updateAvailable =
-          UpdateService.isNewerVersion(
-        AppVersion.current,
-        update.latestVersion,
-      );
-    });
   }
 
   void _startBootAnimation() {
@@ -88,7 +61,7 @@ class _BootScreenState
 
     final lineDuration =
         totalBootTime.inMilliseconds ~/
-            _bootLines.length;
+            6;
 
     _timer = Timer.periodic(
       Duration(
@@ -114,6 +87,7 @@ class _BootScreenState
         if (_currentLine >=
             _bootLines.length) {
           timer.cancel();
+
           _showLinuxLogo();
         }
       },
@@ -128,9 +102,7 @@ class _BootScreenState
     });
 
     await Future.delayed(
-      const Duration(
-        milliseconds: 500,
-      ),
+      const Duration(milliseconds: 500),
     );
 
     if (!mounted) return;
@@ -140,73 +112,6 @@ class _BootScreenState
     });
   }
 
-  void _showUpdateDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Yeni sürüm bulundu',
-          ),
-          content: Text(
-            'Stellar Center için yeni '
-            'bir sürüm mevcut.\n\n'
-            'Mevcut sürüm: '
-            'v$_currentVersion\n\n'
-            'Güncelleme ekranını açmak '
-            'ister misiniz?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-              },
-              child: const Text(
-                'Daha sonra',
-              ),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(
-                        title: const Text(
-                          'Güncelleme',
-                        ),
-                      ),
-                      body: ListView(
-                        padding:
-                            const EdgeInsets.all(
-                          20,
-                        ),
-                        children: [
-                          const UpdateButton(
-                            currentVersion:
-                                AppVersion.current,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-              child: const Text(
-                'Aç',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -214,9 +119,7 @@ class _BootScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     if (_finished) {
       return HomeShell(
         selectedTheme:
@@ -244,7 +147,7 @@ class _BootScreenState
                       CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Stellar Center',
+                      'ThisLinux',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -252,20 +155,24 @@ class _BootScreenState
                             FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(
                       height: 24,
                     ),
+
                     ..._visibleLines.map(
                       (line) => Padding(
                         padding:
-                            const EdgeInsets.only(
+                            const EdgeInsets
+                                .only(
                           bottom: 5,
                         ),
                         child: Text(
                           line,
                           style:
                               const TextStyle(
-                            color: Colors.white,
+                            color:
+                                Colors.white,
                             fontFamily:
                                 'monospace',
                             fontSize: 13,
@@ -276,55 +183,15 @@ class _BootScreenState
                   ],
                 ),
               ),
+
             if (_showLogo)
               Center(
                 child: Image.asset(
-                  'assets/icon.png',
-                  width: 110,
-                  height: 110,
-                  errorBuilder: (
-                    context,
-                    error,
-                    stackTrace,
-                  ) {
-                    return const Icon(
-                      Icons
-                          .auto_awesome_rounded,
-                      color: Colors.white,
-                      size: 90,
-                    );
-                  },
+                  'assets/linux_logo.png',
+                  width: 100,
+                  height: 100,
                 ),
               ),
-            if (_updateAvailable)
-              Positioned(
-                right: 18,
-                bottom: 18,
-                child: FilledButton.icon(
-                  onPressed:
-                      _showUpdateDialog,
-                  icon: const Icon(
-                    Icons.system_update,
-                  ),
-                  label: const Text(
-                    'UPDATE',
-                  ),
-                ),
-              ),
-            Positioned(
-              right: 18,
-              bottom: 4,
-              child: Text(
-                'v$_currentVersion',
-                style:
-                    const TextStyle(
-                  color: Colors.white54,
-                  fontFamily:
-                      'monospace',
-                  fontSize: 11,
-                ),
-              ),
-            ),
           ],
         ),
       ),

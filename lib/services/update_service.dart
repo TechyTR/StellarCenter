@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class UpdateInfo {
@@ -14,128 +13,125 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  static const MethodChannel _channel =
-      MethodChannel('thislinux/updater');
+  static const String versionUrl =
+      'https://raw.githubusercontent.com/TechyTR/ThisLinux-app/main/version.json';
 
-  static const String releaseUrl =
-      'https://api.github.com/repos/TechyTR/ThisLinux-app/releases/latest';
-
-  static Future<UpdateInfo?> checkForUpdate() async {
+  static Future<UpdateInfo?> checkForUpdate(
+    String currentVersion,
+  ) async {
     try {
       final response = await http
           .get(
-            Uri.parse(releaseUrl),
-            headers: const {
-              'Accept': 'application/vnd.github+json',
-              'X-GitHub-Api-Version': '2022-11-28',
-              'Cache-Control': 'no-cache',
-            },
+            Uri.parse(versionUrl),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(
+            const Duration(
+              seconds: 10,
+            ),
+          );
 
       if (response.statusCode != 200) {
         return null;
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final tagName = data['tag_name']?.toString();
-      final assets = data['assets'];
+      final data =
+          jsonDecode(
+            response.body,
+          ) as Map<String, dynamic>;
 
-      if (tagName == null || tagName.isEmpty || assets is! List) {
+      final remoteVersion =
+          data['latest_version']
+              ?.toString();
+
+      final downloadUrl =
+          data['download_url']
+              ?.toString();
+
+      if (remoteVersion == null ||
+          remoteVersion.isEmpty ||
+          downloadUrl == null ||
+          downloadUrl.isEmpty) {
         return null;
       }
 
-      String? downloadUrl;
-      for (final asset in assets) {
-        if (asset is! Map<String, dynamic>) continue;
-
-        final name = asset['name']?.toString();
-        final url = asset['browser_download_url']?.toString();
-
-        if (name == 'app-release.apk' &&
-            url != null &&
-            Uri.tryParse(url)?.scheme == 'https') {
-          downloadUrl = url;
-          break;
-        }
-      }
-
-      downloadUrl ??= data['html_url']?.toString();
-
-      if (downloadUrl == null || downloadUrl.isEmpty) {
-        return null;
-      }
-
-      final version = tagName.replaceFirst(RegExp(r'^v'), '').trim();
-
-      if (version.isEmpty) {
+      if (!_isNewer(
+        remoteVersion,
+        currentVersion,
+      )) {
         return null;
       }
 
       return UpdateInfo(
-        latestVersion: version,
-        downloadUrl: downloadUrl,
+        latestVersion:
+            remoteVersion,
+        downloadUrl:
+            downloadUrl,
       );
     } catch (_) {
       return null;
     }
   }
 
-  static bool isNewerVersion(
-    String currentVersion,
-    String latestVersion,
+  static bool _isNewer(
+    String remote,
+    String local,
   ) {
-    final current = _parseVersion(currentVersion);
-    final latest = _parseVersion(latestVersion);
-    final maxLength = current.length > latest.length
-        ? current.length
-        : latest.length;
+    final remoteParts =
+        _parseVersion(remote);
 
-    for (var i = 0; i < maxLength; i++) {
-      final currentPart = i < current.length ? current[i] : 0;
-      final latestPart = i < latest.length ? latest[i] : 0;
+    final localParts =
+        _parseVersion(local);
 
-      if (latestPart > currentPart) return true;
-      if (latestPart < currentPart) return false;
+    for (int i = 0; i < 3; i++) {
+      if (remoteParts[i] >
+          localParts[i]) {
+        return true;
+      }
+
+      if (remoteParts[i] <
+          localParts[i]) {
+        return false;
+      }
     }
 
     return false;
   }
 
-  static List<int> _parseVersion(String version) {
-    return version
-        .trim()
-        .replaceFirst(RegExp(r'^v'), '')
-        .split('.')
-        .map((part) {
-          final match = RegExp(r'\d+').firstMatch(part);
-          return int.tryParse(match?.group(0) ?? '0') ?? 0;
-        })
-        .toList();
-  }
+  static List<int> _parseVersion(
+    String version,
+  ) {
+    final cleaned =
+        version
+            .trim()
+            .replaceFirst(
+              RegExp(r'^[vV]'),
+              '',
+            );
 
-  static Future<void> downloadAndInstall(String downloadUrl) async {
-    final uri = Uri.tryParse(downloadUrl);
+    final parts =
+        cleaned.split('.');
 
-    if (uri == null || uri.scheme != 'https') {
-      throw PlatformException(
-        code: 'INVALID_URL',
-        message: 'APK URL geçersiz.',
-      );
-    }
+    return List.generate(
+      3,
+      (index) {
+        if (index >=
+            parts.length) {
+          return 0;
+        }
 
-    try {
-      await _channel.invokeMethod(
-        'downloadAndInstall',
-        {'url': downloadUrl},
-      );
-    } on PlatformException {
-      rethrow;
-    } on MissingPluginException {
-      throw PlatformException(
-        code: 'NATIVE_UPDATER_MISSING',
-        message: 'Android güncelleme bileşeni bulunamadı.',
-      );
-    }
+        final number =
+            RegExp(
+          r'^\d+',
+        ).firstMatch(
+          parts[index],
+        );
+
+        return int.tryParse(
+              number?.group(0) ??
+                  '',
+            ) ??
+            0;
+      },
+    );
   }
 }
