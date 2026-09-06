@@ -33,12 +33,14 @@ jobs:
       - name: Install Android SDK
         shell: bash
         run: |
+          set -e
+
           yes | sdkmanager --licenses >/dev/null || true
 
           sdkmanager \
             "platform-tools" \
-            "platforms;android-37" \
             "build-tools;35.0.0" \
+            "platforms;android-37.0" \
             "ndk;28.2.13676358"
 
       - name: Set up Gradle
@@ -130,3 +132,4 @@ jobs:
           files: android/app/build/outputs/apk/release/app-release.apk
           make_latest: true
           overwrite_files: true
+
