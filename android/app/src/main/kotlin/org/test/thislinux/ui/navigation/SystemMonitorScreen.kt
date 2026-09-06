@@ -67,200 +67,211 @@ fun SystemMonitorScreen() {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            Text(
-                text = "Monitor",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+            MonitorHeader()
+        }
+
+        item {
+            LiveMonitorSection(
+                cpuUsage = state.cpuUsage,
+                ramUsage = state.ramUsage,
+                battery = state.battery,
+                temperature = state.temperature
             )
         }
 
         item {
-            Text(
-                text = "Canlı sistem durumu",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            StaticSystemSection(
+                state = state
             )
         }
+    }
+}
 
-        item {
-            LiveMetricCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.MonitorHeart,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "CPU kullanımı",
-                value = "%${state.cpuUsage}",
-                progress = state.cpuUsage / 100f
-            )
-        }
+@Composable
+private fun MonitorHeader() {
+    Column {
+        Text(
+            text = "Monitor",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
 
-        item {
-            LiveMetricCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "RAM kullanımı",
-                value = "%${state.ramUsage}",
-                progress = state.ramUsage / 100f
-            )
-        }
+        Spacer(
+            modifier = Modifier.height(2.dp)
+        )
 
-        item {
-            LiveMetricCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.BatteryFull,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Pil",
-                value = "%${state.battery}",
-                progress = state.battery / 100f
-            )
-        }
+        Text(
+            text = "Canlı sistem durumu",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
-        item {
-            InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Thermostat,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Pil sıcaklığı",
-                value = "${state.temperature} °C"
-            )
-        }
+@Composable
+private fun LiveMonitorSection(
+    cpuUsage: Int,
+    ramUsage: Int,
+    battery: Int,
+    temperature: Double
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        LiveMetricCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.MonitorHeart,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "CPU kullanımı",
+            value = "%$cpuUsage",
+            progress = cpuUsage / 100f
+        )
 
-        item {
-            SectionTitle("Cihaz")
-        }
+        LiveMetricCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "RAM kullanımı",
+            value = "%$ramUsage",
+            progress = ramUsage / 100f
+        )
 
-        item {
-            InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Model",
-                value = state.model
-            )
-        }
+        LiveMetricCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.BatteryFull,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "Pil",
+            value = "%$battery",
+            progress = battery / 100f
+        )
 
-        item {
-            InfoCard(
-                title = "Üretici",
-                value = state.manufacturer
-            )
-        }
+        InfoCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Thermostat,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "Pil sıcaklığı",
+            value = "$temperature °C"
+        )
+    }
+}
 
-        item {
-            InfoCard(
-                title = "Android",
-                value = "${state.androidVersion} • SDK ${state.sdk}"
-            )
-        }
+@Composable
+private fun StaticSystemSection(
+    state: SystemMonitorState
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        SectionTitle("Cihaz")
 
-        item {
-            InfoCard(
-                title = "Güvenlik yaması",
-                value = state.securityPatch
-            )
-        }
+        InfoCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.PhoneAndroid,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "Model",
+            value = state.model
+        )
 
-        item {
-            InfoCard(
-                title = "Kernel",
-                value = state.kernel
-            )
-        }
+        InfoCard(
+            title = "Üretici",
+            value = state.manufacturer
+        )
 
-        item {
-            SectionTitle("İşlemci")
-        }
+        InfoCard(
+            title = "Android",
+            value = "${state.androidVersion} • SDK ${state.sdk}"
+        )
 
-        item {
-            InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Çekirdek sayısı",
-                value = "${state.cpuCount}"
-            )
-        }
+        InfoCard(
+            title = "Güvenlik yaması",
+            value = state.securityPatch
+        )
 
-        item {
-            InfoCard(
-                title = "Desteklenen ABI",
-                value = state.supportedAbis
-            )
-        }
+        InfoCard(
+            title = "Kernel",
+            value = state.kernel
+        )
 
-        item {
-            SectionTitle("Bellek ve depolama")
-        }
+        SectionTitle("İşlemci")
 
-        item {
-            InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "RAM",
-                value = "${formatBytes(state.availableRamBytes)} boş / " +
+        InfoCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "Çekirdek sayısı",
+            value = "${state.cpuCount}"
+        )
+
+        InfoCard(
+            title = "Desteklenen ABI",
+            value = state.supportedAbis
+        )
+
+        SectionTitle("Bellek ve depolama")
+
+        InfoCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "RAM",
+            value =
+                "${formatBytes(state.availableRamBytes)} boş / " +
                         "${formatBytes(state.totalRamBytes)} toplam"
-            )
-        }
+        )
 
-        item {
-            InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Storage,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Depolama",
-                value = "${formatBytes(state.availableStorageBytes)} boş / " +
+        InfoCard(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Storage,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = "Depolama",
+            value =
+                "${formatBytes(state.availableStorageBytes)} boş / " +
                         "${formatBytes(state.totalStorageBytes)} toplam"
-            )
-        }
+        )
 
-        item {
-            InfoCard(
-                title = "Depolama kullanımı",
-                value = calculateStorageUsage(state)
-            )
-        }
+        InfoCard(
+            title = "Depolama kullanımı",
+            value = calculateStorageUsage(state)
+        )
 
-        item {
-            SectionTitle("Ekran")
-        }
+        SectionTitle("Ekran")
 
-        item {
-            InfoCard(
-                title = "Çözünürlük",
-                value = if (
+        InfoCard(
+            title = "Çözünürlük",
+            value =
+                if (
                     state.screenWidth > 0 &&
                     state.screenHeight > 0
                 ) {
@@ -268,69 +279,54 @@ fun SystemMonitorScreen() {
                 } else {
                     "Bilinmiyor"
                 }
-            )
-        }
+        )
 
-        item {
-            InfoCard(
-                title = "Ekran yoğunluğu",
-                value = if (state.density > 0f) {
+        InfoCard(
+            title = "Ekran yoğunluğu",
+            value =
+                if (state.density > 0f) {
                     "${"%.2f".format(state.density)}x"
                 } else {
                     "Bilinmiyor"
                 }
-            )
-        }
+        )
 
-        item {
-            InfoCard(
-                title = "Yenileme hızı",
-                value = if (state.refreshRate > 0f) {
+        InfoCard(
+            title = "Yenileme hızı",
+            value =
+                if (state.refreshRate > 0f) {
                     "${"%.1f".format(state.refreshRate)} Hz"
                 } else {
                     "Bilinmiyor"
                 }
-            )
-        }
+        )
 
-        item {
-            SectionTitle("Donanım")
-        }
+        SectionTitle("Donanım")
 
-        item {
-            InfoCard(
-                title = "Board",
-                value = state.board
-            )
-        }
+        InfoCard(
+            title = "Board",
+            value = state.board
+        )
 
-        item {
-            InfoCard(
-                title = "Device",
-                value = state.device
-            )
-        }
+        InfoCard(
+            title = "Device",
+            value = state.device
+        )
 
-        item {
-            InfoCard(
-                title = "Product",
-                value = state.product
-            )
-        }
+        InfoCard(
+            title = "Product",
+            value = state.product
+        )
 
-        item {
-            InfoCard(
-                title = "Hardware",
-                value = state.hardware
-            )
-        }
+        InfoCard(
+            title = "Hardware",
+            value = state.hardware
+        )
 
-        item {
-            InfoCard(
-                title = "Bootloader",
-                value = state.bootloader
-            )
-        }
+        InfoCard(
+            title = "Bootloader",
+            value = state.bootloader
+        )
     }
 }
 
@@ -361,7 +357,8 @@ private fun LiveMetricCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor =
+                MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
@@ -416,7 +413,8 @@ private fun InfoCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor =
+                MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Row(
@@ -498,11 +496,13 @@ private fun calculateStorageUsage(
                 state.availableStorageBytes
 
     val percentage =
-        (used.toDouble() /
-                state.totalStorageBytes.toDouble()) *
-                100.0
+        (
+            used.toDouble() /
+                    state.totalStorageBytes.toDouble()
+        ) * 100.0
 
     return "${"%.1f".format(
         percentage.coerceIn(0.0, 100.0)
     )}% kullanılıyor"
 }
+
