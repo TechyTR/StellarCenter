@@ -4,15 +4,10 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun Navigation(
-    selectedIndex: Int,
-    onOpenSecurity: () -> Unit = {},
-    onOpenShizuku: () -> Unit = {}
+    selectedIndex: Int
 ) {
     when (selectedIndex) {
-        0 -> HomeScreen(
-            onOpenSecurity = onOpenSecurity,
-            onOpenShizuku = onOpenShizuku
-        )
+        0 -> HomeScreen()
 
         1 -> SystemMonitorScreen()
 
