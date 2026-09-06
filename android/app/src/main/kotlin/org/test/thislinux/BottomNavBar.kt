@@ -2,17 +2,10 @@ package org.test.thislinux.ui
 
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedDefaultTextStyle
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -85,7 +78,7 @@ fun BottomNavBar(
 
     val items = listOf(
         NavItem(
-            label = "Menü",
+            label = "Home",
             icon = Icons.Outlined.Dashboard,
             selectedIcon = Icons.Filled.Dashboard
         ),
