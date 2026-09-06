@@ -1,450 +1,341 @@
 package org.test.thislinux.ui.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import android.content.Context
+import android.os.BatteryManager
+import android.os.Build
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.BatteryStd
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlin.math.max
 
-data class DeviceInfo(
-    val model: String = "Bilinmiyor",
-    val manufacturer: String = "Bilinmiyor",
-    val androidVersion: String = "Bilinmiyor",
-    val ram: String = "--"
+private data class DeviceInfo(
+    val model: String,
+    val manufacturer: String,
+    val androidVersion: String,
+    val totalRamGb: Double
 )
 
 @Composable
-fun HomeScreen() {
-
-    var deviceInfo by remember {
-        mutableStateOf(DeviceInfo())
-    }
+fun HomeScreen(
+    onOpenSecurity: () -> Unit = {},
+    onOpenShizuku: () -> Unit = {}
+) {
+    val context = LocalContext.current
 
     var batteryLevel by remember {
-        mutableIntStateOf(-1)
+        mutableIntStateOf(readBatteryLevel(context))
     }
 
-    var batteryCharging by remember {
-        mutableStateOf(false)
+    var totalRam by remember {
+        mutableLongStateOf(readTotalRam(context))
     }
 
     LaunchedEffect(Unit) {
-
-        // Şimdilik native bridge bağlanana kadar
-        // güvenli varsayılan değerler kullanıyoruz.
-
-        deviceInfo = DeviceInfo(
-            model = android.os.Build.MODEL,
-            manufacturer = android.os.Build.MANUFACTURER,
-            androidVersion = android.os.Build.VERSION.RELEASE,
-            ram = "--"
-        )
-
         while (true) {
-
-            val manager =
-                androidx.compose.ui.platform.LocalContext.current
-                    .getSystemService(android.content.Context.BATTERY_SERVICE)
-                    as android.os.BatteryManager
-
-            batteryLevel =
-                manager.getIntProperty(
-                    android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY
-                )
-
+            batteryLevel = readBatteryLevel(context)
+            totalRam = readTotalRam(context)
             delay(10_000)
         }
     }
 
+    val deviceInfo = remember(totalRam) {
+        DeviceInfo(
+            model = Build.MODEL,
+            manufacturer = Build.MANUFACTURER,
+            androidVersion = Build.VERSION.RELEASE ?: "Bilinmiyor",
+            totalRamGb = totalRam / 1024.0 / 1024.0 / 1024.0
+        )
+    }
+
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            top = 20.dp,
-            bottom = 24.dp
+            start = 20.dp,
+            end = 20.dp,
+            top = 24.dp,
+            bottom = 20.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
 
         item {
             Text(
-                text = "Stellar Center",
-                style = MaterialTheme.typography.headlineLarge,
+                text = getGreeting(),
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
+        }
 
-            Spacer(
-                modifier = Modifier.height(4.dp)
-            )
-
+        item {
             Text(
-                text = "Android Native",
+                text = "Stellar Center",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         item {
-            DeviceCard(
-                deviceInfo = deviceInfo
+            DeviceCard(deviceInfo)
+        }
+
+        item {
+            BatteryCard(batteryLevel)
+        }
+
+        item {
+            ActionCard(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Security,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                },
+                title = "Güvenlik denetlemesi",
+                description = "Stellar Secure ile telefonunuzun güvenliğini kontrol edin.",
+                onClick = onOpenSecurity
             )
         }
 
         item {
-            BatteryCard(
-                level = batteryLevel,
-                charging = batteryCharging
+            ActionCard(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Terminal,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                },
+                title = "Shizuku bağlantısı",
+                description = "Gelişmiş Android yetkilerini ve bağlantı durumunu yönetin.",
+                onClick = onOpenShizuku
             )
-        }
-
-        item {
-            SecurityCard()
-        }
-
-        item {
-            ShizukuCard()
         }
     }
 }
-
 
 @Composable
 private fun DeviceCard(
     deviceInfo: DeviceInfo
 ) {
-
-    val scheme = MaterialTheme.colorScheme
-
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
-
         Row(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        scheme.primary.copy(alpha = 0.12f)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Icon(
-                    imageVector = Icons.Default.Smartphone,
-                    contentDescription = null,
-                    tint = scheme.primary,
-                    modifier = Modifier.size(33.dp)
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.width(16.dp)
+            Icon(
+                imageVector = Icons.Default.Smartphone,
+                contentDescription = null,
+                modifier = Modifier.size(42.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
+
+            Spacer(modifier = Modifier.size(16.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
                     text = deviceInfo.model,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
+                Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
                     text = deviceInfo.manufacturer,
-                    color = scheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(
-                    modifier = Modifier.height(7.dp)
-                )
+                Spacer(modifier = Modifier.height(5.dp))
 
                 Text(
-                    text =
-                        "Android ${deviceInfo.androidVersion} • ${deviceInfo.ram} RAM",
-                    fontSize = 12.sp,
-                    color = scheme.onSurfaceVariant
+                    text = "Android ${deviceInfo.androidVersion} • " +
+                            "${"%.1f".format(deviceInfo.totalRamGb)} GB RAM",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
-
 @Composable
 private fun BatteryCard(
-    level: Int,
-    charging: Boolean
+    batteryLevel: Int
 ) {
-
-    val scheme = MaterialTheme.colorScheme
-
-    val icon = when {
-
-        charging ->
-            Icons.Default.BatteryChargingFull
-
-        level >= 75 ->
-            Icons.Default.BatteryFull
-
-        else ->
-            Icons.Default.BatteryStd
-    }
-
-    val status = when {
-
-        charging ->
-            "Şarj oluyor"
-
-        level >= 0 ->
-            "Pil kullanılıyor"
-
-        else ->
-            "Bilinmiyor"
-    }
+    val progress = (batteryLevel.coerceIn(0, 100)) / 100f
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
-
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Icon(
-                    imageVector = icon,
+                    imageVector = Icons.Default.BatteryFull,
                     contentDescription = null,
-                    tint = scheme.primary,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(30.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(
-                    modifier = Modifier.width(13.dp)
-                )
+                Spacer(modifier = Modifier.size(12.dp))
 
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-
                     Text(
                         text = "Pil durumu",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(3.dp)
-                    )
-
                     Text(
-                        text = status,
-                        fontSize = 12.sp,
-                        color = scheme.onSurfaceVariant
+                        text = if (batteryLevel >= 0) {
+                            "%$batteryLevel"
+                        } else {
+                            "Bilinmiyor"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
-                Text(
-                    text =
-                        if (level >= 0) "$level%"
-                        else "--",
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = scheme.primary
-                )
             }
 
-            Spacer(
-                modifier = Modifier.height(15.dp)
-            )
+            Spacer(modifier = Modifier.height(14.dp))
 
             LinearProgressIndicator(
-                progress = {
-                    if (level >= 0)
-                        level.coerceIn(0, 100) / 100f
-                    else
-                        0f
-                },
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(9.dp)
-                    .clip(RoundedCornerShape(10.dp))
             )
         }
     }
 }
 
-
 @Composable
-private fun SecurityCard() {
-
-    val scheme = MaterialTheme.colorScheme
-
+private fun ActionCard(
+    icon: @Composable () -> Unit,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        onClick = {
-            // Stellar Secure ekranı sonraki aşamada bağlanacak.
-        }
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        onClick = onClick
     ) {
-
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            icon()
 
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        scheme.primary.copy(alpha = 0.11f)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Text(
-                    text = "✓",
-                    color = scheme.primary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.width(16.dp)
-            )
+            Spacer(modifier = Modifier.size(16.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
-                    text = "Güvenlik denetlemesi",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Spacer(
-                    modifier = Modifier.height(5.dp)
-                )
-
-                Text(
-                    text =
-                        "Stellar Secure ile telefonunuzun güvenliğini kontrol edin.",
-                    fontSize = 12.sp,
-                    color = scheme.onSurfaceVariant
-                )
-            }
-
-            Text(
-                text = "›",
-                fontSize = 28.sp,
-                color = scheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun ShizukuCard() {
-
-    val scheme = MaterialTheme.colorScheme
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        onClick = {
-            // Shizuku ekranı sonraki aşamada bağlanacak.
-        }
-    ) {
-
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(
-                        scheme.primary.copy(alpha = 0.11f)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Text(
-                    text = "S",
-                    color = scheme.primary,
-                    fontSize = 25.sp,
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-            }
 
-            Spacer(
-                modifier = Modifier.width(16.dp)
-            )
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Shizuku bağlantısı",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Spacer(
-                    modifier = Modifier.height(5.dp)
-                )
-
-                Text(
-                    text =
-                        "Gelişmiş Android yetkilerini ve bağlantı durumunu yönetin.",
-                    fontSize = 12.sp,
-                    color = scheme.onSurfaceVariant
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Text(
-                text = "›",
-                fontSize = 28.sp,
-                color = scheme.onSurfaceVariant
-            )
         }
     }
 }
 
+private fun readBatteryLevel(context: Context): Int {
+    val batteryManager =
+        context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+
+    return batteryManager.getIntProperty(
+        BatteryManager.BATTERY_PROPERTY_CAPACITY
+    ).coerceIn(0, 100)
+}
+
+private fun readTotalRam(context: Context): Long {
+    val activityManager =
+        context.getSystemService(Context.ACTIVITY_SERVICE)
+                as android.app.ActivityManager
+
+    val memoryInfo = android.app.ActivityManager.MemoryInfo()
+    activityManager.getMemoryInfo(memoryInfo)
+
+    return max(memoryInfo.totalMem, 0L)
+}
+
+private fun getGreeting(): String {
+    val hour = java.util.Calendar.getInstance()
+        .get(java.util.Calendar.HOUR_OF_DAY)
+
+    return when {
+        hour < 6 -> "İyi geceler"
+        hour < 12 -> "Günaydın"
+        hour < 18 -> "İyi günler"
+        else -> "İyi akşamlar"
+    }
+}
