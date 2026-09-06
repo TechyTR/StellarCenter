@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "**"
-
   workflow_dispatch:
 
 permissions:
@@ -37,13 +36,14 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses || true
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Install Android SDK
         run: |
           sdkmanager "platform-tools"
-          sdkmanager "platforms;android-37"
-          sdkmanager "build-tools;37.0.0"
+          sdkmanager "platforms;android-36"
+          sdkmanager "build-tools;36.0.0"
           sdkmanager "ndk;28.2.13676358"
 
       - name: Set up Gradle
@@ -52,7 +52,8 @@ jobs:
           gradle-version: "9.6.0"
 
       - name: Check Gradle
-        run: gradle --version
+        run: |
+          gradle --version
 
       - name: Read current version
         id: current_version
@@ -62,12 +63,12 @@ jobs:
           VERSION_CODE=$(grep -E 'versionCode\s*=' app/build.gradle | head -1 | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
 
           if [ -z "$VERSION_NAME" ]; then
-            echo "versionName bulunamadı."
+            echo "HATA: versionName bulunamadı."
             exit 1
           fi
 
           if [ -z "$VERSION_CODE" ]; then
-            echo "versionCode bulunamadı."
+            echo "HATA: versionCode bulunamadı."
             exit 1
           fi
 
@@ -147,16 +148,37 @@ jobs:
           echo "Güncel Android sürümü:"
           grep -E 'version(Code|Name)\s*=' app/build.gradle
 
+      - name: Verify Android configuration
+        shell: bash
+        run: |
+          echo "compileSdk:"
+          grep -E 'compileSdk\s*=' app/build.gradle || true
+
+          echo "targetSdk:"
+          grep -E 'targetSdk\s*=' app/build.gradle || true
+
+          echo "minSdk:"
+          grep -E 'minSdk\s*=' app/build.gradle || true
+
+          echo "NDK:"
+          grep -E 'ndkVersion\s*=' app/build.gradle || true
+
       - name: Clean
-        run: gradle clean --no-daemon
+        run: |
+          gradle clean --no-daemon
 
       - name: Build release APK
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          gradle assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            --info
 
       - name: Verify APK
         shell: bash
         run: |
-          echo "Oluşturulan APK:"
+          echo "Oluşturulan APK dosyaları:"
+
           find app/build/outputs/apk/release \
             -type f \
             -name "*.apk" \
@@ -174,6 +196,7 @@ jobs:
           echo "APK başarıyla oluşturuldu."
 
       - name: Commit version bump
+        id: version_commit
         working-directory: .
         env:
           NEW_VERSION: ${{ steps.next_version.outputs.new_version }}
@@ -187,17 +210,21 @@ jobs:
           if git diff --cached --quiet; then
             echo "Version değişikliği bulunamadı."
           else
-            git commit \
-              -m "chore: bump version to ${NEW_VERSION} [skip ci]"
-
+            git commit -m "chore: bump version to ${NEW_VERSION} [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+          RELEASE_COMMIT=$(git rev-parse HEAD)
+
+          echo "Release commit: $RELEASE_COMMIT"
+          echo "release_commit=$RELEASE_COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.next_version.outputs.new_version }}
           name: Stellar Center v${{ steps.next_version.outputs.new_version }}
+          target_commitish: ${{ steps.version_commit.outputs.release_commit }}
           generate_release_notes: true
           files: android/app/build/outputs/apk/release/*.apk
           fail_on_unmatched_files: true
@@ -208,11 +235,13 @@ jobs:
         working-directory: .
         env:
           NEW_VERSION: ${{ steps.next_version.outputs.new_version }}
+          NEW_VERSION_CODE: ${{ steps.next_version.outputs.new_version_code }}
         run: |
           echo "======================================"
           echo " Stellar Center Release Başarılı"
+          echo "======================================"
           echo " Version: ${NEW_VERSION}"
+          echo " VersionCode: ${NEW_VERSION_CODE}"
           echo " Tag: v${NEW_VERSION}"
           echo " APK: GitHub Release'e yüklendi"
           echo "======================================"
-
