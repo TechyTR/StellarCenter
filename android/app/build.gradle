@@ -1,89 +1,83 @@
 plugins {
-    id "com.android.application"
-    id "org.jetbrains.kotlin.android"
-    id "org.jetbrains.kotlin.plugin.compose"
+id "com.android.application"
+id "org.jetbrains.kotlin.plugin.compose"
 }
-
 android {
-    namespace = "org.test.thislinux"
+namespace = "org.test.thislinux"
+compileSdk = 36
 
-    compileSdk = 36
+ndkVersion = "28.2.13676358"
 
-    ndkVersion = "28.2.13676358"
+defaultConfig {
+    applicationId = "org.test.thislinux"
 
-    defaultConfig {
-        applicationId = "org.test.thislinux"
+    minSdk = 23
+    targetSdk = 36
 
-        minSdk = 23
-        targetSdk = 36
+    versionCode = 1
+    versionName = "3.0.0"
+}
 
-        versionCode = 1
-        versionName = "3.0.0"
+buildTypes {
+    debug {
+        applicationIdSuffix ".debug"
+        versionNameSuffix "-debug"
     }
 
-    buildTypes {
-        debug {
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
-        }
-
-        release {
-            minifyEnabled false
-            shrinkResources false
-            signingConfig = signingConfigs.debug
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose true
-        buildConfig true
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
+    release {
+        minifyEnabled false
+        shrinkResources false
+        signingConfig = signingConfigs.debug
     }
 }
 
+compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+buildFeatures {
+    compose true
+    buildConfig true
+}
+
+packaging {
+    resources {
+        excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    }
+}
+
+}
 kotlin {
-    jvmToolchain(17)
+jvmToolchain(17)
 }
-
 dependencies {
+implementation "androidx.core:core-ktx:1.17.0"
+implementation "androidx.activity:activity-compose:1.11.0"
+implementation platform("androidx.compose:compose-bom:2026.08.00")
 
-    implementation "androidx.core:core-ktx:1.17.0"
-    implementation "androidx.activity:activity-compose:1.11.0"
+implementation "androidx.compose.ui:ui"
+implementation "androidx.compose.ui:ui-tooling-preview"
+implementation "androidx.compose.foundation:foundation"
 
-    implementation platform("androidx.compose:compose-bom:2026.08.00")
+implementation "androidx.compose.material3:material3"
+implementation "androidx.compose.material:material-icons-extended"
 
-    implementation "androidx.compose.ui:ui"
-    implementation "androidx.compose.ui:ui-tooling-preview"
-    implementation "androidx.compose.foundation:foundation"
+debugImplementation "androidx.compose.ui:ui-tooling"
 
-    implementation "androidx.compose.material3:material3"
-    implementation "androidx.compose.material:material-icons-extended"
+implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.9.3"
+implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3"
 
-    debugImplementation "androidx.compose.ui:ui-tooling"
+implementation "androidx.navigation:navigation-compose:2.9.3"
 
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.9.3"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 
-    implementation "androidx.navigation:navigation-compose:2.9.3"
+implementation "androidx.datastore:datastore-preferences:1.1.7"
 
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+implementation "dev.rikka.shizuku:api:13.1.5"
+implementation "dev.rikka.shizuku:provider:13.1.5"
 
-    implementation "androidx.datastore:datastore-preferences:1.1.7"
+implementation "androidx.media3:media3-exoplayer:1.9.1"
+implementation "androidx.media3:media3-ui:1.9.1"
 
-    implementation "dev.rikka.shizuku:api:13.1.5"
-    implementation "dev.rikka.shizuku:provider:13.1.5"
-
-    implementation "androidx.media3:media3-exoplayer:1.11.0"
-    implementation "androidx.media3:media3-ui:1.11.0"
 }
-
