@@ -7,6 +7,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,16 +29,22 @@ fun StellarCenterApp() {
             mutableIntStateOf(0)
         }
 
+        var showSecurity by remember {
+            mutableStateOf(false)
+        }
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
-                BottomNavBar(
-                    selectedIndex = selectedIndex,
-                    themeStyle = themeStyle,
-                    onSelected = { index ->
-                        selectedIndex = index
-                    }
-                )
+                if (!showSecurity) {
+                    BottomNavBar(
+                        selectedIndex = selectedIndex,
+                        themeStyle = themeStyle,
+                        onSelected = { index ->
+                            selectedIndex = index
+                        }
+                    )
+                }
             }
         ) { padding ->
             Box(
@@ -46,7 +53,14 @@ fun StellarCenterApp() {
                     .padding(padding)
             ) {
                 Navigation(
-                    selectedIndex = selectedIndex
+                    selectedIndex = selectedIndex,
+                    showSecurity = showSecurity,
+                    onOpenSecurity = {
+                        showSecurity = true
+                    },
+                    onCloseSecurity = {
+                        showSecurity = false
+                    }
                 )
             }
         }
