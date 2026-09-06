@@ -40,7 +40,7 @@ jobs:
           sdkmanager \
             "platform-tools" \
             "build-tools;35.0.0" \
-            "platforms;android-37.0" \
+            "platforms;android-37" \
             "ndk;28.2.13676358"
 
       - name: Set up Gradle
@@ -67,12 +67,14 @@ jobs:
         working-directory: android
         shell: bash
         run: |
-          gradle clean
+          set -e
+          gradle clean --no-daemon
 
       - name: Build release APK
         working-directory: android
         shell: bash
         run: |
+          set -e
           gradle assembleRelease --stacktrace --no-daemon
 
       - name: Verify APK
@@ -96,8 +98,14 @@ jobs:
         id: version
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
-            android/app/build.gradle | head -n 1)
+          set -e
+
+          VERSION=$(
+            sed -n \
+              's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+              android/app/build.gradle |
+              head -n 1
+          )
 
           if [ -z "$VERSION" ]; then
             echo "Could not read versionName from android/app/build.gradle"
@@ -128,69 +136,7 @@ jobs:
             - Jetpack Compose
             - Android Gradle Plugin
             - Release APK
-
           files: android/app/build/outputs/apk/release/app-release.apk
           make_latest: true
           overwrite_files: true
 
-           - name: ChatGPT Reviewer
-            uses: feiskyer/ChatGPT-Reviewer@v0.8
-            - name: chatgpt-action
-  # You may pin to the exact commit or the version.
-  # uses: unsafecoerce/chatgpt-action@df5b73b6f2d8b7f16a51de0f2f3810bd320b053e
-  uses: unsafecoerce/chatgpt-action@release/v2
-  with:
-    # The action to run, currently can be "review", "score"
-    action: # optional, default is review
-    # Enable debug mode
-    debug: # optional
-    # The path filters, e.g., "src/**.py", "!dist/**", each line will be considered as one pattern.
-See also
-
-- https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
-- https://github.com/isaacs/minimatch
-
-    path_filters: # optional, default is !dist/**
-!**/package-lock.json
-
-    # The URL of the chatgpt reverse proxy, see also https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy
-
-    chatgpt_reverse_proxy: # optional, default is https://chat.duti.tech/api/conversation
-    # Leave comments even the patch is LGTM
-    review_comment_lgtm: # optional
-    # The beginning prompt of a code review dialog
-    review_beginning: # optional, default is Hi ChatGPT, I have a pull request with title "$title" and the description is as follows,
-
-> $description.
-
-Next, I will given you a series of patches, each of them consists of a filename and a diff
-snippet, and you need to do a brief code review for every message, and tell me any bug risk
-and improvement suggestion. If the patch is looks good and acceptable, please reply "LGTM!"
-with a short comment with 30 words.
-
-You answer should be concise. Don't include the diff in your comment, and markdown format is
-preferred. Reply "OK" to confirm.
-
-    # The prompt for each chunks/patches
-    review_patch: # optional, default is $filename
-
-```diff
-$patch
-```
-
-    # The prompt for the whole pull request
-    scoring_beginning: # optional, default is Hi ChatGPT, I have a pull request with title "$title" and the description is as follows,
-
-> $description
-
-I would like score the pull request, the score should be a number between 0 and 100
-and 85 means the the pull request is basically acceptable. You just need to reply a
-number between 0 and 100, e.g., "85", and a comment within 30 words. Next, I would
-give you the whole diff of the pull request. Reply "OK" to confirm.
-
-    # The prompt for the whole diff for scoring
-    scoring: # optional, default is The diff is as follows:
-
-```diff
-$diff
-```
