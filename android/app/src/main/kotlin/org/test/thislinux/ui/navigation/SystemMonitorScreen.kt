@@ -26,19 +26,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.test.thislinux.system.SystemMonitorViewModel
 import org.test.thislinux.system.SystemMonitorState
+import org.test.thislinux.system.SystemMonitorViewModel
 
 @Composable
 fun SystemMonitorScreen() {
 
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     val viewModel = remember(context) {
         SystemMonitorViewModel(context)
@@ -52,7 +54,7 @@ fun SystemMonitorScreen() {
         }
     }
 
-    val state by viewModel.state.collectAsStateCompat()
+    val state by viewModel.state.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -64,7 +66,6 @@ fun SystemMonitorScreen() {
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-
         item {
             Text(
                 text = "Monitor",
@@ -160,13 +161,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Üretici",
                 value = state.manufacturer
             )
@@ -174,13 +168,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Android",
                 value = "${state.androidVersion} • SDK ${state.sdk}"
             )
@@ -188,13 +175,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Güvenlik yaması",
                 value = state.securityPatch
             )
@@ -202,13 +182,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Kernel",
                 value = state.kernel
             )
@@ -234,14 +207,7 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "ABI",
+                title = "Desteklenen ABI",
                 value = state.supportedAbis
             )
         }
@@ -282,13 +248,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Storage,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Depolama kullanımı",
                 value = calculateStorageUsage(state)
             )
@@ -300,13 +259,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Çözünürlük",
                 value = if (
                     state.screenWidth > 0 &&
@@ -321,13 +273,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Ekran yoğunluğu",
                 value = if (state.density > 0f) {
                     "${"%.2f".format(state.density)}x"
@@ -339,13 +284,6 @@ fun SystemMonitorScreen() {
 
         item {
             InfoCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.MonitorHeart,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
                 title = "Yenileme hızı",
                 value = if (state.refreshRate > 0f) {
                     "${"%.1f".format(state.refreshRate)} Hz"
@@ -567,13 +505,4 @@ private fun calculateStorageUsage(
     return "${"%.1f".format(
         percentage.coerceIn(0.0, 100.0)
     )}% kullanılıyor"
-}
-
-@Composable
-private fun androidx.compose.runtime.ComposableScope.collectAsStateCompat():
-        androidx.compose.runtime.State<SystemMonitorState> {
-    val viewModelState =
-        (this as? Nothing)
-
-    throw IllegalStateException()
 }
