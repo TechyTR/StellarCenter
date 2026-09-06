@@ -2,6 +2,7 @@ package org.test.thislinux.ui.navigation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,10 +10,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Construction
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -25,39 +26,41 @@ import androidx.compose.ui.unit.dp
 private data class AppTool(
     val title: String,
     val description: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val inDevelopment: Boolean = false
 )
 
 private val tools = listOf(
     AppTool(
-        "Benchmark",
-        "Test CPU, memory and storage performance.",
-        Icons.Default.Speed
+        title = "Benchmark",
+        description = "A separate Stellar Benchmark application is being developed.",
+        icon = Icons.Default.Construction,
+        inDevelopment = true
     ),
     AppTool(
-        "Storage Manager",
-        "View storage usage and available space.",
-        Icons.Default.Storage
+        title = "Storage Manager",
+        description = "View storage usage and available space.",
+        icon = Icons.Default.Storage
     ),
     AppTool(
-        "Battery Lab",
-        "Monitor battery information and charging state.",
-        Icons.Default.BatteryChargingFull
+        title = "Battery Lab",
+        description = "Monitor battery information and charging state.",
+        icon = Icons.Default.BatteryChargingFull
     ),
     AppTool(
-        "Network Lab",
-        "Inspect network information and connectivity.",
-        Icons.Default.NetworkCheck
+        title = "Network Lab",
+        description = "Inspect network information and connectivity.",
+        icon = Icons.Default.NetworkCheck
     ),
     AppTool(
-        "SensorLab",
-        "View available device sensors.",
-        Icons.Default.Sensors
+        title = "SensorLab",
+        description = "View available device sensors.",
+        icon = Icons.Default.Sensors
     ),
     AppTool(
-        "Settings",
-        "Configure Stellar Center.",
-        Icons.Default.Settings
+        title = "Settings",
+        description = "Configure Stellar Center.",
+        icon = Icons.Default.Settings
     )
 )
 
@@ -93,11 +96,9 @@ private fun AppToolCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = {
-            // Araçların gerçek ekranları bir sonraki aşamada bağlanacak.
-        }
+        onClick = {}
     ) {
-        androidx.compose.foundation.layout.Row(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(18.dp)
@@ -107,7 +108,7 @@ private fun AppToolCard(
                 contentDescription = tool.title
             )
 
-            androidx.compose.foundation.layout.Column(
+            Column(
                 modifier = Modifier.padding(start = 16.dp)
             ) {
                 Text(
@@ -121,6 +122,15 @@ private fun AppToolCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+
+                if (tool.inDevelopment) {
+                    Text(
+                        text = "Yapım aşamasında",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
         }
     }
