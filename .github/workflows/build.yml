@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 permissions:
@@ -33,7 +34,12 @@ jobs:
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-         sdkmanager "platform-tools" "platforms;android-37.0" "ndk;28.2.13676358"
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-37" \
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -44,45 +50,59 @@ jobs:
         working-directory: android
         shell: bash
         run: |
+          set -e
+
           java -version
           gradle --version
 
           test -f settings.gradle
+          test -f build.gradle
           test -f app/build.gradle
 
           echo "Native Kotlin Android project detected."
+
+      - name: Clean build
+        working-directory: android
+        shell: bash
+        run: |
+          gradle clean
 
       - name: Build release APK
         working-directory: android
         shell: bash
         run: |
-          gradle clean
-          gradle assembleRelease --stacktrace
+          gradle assembleRelease --stacktrace --no-daemon
 
       - name: Verify APK
         shell: bash
         run: |
+          set -e
+
           APK="android/app/build/outputs/apk/release/app-release.apk"
 
           if [ ! -f "$APK" ]; then
             echo "Release APK was not generated."
+            echo "Available output files:"
             find android/app/build/outputs -type f 2>/dev/null || true
             exit 1
           fi
 
+          echo "APK successfully generated:"
           ls -lh "$APK"
 
       - name: Read app version
         id: version
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' android/app/build.gradle | head -n 1)
+          VERSION=$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+            android/app/build.gradle | head -n 1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read versionName."
+            echo "Could not read versionName from android/app/build.gradle"
             exit 1
           fi
 
+          echo "Detected version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
@@ -98,10 +118,15 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Stellar Center v${{ steps.version.outputs.version }}
           body: |
-            Stellar Center v${{ steps.version.outputs.version }}
+            # Stellar Center v${{ steps.version.outputs.version }}
 
-            Native Android Kotlin + Jetpack Compose release APK.
+            Native Android release.
+
+            - Kotlin
+            - Jetpack Compose
+            - Android Gradle Plugin
+            - Release APK
+
           files: android/app/build/outputs/apk/release/app-release.apk
           make_latest: true
           overwrite_files: true
-
