@@ -30,9 +30,6 @@ android {
         release {
             minifyEnabled false
             shrinkResources false
-
-            // Şimdilik mevcut debug signing.
-            // Release aşamasında gerçek Stellar keystore kullanılacak.
             signingConfig = signingConfigs.debug
         }
     }
@@ -40,10 +37,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -58,13 +51,15 @@ android {
     }
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 dependencies {
 
-    // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"
     implementation "androidx.activity:activity-compose:1.11.0"
 
-    // Compose
     implementation platform("androidx.compose:compose-bom:2026.08.00")
 
     implementation "androidx.compose.ui:ui"
@@ -76,24 +71,19 @@ dependencies {
 
     debugImplementation "androidx.compose.ui:ui-tooling"
 
-    // Lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.9.3"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3"
 
-    // Navigation
     implementation "androidx.navigation:navigation-compose:2.9.3"
 
-    // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 
-    // DataStore
     implementation "androidx.datastore:datastore-preferences:1.1.7"
 
-    // Shizuku
     implementation "dev.rikka.shizuku:api:13.1.5"
     implementation "dev.rikka.shizuku:provider:13.1.5"
 
-    // Media3 - ileride sistem medya özellikleri için
-    implementation "androidx.media3:media3-exoplayer:1.9.1"
-    implementation "androidx.media3:media3-ui:1.9.1"
+    implementation "androidx.media3:media3-exoplayer:1.11.0"
+    implementation "androidx.media3:media3-ui:1.11.0"
 }
+
