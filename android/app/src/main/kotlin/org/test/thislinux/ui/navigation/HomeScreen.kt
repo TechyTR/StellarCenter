@@ -14,12 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -50,17 +48,20 @@ private data class DeviceInfo(
 
 @Composable
 fun HomeScreen(
-    onOpenSecurity: () -> Unit = {},
-    onOpenShizuku: () -> Unit = {}
+    onOpenSecurity: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
     var batteryLevel by remember {
-        mutableIntStateOf(readBatteryLevel(context))
+        mutableIntStateOf(
+            readBatteryLevel(context)
+        )
     }
 
     var totalRam by remember {
-        mutableLongStateOf(readTotalRam(context))
+        mutableLongStateOf(
+            readTotalRam(context)
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -75,8 +76,13 @@ fun HomeScreen(
         DeviceInfo(
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
-            androidVersion = Build.VERSION.RELEASE ?: "Bilinmiyor",
-            totalRamGb = totalRam / 1024.0 / 1024.0 / 1024.0
+            androidVersion =
+                Build.VERSION.RELEASE ?: "Bilinmiyor",
+            totalRamGb =
+                totalRam /
+                        1024.0 /
+                        1024.0 /
+                        1024.0
         )
     }
 
@@ -108,40 +114,20 @@ fun HomeScreen(
         }
 
         item {
-            DeviceCard(deviceInfo)
-        }
-
-        item {
-            BatteryCard(batteryLevel)
-        }
-
-        item {
-            ActionCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Security,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Güvenlik denetlemesi",
-                description = "Stellar Secure ile telefonunuzun güvenliğini kontrol edin.",
-                onClick = onOpenSecurity
+            DeviceCard(
+                deviceInfo = deviceInfo
             )
         }
 
         item {
-            ActionCard(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Terminal,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp)
-                    )
-                },
-                title = "Shizuku bağlantısı",
-                description = "Gelişmiş Android yetkilerini ve bağlantı durumunu yönetin.",
-                onClick = onOpenShizuku
+            BatteryCard(
+                batteryLevel = batteryLevel
+            )
+        }
+
+        item {
+            SecurityTechnologyCard(
+                onClick = onOpenSecurity
             )
         }
     }
@@ -154,7 +140,8 @@ private fun DeviceCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor =
+                MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Row(
@@ -170,7 +157,9 @@ private fun DeviceCard(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(
+                modifier = Modifier.size(16.dp)
+            )
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -181,7 +170,9 @@ private fun DeviceCard(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
 
                 Text(
                     text = deviceInfo.manufacturer,
@@ -189,11 +180,16 @@ private fun DeviceCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
 
                 Text(
-                    text = "Android ${deviceInfo.androidVersion} • " +
-                            "${"%.1f".format(deviceInfo.totalRamGb)} GB RAM",
+                    text =
+                        "Android ${deviceInfo.androidVersion} • " +
+                                "${"%.1f".format(
+                                    deviceInfo.totalRamGb
+                                )} GB RAM",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -206,12 +202,15 @@ private fun DeviceCard(
 private fun BatteryCard(
     batteryLevel: Int
 ) {
-    val progress = (batteryLevel.coerceIn(0, 100)) / 100f
+    val progress =
+        batteryLevel
+            .coerceIn(0, 100) / 100f
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor =
+                MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
@@ -227,7 +226,9 @@ private fun BatteryCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(modifier = Modifier.size(12.dp))
+                Spacer(
+                    modifier = Modifier.size(12.dp)
+                )
 
                 Column(
                     modifier = Modifier.weight(1f)
@@ -239,21 +240,21 @@ private fun BatteryCard(
                     )
 
                     Text(
-                        text = if (batteryLevel >= 0) {
-                            "%$batteryLevel"
-                        } else {
-                            "Bilinmiyor"
-                        },
+                        text = "%$batteryLevel",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
 
             LinearProgressIndicator(
-                progress = { progress },
+                progress = {
+                    progress
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(9.dp)
@@ -263,74 +264,111 @@ private fun BatteryCard(
 }
 
 @Composable
-private fun ActionCard(
-    icon: @Composable () -> Unit,
-    title: String,
-    description: String,
+private fun SecurityTechnologyCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor =
+                MaterialTheme.colorScheme.surfaceContainer
         ),
         onClick = onClick
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(20.dp)
         ) {
-            icon()
-
-            Spacer(modifier = Modifier.size(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Default.Security,
+                    contentDescription = null,
+                    modifier = Modifier.size(34.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Spacer(
+                    modifier = Modifier.size(14.dp)
                 )
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Güvenlik Teknolojisi",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(3.dp)
+                    )
+
+                    Text(
+                        text = "Stellar Secure",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Text(
+                text =
+                    "Cihazınızın güvenlik durumunu " +
+                            "Stellar Secure teknolojisiyle kontrol edin.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
 
-private fun readBatteryLevel(context: Context): Int {
+private fun readBatteryLevel(
+    context: Context
+): Int {
     val batteryManager =
-        context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        context.getSystemService(
+            Context.BATTERY_SERVICE
+        ) as BatteryManager
 
-    return batteryManager.getIntProperty(
-        BatteryManager.BATTERY_PROPERTY_CAPACITY
-    ).coerceIn(0, 100)
+    return batteryManager
+        .getIntProperty(
+            BatteryManager.BATTERY_PROPERTY_CAPACITY
+        )
+        .coerceIn(0, 100)
 }
 
-private fun readTotalRam(context: Context): Long {
+private fun readTotalRam(
+    context: Context
+): Long {
     val activityManager =
-        context.getSystemService(Context.ACTIVITY_SERVICE)
-                as android.app.ActivityManager
+        context.getSystemService(
+            Context.ACTIVITY_SERVICE
+        ) as android.app.ActivityManager
 
-    val memoryInfo = android.app.ActivityManager.MemoryInfo()
+    val memoryInfo =
+        android.app.ActivityManager.MemoryInfo()
+
     activityManager.getMemoryInfo(memoryInfo)
 
-    return max(memoryInfo.totalMem, 0L)
+    return max(
+        memoryInfo.totalMem,
+        0L
+    )
 }
 
 private fun getGreeting(): String {
-    val hour = java.util.Calendar.getInstance()
-        .get(java.util.Calendar.HOUR_OF_DAY)
+    val hour =
+        java.util.Calendar
+            .getInstance()
+            .get(
+                java.util.Calendar.HOUR_OF_DAY
+            )
 
     return when {
         hour < 6 -> "İyi geceler"
