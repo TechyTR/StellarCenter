@@ -30,11 +30,17 @@ class SystemMonitorViewModel(
         SupervisorJob() + Dispatchers.Default
     )
 
-    private val _state = MutableStateFlow(
+    private val _liveState = MutableStateFlow(
         SystemMonitorState()
     )
 
-    val state: StateFlow<SystemMonitorState> = _state
+    val liveState: StateFlow<SystemMonitorState> = _liveState
+
+    private val _staticState = MutableStateFlow(
+        StaticSystemMonitorState()
+    )
+
+    val staticState: StateFlow<StaticSystemMonitorState> = _staticState
 
     private var running = false
     private var monitorJob: Job? = null
@@ -51,11 +57,10 @@ class SystemMonitorViewModel(
 
         monitorJob = scope.launch {
 
-            /*
-             * Sabit sistem bilgilerini yalnızca Monitor
-             * ekranına ilk girildiğinde oku.
-             */
-            val staticInfo = readStaticSystemInfo()
+            if (_staticState.value.model == "Bilinmiyor") {
+                _staticState.value =
+                    readStaticSystemInfo()
+            }
 
             while (isActive && running) {
 
@@ -63,46 +68,14 @@ class SystemMonitorViewModel(
                 val memory = readMemory()
                 val battery = readBatteryInfo()
 
-                _state.value = SystemMonitorState(
+                _liveState.value = SystemMonitorState(
                     cpuUsage = cpuUsage,
                     ramUsage = memory.usagePercent,
                     battery = battery.level,
-                    temperature = battery.temperature,
-
-                    model = staticInfo.model,
-                    manufacturer = staticInfo.manufacturer,
-
-                    androidVersion = staticInfo.androidVersion,
-                    sdk = staticInfo.sdk,
-                    securityPatch = staticInfo.securityPatch,
-                    kernel = staticInfo.kernel,
-
-                    board = staticInfo.board,
-                    device = staticInfo.device,
-                    product = staticInfo.product,
-                    hardware = staticInfo.hardware,
-                    bootloader = staticInfo.bootloader,
-
-                    cpuCount = staticInfo.cpuCount,
-                    supportedAbis = staticInfo.supportedAbis,
-
-                    totalRamBytes = memory.totalBytes,
-                    availableRamBytes = memory.availableBytes,
-
-                    totalStorageBytes = staticInfo.totalStorageBytes,
-                    availableStorageBytes = staticInfo.availableStorageBytes,
-
-                    screenWidth = staticInfo.screenWidth,
-                    screenHeight = staticInfo.screenHeight,
-                    density = staticInfo.density,
-                    refreshRate = staticInfo.refreshRate
+                    temperature = battery.temperature
                 )
 
-                /*
-                 * Canlı veriler yalnızca Monitor açıkken
-                 * saniyede bir güncellenir.
-                 */
-                delay(1000)
+                delay(1000L)
             }
         }
     }
@@ -113,40 +86,9 @@ class SystemMonitorViewModel(
         monitorJob?.cancel()
         monitorJob = null
 
-        /*
-         * Bir sonraki Monitor oturumunda CPU ölçümü
-         * yeniden doğru şekilde başlasın.
-         */
         previousCpuTotal = 0L
         previousCpuIdle = 0L
     }
-
-    private data class StaticSystemInfo(
-        val model: String,
-        val manufacturer: String,
-
-        val androidVersion: String,
-        val sdk: Int,
-        val securityPatch: String,
-        val kernel: String,
-
-        val board: String,
-        val device: String,
-        val product: String,
-        val hardware: String,
-        val bootloader: String,
-
-        val cpuCount: Int,
-        val supportedAbis: String,
-
-        val totalStorageBytes: Long,
-        val availableStorageBytes: Long,
-
-        val screenWidth: Int,
-        val screenHeight: Int,
-        val density: Float,
-        val refreshRate: Float
-    )
 
     private data class MemoryInfo(
         val totalBytes: Long,
@@ -159,8 +101,8 @@ class SystemMonitorViewModel(
         val temperature: Double
     )
 
-    private fun readStaticSystemInfo(): StaticSystemInfo {
-        return StaticSystemInfo(
+    private fun readStaticSystemInfo(): StaticSystemMonitorState {
+        return StaticSystemMonitorState(
             model = Build.MODEL,
             manufacturer = Build.MANUFACTURER,
 
@@ -189,6 +131,12 @@ class SystemMonitorViewModel(
 
             supportedAbis =
                 readSupportedAbis(),
+
+            totalRamBytes =
+                readTotalRam(),
+
+            availableRamBytes =
+                readAvailableRam(),
 
             totalStorageBytes =
                 readTotalStorage(),
@@ -239,7 +187,7 @@ class SystemMonitorViewModel(
                     (
                         (
                             used.toDouble() /
-                                    total.toDouble()
+                                total.toDouble()
                         ) * 100.0
                     )
                         .toInt()
@@ -302,7 +250,7 @@ class SystemMonitorViewModel(
                     (
                         (
                             level.toDouble() /
-                                    scale.toDouble()
+                                scale.toDouble()
                         ) * 100.0
                     )
                         .toInt()
@@ -313,8 +261,7 @@ class SystemMonitorViewModel(
 
             BatteryInfo(
                 level = percentage,
-                temperature =
-                    rawTemperature / 10.0
+                temperature = rawTemperature / 10.0
             )
         } catch (_: Exception) {
             BatteryInfo(
@@ -331,126 +278,139 @@ class SystemMonitorViewModel(
                     FileReader("/proc/stat")
                 )
 
-            val firstLine =
-                reader.useLines { lines ->
-                    lines.firstOrNull {
-                        it.startsWith("cpu ")
+            var cpuLine: String? = null
+
+            reader.useLines { lines ->
+                for (line in lines) {
+                    if (line.startsWith("cpu ")) {
+                        cpuLine = line
+                        break
                     }
                 }
-                    ?: return 0
+            }
 
-            val spaceIndex =
-                firstLine.indexOf(' ')
+            val line =
+                cpuLine ?: return 0
 
-            if (spaceIndex == -1) {
+            val firstSpace =
+                line.indexOf(' ')
+
+            if (firstSpace == -1) {
                 return 0
             }
 
-            val values =
-                firstLine
-                    .substring(spaceIndex)
-                    .trim()
-                    .split(' ')
-                    .filter {
-                        it.isNotEmpty()
+            val data =
+                line.substring(firstSpace + 1)
+
+            var index = 0
+            var numberStart = -1
+
+            var user = 0L
+            var nice = 0L
+            var system = 0L
+            var idle = 0L
+            var iowait = 0L
+            var irq = 0L
+            var softIrq = 0L
+            var steal = 0L
+
+            for (i in data.indices) {
+                val char = data[i]
+
+                if (char in '0'..'9') {
+                    if (numberStart == -1) {
+                        numberStart = i
                     }
-                    .mapNotNull {
-                        it.toLongOrNull()
+                } else if (numberStart != -1) {
+                    val value =
+                        data.substring(
+                            numberStart,
+                            i
+                        ).toLongOrNull() ?: 0L
+
+                    when (index) {
+                        0 -> user = value
+                        1 -> nice = value
+                        2 -> system = value
+                        3 -> idle = value
+                        4 -> iowait = value
+                        5 -> irq = value
+                        6 -> softIrq = value
+                        7 -> steal = value
                     }
 
-            if (values.size < 4) {
-                return 0
+                    index++
+                    numberStart = -1
+
+                    if (index >= 8) {
+                        break
+                    }
+                }
             }
 
-            val user =
-                values.getOrElse(0) {
-                    0L
+            if (numberStart != -1 && index < 8) {
+                val value =
+                    data.substring(numberStart)
+                        .toLongOrNull() ?: 0L
+
+                when (index) {
+                    0 -> user = value
+                    1 -> nice = value
+                    2 -> system = value
+                    3 -> idle = value
+                    4 -> iowait = value
+                    5 -> irq = value
+                    6 -> softIrq = value
+                    7 -> steal = value
                 }
 
-            val nice =
-                values.getOrElse(1) {
-                    0L
-                }
+                index++
+            }
 
-            val system =
-                values.getOrElse(2) {
-                    0L
-                }
-
-            val idle =
-                values.getOrElse(3) {
-                    0L
-                }
-
-            val iowait =
-                values.getOrElse(4) {
-                    0L
-                }
-
-            val irq =
-                values.getOrElse(5) {
-                    0L
-                }
-
-            val softIrq =
-                values.getOrElse(6) {
-                    0L
-                }
-
-            val steal =
-                values.getOrElse(7) {
-                    0L
-                }
+            if (index < 4) {
+                return 0
+            }
 
             val idleTime =
                 idle + iowait
 
             val totalTime =
                 user +
-                        nice +
-                        system +
-                        idle +
-                        iowait +
-                        irq +
-                        softIrq +
-                        steal
+                    nice +
+                    system +
+                    idle +
+                    iowait +
+                    irq +
+                    softIrq +
+                    steal
 
             if (previousCpuTotal == 0L) {
-                previousCpuTotal =
-                    totalTime
-
-                previousCpuIdle =
-                    idleTime
-
+                previousCpuTotal = totalTime
+                previousCpuIdle = idleTime
                 return 0
             }
 
             val totalDelta =
-                totalTime -
-                        previousCpuTotal
+                totalTime - previousCpuTotal
 
             val idleDelta =
-                idleTime -
-                        previousCpuIdle
+                idleTime - previousCpuIdle
 
-            previousCpuTotal =
-                totalTime
-
-            previousCpuIdle =
-                idleTime
+            previousCpuTotal = totalTime
+            previousCpuIdle = idleTime
 
             if (totalDelta <= 0L) {
                 return 0
             }
 
             val activeDelta =
-                totalDelta -
-                        idleDelta
+                (totalDelta - idleDelta)
+                    .coerceAtLeast(0L)
 
             (
                 (
                     activeDelta.toDouble() /
-                            totalDelta.toDouble()
+                        totalDelta.toDouble()
                 ) * 100.0
             )
                 .toInt()
@@ -458,6 +418,42 @@ class SystemMonitorViewModel(
 
         } catch (_: Exception) {
             0
+        }
+    }
+
+    private fun readTotalRam(): Long {
+        return try {
+            val activityManager =
+                appContext.getSystemService(
+                    Context.ACTIVITY_SERVICE
+                ) as android.app.ActivityManager
+
+            val info =
+                android.app.ActivityManager.MemoryInfo()
+
+            activityManager.getMemoryInfo(info)
+
+            max(info.totalMem, 0L)
+        } catch (_: Exception) {
+            0L
+        }
+    }
+
+    private fun readAvailableRam(): Long {
+        return try {
+            val activityManager =
+                appContext.getSystemService(
+                    Context.ACTIVITY_SERVICE
+                ) as android.app.ActivityManager
+
+            val info =
+                android.app.ActivityManager.MemoryInfo()
+
+            activityManager.getMemoryInfo(info)
+
+            max(info.availMem, 0L)
+        } catch (_: Exception) {
+            0L
         }
     }
 
