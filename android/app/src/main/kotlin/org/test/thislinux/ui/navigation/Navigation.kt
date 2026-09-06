@@ -4,10 +4,23 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun Navigation(
-    selectedIndex: Int
+    selectedIndex: Int,
+    showSecurity: Boolean,
+    onOpenSecurity: () -> Unit,
+    onCloseSecurity: () -> Unit
 ) {
+    if (showSecurity) {
+        StellarSecureScreen(
+            onBack = onCloseSecurity
+        )
+
+        return
+    }
+
     when (selectedIndex) {
-        0 -> HomeScreen()
+        0 -> HomeScreen(
+            onOpenSecurity = onOpenSecurity
+        )
 
         1 -> SystemMonitorScreen()
 
