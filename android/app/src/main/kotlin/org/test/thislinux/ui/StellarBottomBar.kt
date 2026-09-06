@@ -18,10 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Note
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +33,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.isSystemInDarkTheme
+import org.test.thislinux.ui.theme.StellarThemeStyle
 
 private data class NavItem(
     val label: String,
@@ -42,134 +41,145 @@ private data class NavItem(
 )
 
 private val navItems = listOf(
-    NavItem("Home", Icons.Default.Home),
-    NavItem("Monitor", Icons.Default.Speed),
-    NavItem("Storage", Icons.Default.Storage),
-    NavItem("Settings", Icons.Default.Settings)
+    NavItem("System", Icons.Default.Memory),
+    NavItem("Notes", Icons.Default.Note),
+    NavItem("App", Icons.Default.Info)
 )
 
 @Composable
 fun StellarBottomBar(
     selectedIndex: Int,
+    themeStyle: StellarThemeStyle,
     onSelected: (Int) -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = themeStyle == StellarThemeStyle.LIQUID_GLASS_DARK
     val accent = MaterialTheme.colorScheme.primary
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+
+    if (themeStyle == StellarThemeStyle.NORMAL) {
+        androidx.compose.material3.NavigationBar {
+            navItems.forEachIndexed { index, item ->
+                androidx.compose.material3.NavigationBarItem(
+                    selected = index == selectedIndex,
+                    onClick = { onSelected(index) },
+                    icon = {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label
+                        )
+                    },
+                    label = {
+                        Text(item.label)
+                    }
+                )
+            }
+        }
+
+        return
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = 28.dp,
-                end = 28.dp,
+                start = 20.dp,
+                end = 20.dp,
                 top = 4.dp,
-                bottom = 8.dp
+                bottom = 10.dp
             )
     ) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(66.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .height(72.dp)
+                .clip(RoundedCornerShape(28.dp))
                 .background(
                     if (isDark) {
-                        Color.Black.copy(alpha = 0.18f)
+                        Color.Black.copy(alpha = 0.55f)
                     } else {
-                        Color.White.copy(alpha = 0.82f)
+                        Color.White.copy(alpha = 0.55f)
                     }
                 )
                 .border(
-                    width = 1.dp,
-                    color = if (isDark) {
-                        Color.White.copy(alpha = 0.10f)
+                    1.dp,
+                    if (isDark) {
+                        Color.White.copy(alpha = 0.18f)
                     } else {
-                        Color.Black.copy(alpha = 0.06f)
+                        Color.White.copy(alpha = 0.65f)
                     },
-                    shape = RoundedCornerShape(24.dp)
+                    RoundedCornerShape(28.dp)
                 )
-                .padding(5.dp)
+                .padding(6.dp)
         ) {
             val itemWidth = maxWidth / navItems.size
 
-            val selectedLeftTarget =
+            val targetLeft =
                 itemWidth * selectedIndex + 3.dp
 
-            val selectedWidthTarget =
+            val targetWidth =
                 itemWidth - 6.dp
 
-            val selectedLeft by animateDpAsState(
-                targetValue = selectedLeftTarget,
+            val animatedLeft by animateDpAsState(
+                targetValue = targetLeft,
                 animationSpec = tween(
-                    durationMillis = 360,
+                    durationMillis = 300,
                     easing = FastOutSlowInEasing
                 ),
-                label = "navigation-pill-position"
+                label = "glass-pill-position"
             )
 
-            val selectedWidth by animateDpAsState(
-                targetValue = selectedWidthTarget,
+            val animatedWidth by animateDpAsState(
+                targetValue = targetWidth,
                 animationSpec = tween(
-                    durationMillis = 360,
+                    durationMillis = 300,
                     easing = FastOutSlowInEasing
                 ),
-                label = "navigation-pill-width"
+                label = "glass-pill-width"
             )
 
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-
-                // Liquid Glass seçili hap
                 Box(
                     modifier = Modifier
                         .padding(
-                            start = selectedLeft,
+                            start = animatedLeft,
                             top = 3.dp
                         )
-                        .width(selectedWidth)
-                        .height(55.dp)
+                        .width(animatedWidth)
+                        .height(58.dp)
                         .shadow(
                             elevation = 8.dp,
-                            shape = RoundedCornerShape(19.dp),
+                            shape = RoundedCornerShape(22.dp),
                             ambientColor = accent.copy(alpha = 0.10f),
                             spotColor = accent.copy(alpha = 0.16f)
                         )
-                        .clip(RoundedCornerShape(19.dp))
+                        .clip(RoundedCornerShape(22.dp))
                         .background(
-                            if (isDark) {
-                                Color.White.copy(alpha = 0.075f)
-                            } else {
-                                Color.White.copy(alpha = 0.24f)
-                            }
+                            accent.copy(
+                                alpha = if (isDark) 0.28f else 0.18f
+                            )
                         )
                         .border(
-                            width = 1.dp,
-                            color = if (isDark) {
-                                Color.White.copy(alpha = 0.25f)
+                            1.dp,
+                            if (isDark) {
+                                Color.White.copy(alpha = 0.20f)
                             } else {
-                                Color.White.copy(alpha = 0.68f)
+                                Color.White.copy(alpha = 0.65f)
                             },
-                            shape = RoundedCornerShape(19.dp)
+                            RoundedCornerShape(22.dp)
                         )
                 ) {
-
-                    // Üst parlaklık çizgisi
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
+                            .padding(horizontal = 14.dp)
                             .height(1.dp)
                             .background(
                                 Color.White.copy(
-                                    alpha = if (isDark) {
-                                        0.34f
-                                    } else {
-                                        0.72f
-                                    }
+                                    alpha = if (isDark) 0.34f else 0.72f
                                 )
                             )
-                            .align(Alignment.TopCenter)
                     )
                 }
 
@@ -177,27 +187,22 @@ fun StellarBottomBar(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     navItems.forEachIndexed { index, item ->
-
-                        val selected =
-                            index == selectedIndex
+                        val selected = index == selectedIndex
 
                         val scale by animateFloatAsState(
-                            targetValue =
-                                if (selected) 1.045f else 1f,
+                            targetValue = if (selected) 1.04f else 1f,
                             animationSpec = tween(
-                                durationMillis = 180,
+                                durationMillis = 200,
                                 easing = FastOutSlowInEasing
                             ),
-                            label = "navigation-item-scale-$index"
+                            label = "glass-item-scale-$index"
                         )
 
                         Column(
                             modifier = Modifier
                                 .width(itemWidth)
-                                .height(55.dp)
-                                .clip(
-                                    RoundedCornerShape(19.dp)
-                                )
+                                .height(58.dp)
+                                .clip(RoundedCornerShape(22.dp))
                                 .clickable {
                                     onSelected(index)
                                 }
@@ -205,34 +210,37 @@ fun StellarBottomBar(
                                     scaleX = scale
                                     scaleY = scale
                                 },
-                            horizontalAlignment =
-                                Alignment.CenterHorizontally,
-                            verticalArrangement =
-                                Arrangement.Center
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.label,
-                                tint =
-                                    if (selected) {
-                                        accent
-                                    } else {
-                                        muted
-                                    },
-                                modifier = Modifier.height(22.dp)
+                                tint = if (selected) {
+                                    accent
+                                } else {
+                                    muted
+                                },
+                                modifier = Modifier.height(23.dp)
                             )
 
                             Text(
                                 text = item.label,
-                                color =
-                                    if (selected) {
-                                        accent
-                                    } else {
-                                        muted
-                                    },
-                                style =
-                                    MaterialTheme.typography.labelSmall
+                                color = if (selected) {
+                                    accent
+                                } else {
+                                    muted
+                                },
+                                fontSize = if (selected) {
+                                    androidx.compose.ui.unit.sp(12)
+                                } else {
+                                    androidx.compose.ui.unit.sp(11)
+                                },
+                                fontWeight = if (selected) {
+                                    androidx.compose.ui.text.font.FontWeight.SemiBold
+                                } else {
+                                    androidx.compose.ui.text.font.FontWeight.Normal
+                                }
                             )
                         }
                     }
