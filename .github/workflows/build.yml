@@ -32,7 +32,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -43,12 +42,20 @@ jobs:
       - name: Install Android SDK
         run: |
           sdkmanager "platform-tools"
-          sdkmanager "platforms;android-37.0"
+          sdkmanager "platforms;android-37"
           sdkmanager "build-tools;37.0.0"
           sdkmanager "ndk;28.2.13676358"
 
-      - name: Calculate next version
-        id: version
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Check Gradle
+        run: gradle --version
+
+      - name: Read current version
+        id: current_version
         shell: bash
         run: |
           VERSION_NAME=$(grep -E 'versionName\s*=' app/build.gradle | head -1 | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
@@ -64,6 +71,19 @@ jobs:
             exit 1
           fi
 
+          echo "Mevcut versionName: $VERSION_NAME"
+          echo "Mevcut versionCode: $VERSION_CODE"
+
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate next version
+        id: next_version
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.current_version.outputs.version_name }}"
+          VERSION_CODE="${{ steps.current_version.outputs.version_code }}"
+
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
 
           MAJOR=${MAJOR:-0}
@@ -74,20 +94,16 @@ jobs:
           NEW_VERSION="${MAJOR}.${NEW_MINOR}.0"
           NEW_VERSION_CODE=$((VERSION_CODE + 1))
 
-          echo "Eski sürüm: $VERSION_NAME"
-          echo "Yeni sürüm: $NEW_VERSION"
-          echo "Eski versionCode: $VERSION_CODE"
+          echo "Yeni versionName: $NEW_VERSION"
           echo "Yeni versionCode: $NEW_VERSION_CODE"
 
-          echo "old_version=$VERSION_NAME" >> "$GITHUB_OUTPUT"
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "new_version_code=$NEW_VERSION_CODE" >> "$GITHUB_OUTPUT"
 
-      - name: Update version
-        working-directory: android
+      - name: Update Android version
         env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
-          NEW_VERSION_CODE: ${{ steps.version.outputs.new_version_code }}
+          NEW_VERSION: ${{ steps.next_version.outputs.new_version }}
+          NEW_VERSION_CODE: ${{ steps.next_version.outputs.new_version_code }}
         shell: bash
         run: |
           python3 <<'PY'
@@ -116,40 +132,51 @@ jobs:
           )
 
           if version_name_count != 1:
-              raise SystemExit("versionName değiştirilemedi.")
+              raise SystemExit(
+                  f"versionName değiştirilemedi. Bulunan: {version_name_count}"
+              )
 
           if version_code_count != 1:
-              raise SystemExit("versionCode değiştirilemedi.")
+              raise SystemExit(
+                  f"versionCode değiştirilemedi. Bulunan: {version_code_count}"
+              )
 
           path.write_text(text)
           PY
 
-          echo "Güncel sürüm:"
+          echo "Güncel Android sürümü:"
           grep -E 'version(Code|Name)\s*=' app/build.gradle
 
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Clean project
-        run: ./gradlew clean --no-daemon
+      - name: Clean
+        run: gradle clean --no-daemon
 
       - name: Build release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Verify APK
+        shell: bash
         run: |
-          echo "APK:"
-          find app/build/outputs/apk/release -type f -name "*.apk" -print
+          echo "Oluşturulan APK:"
+          find app/build/outputs/apk/release \
+            -type f \
+            -name "*.apk" \
+            -print
 
-          if ! find app/build/outputs/apk/release -type f -name "*.apk" | grep -q .; then
-            echo "APK oluşturulamadı."
+          APK_COUNT=$(find app/build/outputs/apk/release \
+            -type f \
+            -name "*.apk" | wc -l)
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "HATA: APK oluşturulamadı."
             exit 1
           fi
+
+          echo "APK başarıyla oluşturuldu."
 
       - name: Commit version bump
         working-directory: .
         env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+          NEW_VERSION: ${{ steps.next_version.outputs.new_version }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -158,20 +185,34 @@ jobs:
           git add android/app/build.gradle
 
           if git diff --cached --quiet; then
-            echo "Version değişikliği yok."
+            echo "Version değişikliği bulunamadı."
           else
-            git commit -m "chore: bump version to ${NEW_VERSION} [skip ci]"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            git commit \
+              -m "chore: bump version to ${NEW_VERSION} [skip ci]"
+
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.new_version }}
-          name: Stellar Center v${{ steps.version.outputs.new_version }}
+          tag_name: v${{ steps.next_version.outputs.new_version }}
+          name: Stellar Center v${{ steps.next_version.outputs.new_version }}
           generate_release_notes: true
           files: android/app/build/outputs/apk/release/*.apk
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release summary
+        working-directory: .
+        env:
+          NEW_VERSION: ${{ steps.next_version.outputs.new_version }}
+        run: |
+          echo "======================================"
+          echo " Stellar Center Release Başarılı"
+          echo " Version: ${NEW_VERSION}"
+          echo " Tag: v${NEW_VERSION}"
+          echo " APK: GitHub Release'e yüklendi"
+          echo "======================================"
 
