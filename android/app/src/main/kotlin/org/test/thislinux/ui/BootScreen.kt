@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,18 +30,20 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.test.thislinux.R
 
-private val bootLines = listOf(
-    "[  OK  ] Starting Stellar Center...",
-    "[  OK  ] Initializing system...",
-    "[  OK  ] Loading system information...",
-    "[  OK  ] Starting system services...",
-    "[  OK  ] Checking device...",
-    "[  OK  ] Stellar Center is ready."
-)
+private val bootLines =
+    listOf(
+        "[  OK  ] Starting Stellar Center...",
+        "[  OK  ] Initializing system...",
+        "[  OK  ] Loading system information...",
+        "[  OK  ] Starting system services...",
+        "[  OK  ] Checking device...",
+        "[  OK  ] Stellar Center is ready."
+    )
 
 private const val TOTAL_BOOT_TIME_MS = 2000L
 private const val LOGO_TIME_MS = 500L
-private const val LINE_INTERVAL_MS = TOTAL_BOOT_TIME_MS / 6L
+private const val LINE_INTERVAL_MS =
+    TOTAL_BOOT_TIME_MS / 6L
 
 @Composable
 fun BootScreen(
@@ -82,8 +81,10 @@ fun BootScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Top
+                horizontalAlignment =
+                    Alignment.Start,
+                verticalArrangement =
+                    Arrangement.Top
             ) {
                 Text(
                     text = "Stellar Center",
@@ -103,8 +104,12 @@ fun BootScreen(
                             text = line,
                             color = Color.White,
                             fontSize = 13.sp,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(bottom = 5.dp)
+                            fontFamily =
+                                FontFamily.Monospace,
+                            modifier =
+                                Modifier.padding(
+                                    bottom = 5.dp
+                                )
                         )
                     }
             }
@@ -113,24 +118,17 @@ fun BootScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                runCatching {
-                    painterResource(
-                        id = R.drawable.icon
-                    )
-                }.getOrNull()?.let { painter ->
-                    Image(
-                        painter = painter,
-                        contentDescription = "Stellar Center",
-                        modifier = Modifier.size(110.dp)
-                    )
-                } ?: Icon(
-                    imageVector = Icons.Rounded.AutoAwesome,
-                    contentDescription = "Stellar Center",
-                    tint = Color.White,
-                    modifier = Modifier.size(90.dp)
+                Image(
+                    painter =
+                        painterResource(
+                            id = R.drawable.icon
+                        ),
+                    contentDescription =
+                        "Stellar Center",
+                    modifier =
+                        Modifier.size(110.dp)
                 )
             }
         }
     }
 }
-
