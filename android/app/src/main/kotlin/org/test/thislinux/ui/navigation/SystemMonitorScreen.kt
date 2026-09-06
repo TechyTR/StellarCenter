@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.test.thislinux.system.StaticSystemMonitorState
 import org.test.thislinux.system.SystemMonitorState
 import org.test.thislinux.system.SystemMonitorViewModel
 
@@ -54,7 +55,8 @@ fun SystemMonitorScreen() {
         }
     }
 
-    val state by viewModel.state.collectAsState()
+    val liveState by viewModel.liveState.collectAsState()
+    val staticState by viewModel.staticState.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -66,22 +68,20 @@ fun SystemMonitorScreen() {
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+
         item {
             MonitorHeader()
         }
 
         item {
             LiveMonitorSection(
-                cpuUsage = state.cpuUsage,
-                ramUsage = state.ramUsage,
-                battery = state.battery,
-                temperature = state.temperature
+                state = liveState
             )
         }
 
         item {
             StaticSystemSection(
-                state = state
+                state = staticState
             )
         }
     }
@@ -110,14 +110,12 @@ private fun MonitorHeader() {
 
 @Composable
 private fun LiveMonitorSection(
-    cpuUsage: Int,
-    ramUsage: Int,
-    battery: Int,
-    temperature: Double
+    state: SystemMonitorState
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+
         LiveMetricCard(
             icon = {
                 Icon(
@@ -127,8 +125,8 @@ private fun LiveMonitorSection(
                 )
             },
             title = "CPU kullanımı",
-            value = "%$cpuUsage",
-            progress = cpuUsage / 100f
+            value = "%${state.cpuUsage}",
+            progress = state.cpuUsage / 100f
         )
 
         LiveMetricCard(
@@ -140,8 +138,8 @@ private fun LiveMonitorSection(
                 )
             },
             title = "RAM kullanımı",
-            value = "%$ramUsage",
-            progress = ramUsage / 100f
+            value = "%${state.ramUsage}",
+            progress = state.ramUsage / 100f
         )
 
         LiveMetricCard(
@@ -153,8 +151,8 @@ private fun LiveMonitorSection(
                 )
             },
             title = "Pil",
-            value = "%$battery",
-            progress = battery / 100f
+            value = "%${state.battery}",
+            progress = state.battery / 100f
         )
 
         InfoCard(
@@ -166,18 +164,19 @@ private fun LiveMonitorSection(
                 )
             },
             title = "Pil sıcaklığı",
-            value = "$temperature °C"
+            value = "${state.temperature} °C"
         )
     }
 }
 
 @Composable
 private fun StaticSystemSection(
-    state: SystemMonitorState
+    state: StaticSystemMonitorState
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+
         SectionTitle("Cihaz")
 
         InfoCard(
@@ -244,7 +243,7 @@ private fun StaticSystemSection(
             title = "RAM",
             value =
                 "${formatBytes(state.availableRamBytes)} boş / " +
-                        "${formatBytes(state.totalRamBytes)} toplam"
+                    "${formatBytes(state.totalRamBytes)} toplam"
         )
 
         InfoCard(
@@ -258,7 +257,7 @@ private fun StaticSystemSection(
             title = "Depolama",
             value =
                 "${formatBytes(state.availableStorageBytes)} boş / " +
-                        "${formatBytes(state.totalStorageBytes)} toplam"
+                    "${formatBytes(state.totalStorageBytes)} toplam"
         )
 
         InfoCard(
@@ -485,7 +484,7 @@ private fun formatBytes(
 }
 
 private fun calculateStorageUsage(
-    state: SystemMonitorState
+    state: StaticSystemMonitorState
 ): String {
     if (state.totalStorageBytes <= 0L) {
         return "Bilinmiyor"
@@ -493,16 +492,15 @@ private fun calculateStorageUsage(
 
     val used =
         state.totalStorageBytes -
-                state.availableStorageBytes
+            state.availableStorageBytes
 
     val percentage =
         (
             used.toDouble() /
-                    state.totalStorageBytes.toDouble()
+                state.totalStorageBytes.toDouble()
         ) * 100.0
 
     return "${"%.1f".format(
         percentage.coerceIn(0.0, 100.0)
     )}% kullanılıyor"
 }
-
