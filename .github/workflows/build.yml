@@ -83,13 +83,13 @@ jobs:
           flutter build apk --release
 
       - name: Prepare APK
-        run: |
-          mkdir -p release
+  run: |
+    mkdir -p release
 
-          cp build/app/outputs/flutter-apk/app-release.apk \
-            "release/StellarCenter-${{ steps.version.outputs.new }}.apk"
+    cp build/app/outputs/flutter-apk/app-release.apk \
+      "release/StellarCenter.apk"
 
-          ls -lh release/
+    ls -lh release/
 
       - name: Commit version update
         run: |
