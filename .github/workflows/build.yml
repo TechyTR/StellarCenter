@@ -38,6 +38,29 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Generate Android project
+        run: |
+          flutter create \
+            --platforms=android \
+            --org org.test \
+            .
+
+      - name: Configure Android application
+        shell: bash
+        run: |
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/applicationId = "org.test.thislinux"/applicationId = "org.test.stellar"/' \
+              android/app/build.gradle
+
+            sed -i 's/applicationId "org.test.thislinux"/applicationId "org.test.stellar"/' \
+              android/app/build.gradle
+          fi
+
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            sed -i 's/android:label="thislinux"/android:label="Stellar Center"/' \
+              android/app/src/main/AndroidManifest.xml
+          fi
+
       - name: Read current version
         id: version
         shell: bash
@@ -112,3 +135,4 @@ jobs:
           name: StellarCenter
           path: release/StellarCenter.apk
           if-no-files-found: error
+
