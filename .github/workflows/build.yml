@@ -50,7 +50,13 @@ jobs:
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
 
-          PATCH=$((PATCH + 1))
+          if ! [[ "$MAJOR" =~ ^[0-9]+$ && "$MINOR" =~ ^[0-9]+$ && "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "Invalid semantic version: $CURRENT_VERSION"
+            exit 1
+          fi
+
+          MINOR=$((MINOR + 1))
+          PATCH=0
 
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
@@ -95,4 +101,14 @@ jobs:
           if git diff --cached --quiet; then
             echo "No version changes to commit."
           else
-            git commit -m "ch
+            git commit -m "chore: bump version to ${{ steps.version.outputs.new }}"
+            git push origin HEAD:main
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: StellarCenter-${{ steps.version.outputs.new }}
+          path: release/StellarCenter-${{ steps.version.outputs.new }}.apk
+          if-no-files-found: error
+
