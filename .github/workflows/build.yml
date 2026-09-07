@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build-release:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -83,13 +84,13 @@ jobs:
           flutter build apk --release
 
       - name: Prepare APK
-  run: |
-    mkdir -p release
+        run: |
+          mkdir -p release
 
-    cp build/app/outputs/flutter-apk/app-release.apk \
-      "release/StellarCenter.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "release/StellarCenter.apk"
 
-    ls -lh release/
+          ls -lh release/
 
       - name: Commit version update
         run: |
@@ -101,14 +102,13 @@ jobs:
           if git diff --cached --quiet; then
             echo "No version changes to commit."
           else
-            git commit -m "chore: bump version to ${{ steps.version.outputs.new }}"
+            git commit -m "chore: bump version to ${{ steps.version.outputs.new }} [skip ci]"
             git push origin HEAD:main
           fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StellarCenter-${{ steps.version.outputs.new }}
-          path: release/StellarCenter-${{ steps.version.outputs.new }}.apk
+          name: StellarCenter
+          path: release/StellarCenter.apk
           if-no-files-found: error
-
