@@ -1,4 +1,4 @@
-package org.test.thislinux
+package org.test.stellar
 
 import io.flutter.embedding.android.FlutterActivity
 
