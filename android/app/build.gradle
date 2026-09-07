@@ -1,15 +1,18 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 android {
     namespace = "org.test.stellar"
+
     compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     defaultConfig {
         applicationId = "org.test.stellar"
+
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
 
