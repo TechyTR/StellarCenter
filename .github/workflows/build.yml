@@ -16,37 +16,66 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: stable
 
-      - name: Create Android platform
+      - name: Create Flutter local.properties
         run: |
-          flutter create --platforms=android --org org.test temp_scaffold
-          cp -r temp_scaffold/android .
-          rm -rf temp_scaffold
-
-      - name: Set application name
-        run: |
-          sed -i 's/android:label="temp_scaffold"/android:label="This Linux"/' \
-          android/app/src/main/AndroidManifest.xml
-
-      - name: Fix Kotlin version
-        run: |
-          sed -i -E \
-          "s/(id[[:space:]]*['\"]org\.jetbrains\.kotlin\.android['\"][[:space:]]*version[[:space:]]*['\"])[^'\"]+(['\"])/\11.9.24\2/" \
-          android/settings.gradle
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: Get dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+
+      - name: Verify Android configuration
+        run: |
+          echo "=== Android settings.gradle ==="
+          cat android/settings.gradle
+
+          echo ""
+          echo "=== Android app/build.gradle ==="
+          cat android/app/build.gradle
+
+          echo ""
+          echo "=== Android Manifest ==="
+          cat android/app/src/main/AndroidManifest.xml
+
+          echo ""
+          echo "=== Android embedding check ==="
+
+          if grep -RniE \
+            'io\.flutter\.app\.|io\.flutter\.view\.|flutterEmbedding.*1' \
+            android/app/src/main; then
+
+            echo "ERROR: Android V1 embedding detected."
+            exit 1
+          fi
+
+          echo "Android V2 embedding confirmed."
 
       - name: Generate app icon
-        run: dart run flutter_launcher_icons
+        run: |
+          dart run flutter_launcher_icons
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+
+      - name: Verify APK
+        run: |
+          test -f build/app/outputs/flutter-apk/app-release.apk
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -58,9 +87,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: v2.2.0
+          name: v2.3.0
           body: |
             ThisLinux güncel sürüm.
           files: build/app/outputs/flutter-apk/app-release.apk
           make_latest: true
           overwrite_files: true
+
