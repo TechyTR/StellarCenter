@@ -1,138 +1,66 @@
-name: Build & Release
+name: Build APK
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 permissions:
   contents: write
 
 jobs:
-  build-release:
-    if: github.actor != 'github-actions[bot]'
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.0'
           channel: stable
-          cache: true
 
-      - name: Flutter version
-        run: flutter --version
+      - name: Create Android platform
+        run: |
+          flutter create --platforms=android --org org.test temp_scaffold
+          cp -r temp_scaffold/android .
+          rm -rf temp_scaffold
+
+      - name: Set application name
+        run: |
+          sed -i 's/android:label="temp_scaffold"/android:label="This Linux"/' \
+          android/app/src/main/AndroidManifest.xml
+
+      - name: Fix Kotlin version
+        run: |
+          sed -i -E \
+          "s/(id[[:space:]]*['\"]org\.jetbrains\.kotlin\.android['\"][[:space:]]*version[[:space:]]*['\"])[^'\"]+(['\"])/\11.9.24\2/" \
+          android/settings.gradle
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Generate Android project
-        run: |
-          flutter create \
-            --platforms=android \
-            --org org.test \
-            .
-
-      - name: Configure Android application
-        shell: bash
-        run: |
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/applicationId = "org.test.thislinux"/applicationId = "org.test.stellar"/' \
-              android/app/build.gradle
-
-            sed -i 's/applicationId "org.test.thislinux"/applicationId "org.test.stellar"/' \
-              android/app/build.gradle
-          fi
-
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            sed -i 's/android:label="thislinux"/android:label="Stellar Center"/' \
-              android/app/src/main/AndroidManifest.xml
-          fi
-
-      - name: Read current version
-        id: version
-        shell: bash
-        run: |
-          CURRENT_VERSION=$(grep '^version:' pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//' | cut -d'+' -f1)
-
-          if [ -z "$CURRENT_VERSION" ]; then
-            echo "Could not read version from pubspec.yaml"
-            exit 1
-          fi
-
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-
-          if ! [[ "$MAJOR" =~ ^[0-9]+$ && "$MINOR" =~ ^[0-9]+$ && "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "Invalid semantic version: $CURRENT_VERSION"
-            exit 1
-          fi
-
-          MINOR=$((MINOR + 1))
-          PATCH=0
-
-          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-
-          echo "Current version: $CURRENT_VERSION"
-          echo "New version: $NEW_VERSION"
-
-          echo "current=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Update pubspec version
-        run: |
-          CURRENT="${{ steps.version.outputs.current }}"
-          NEW="${{ steps.version.outputs.new }}"
-
-          sed -i "s/^version: ${CURRENT}/version: ${NEW}/" pubspec.yaml
-
-          echo "Updated pubspec.yaml:"
-          grep '^version:' pubspec.yaml
+      - name: Generate app icon
+        run: dart run flutter_launcher_icons
 
       - name: Build APK
-        run: |
-          flutter clean
-          flutter pub get
-          flutter build apk --release
+        run: flutter build apk --release
 
-      - name: Prepare APK
-        run: |
-          mkdir -p release
-
-          cp build/app/outputs/flutter-apk/app-release.apk \
-            "release/StellarCenter.apk"
-
-          ls -lh release/
-
-      - name: Commit version update
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add pubspec.yaml
-
-          if git diff --cached --quiet; then
-            echo "No version changes to commit."
-          else
-            git commit -m "chore: bump version to ${{ steps.version.outputs.new }} [skip ci]"
-            git push origin HEAD:main
-          fi
-
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: StellarCenter
-          path: release/StellarCenter.apk
-          if-no-files-found: error
+          name: apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: v2.2.0
+          body: |
+            ThisLinux güncel sürüm.
+          files: build/app/outputs/flutter-apk/app-release.apk
+          make_latest: true
+          overwrite_files: true
