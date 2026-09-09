@@ -13,15 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------
+      # ============================================================
       # CHECKOUT
-      # -------------------------
+      # ============================================================
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
+      # ============================================================
       # LINUX BUILD DEPENDENCIES
-      # -------------------------
+      # ============================================================
+
       - name: Install Linux Build Dependencies
         run: |
           sudo apt-get update
@@ -34,18 +36,20 @@ jobs:
             liblzma-dev \
             dpkg-dev
 
-      # -------------------------
+      # ============================================================
       # JAVA
-      # -------------------------
+      # ============================================================
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # -------------------------
+      # ============================================================
       # FLUTTER
-      # -------------------------
+      # ============================================================
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -53,31 +57,38 @@ jobs:
           channel: stable
 
       - name: Enable Linux Desktop
-        run: flutter config --enable-linux-desktop
+        run: |
+          flutter config --enable-linux-desktop
 
-      # -------------------------
+      # ============================================================
       # ANDROID LOCAL PROPERTIES
-      # -------------------------
+      # ============================================================
+
       - name: Create Flutter local.properties
         run: |
           mkdir -p android
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      # -------------------------
+      # ============================================================
       # DEPENDENCIES
-      # -------------------------
+      # ============================================================
+
       - name: Get dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
 
-      # -------------------------
+      # ============================================================
       # APP ICON
-      # -------------------------
-      - name: Generate app icon
-        run: dart run flutter_launcher_icons
+      # ============================================================
 
-      # -------------------------
+      - name: Generate app icon
+        run: |
+          dart run flutter_launcher_icons
+
+      # ============================================================
       # VERSION
-      # -------------------------
+      # ============================================================
+
       - name: Read app version
         id: version
         shell: bash
@@ -85,7 +96,7 @@ jobs:
           VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read version from pubspec.yaml"
+            echo "ERROR: Could not read version from pubspec.yaml"
             exit 1
           fi
 
@@ -114,16 +125,20 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
 
       # ============================================================
-      # LINUX / PARDUS
+      # CREATE LINUX PLATFORM
       # ============================================================
 
-      - name: Verify Linux Platform
+      - name: Create Linux Platform
         run: |
-          if [ ! -d "linux" ]; then
-            echo "ERROR: linux/ directory is missing."
-            echo "The Linux platform files must exist in the repository."
-            exit 1
-          fi
+          rm -rf linux
+          flutter create \
+            --platforms=linux \
+            --project-name=stellarcenter \
+            .
+
+      # ============================================================
+      # BUILD LINUX / PARDUS
+      # ============================================================
 
       - name: Build Linux
         run: |
@@ -131,11 +146,22 @@ jobs:
           flutter pub get
           flutter build linux --release
 
+      # ============================================================
+      # VERIFY LINUX BUILD
+      # ============================================================
+
       - name: Verify Linux Build
+        shell: bash
         run: |
           test -d build/linux/x64/release/bundle
-          test -f build/linux/x64/release/bundle/stellarcenter
+
+          echo "Linux bundle contents:"
           ls -lh build/linux/x64/release/bundle/
+
+          if [ ! -f "build/linux/x64/release/bundle/stellarcenter" ]; then
+            echo "ERROR: stellarcenter executable was not found."
+            exit 1
+          fi
 
       # ============================================================
       # LINUX TAR.GZ
@@ -174,7 +200,8 @@ jobs:
             "deb-package/usr/share/applications" \
             "deb-package/usr/share/icons/hicolor/256x256/apps"
 
-          cp -r build/linux/x64/release/bundle/* \
+          cp -r \
+            build/linux/x64/release/bundle/* \
             "deb-package/opt/stellarcenter/"
 
           cat > "deb-package/DEBIAN/control" <<EOF
@@ -201,23 +228,38 @@ jobs:
           EOF
 
           if [ -f "assets/icon.png" ]; then
-            cp assets/icon.png \
+            cp \
+              assets/icon.png \
               "deb-package/usr/share/icons/hicolor/256x256/apps/stellarcenter.png"
           fi
+
+      # ============================================================
+      # BUILD .DEB
+      # ============================================================
 
       - name: Build DEB Package
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
-          dpkg-deb --build \
+          dpkg-deb \
+            --build \
             --root-owner-group \
             deb-package \
             "stellar-center_${VERSION}_amd64.deb"
 
+      # ============================================================
+      # VERIFY .DEB
+      # ============================================================
+
       - name: Verify DEB
         run: |
           test -f "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
-          dpkg-deb --info "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+
+          dpkg-deb \
+            --info \
+            "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+
+          echo "DEB package:"
           ls -lh "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
 
       - name: Upload DEB artifact
@@ -235,6 +277,7 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Stellar Center v${{ steps.version.outputs.version }}
+
           body: |
             # Stellar Center v${{ steps.version.outputs.version }}
 
@@ -243,10 +286,12 @@ jobs:
             - Android APK
             - Linux / Pardus TAR.GZ
             - Debian / Pardus AMD64 .deb package
+
           files: |
             build/app/outputs/flutter-apk/app-release.apk
             stellar-center-linux-x64.tar.gz
             stellar-center_${{ steps.version.outputs.version }}_amd64.deb
+
           make_latest: true
           overwrite_files: true
 
