@@ -112,3 +112,8 @@ jobs:
             stellar-center-linux-x64.tar.gz
           make_latest: true
           overwrite_files: true
+
+      - name: Clean and Recreate Linux
+        run: |
+          rm -rf linux
+          flutter create --platforms=linux .
