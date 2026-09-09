@@ -7,7 +7,7 @@ import 'theme/app_theme.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const ThisLinuxApp());
+  runApp(const stellarcenterapp());
 }
 
 class ThisLinuxApp extends StatefulWidget {
