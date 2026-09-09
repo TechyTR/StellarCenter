@@ -7,19 +7,19 @@ import 'theme/app_theme.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const thislinuxapp());
+  runApp(const StellarCenterApp());
 }
 
-class ThisLinuxApp extends StatefulWidget {
-  const ThisLinuxApp({
+class StellarCenterApp extends StatefulWidget {
+  const StellarCenterApp({
     super.key,
   });
 
   @override
-  State<ThisLinuxApp> createState() => _ThisLinuxAppState();
+  State<StellarCenterApp> createState() => _StellarCenterAppState();
 }
 
-class _ThisLinuxAppState extends State<ThisLinuxApp> {
+class _StellarCenterAppState extends State<StellarCenterApp> {
   AppThemeColor _selectedTheme = AppThemeColor.purple;
   AppThemeStyle _selectedStyle = AppThemeStyle.normal;
 
@@ -32,28 +32,19 @@ class _ThisLinuxAppState extends State<ThisLinuxApp> {
   }
 
   Future<void> _loadPreferences() async {
-    final colorValue =
-        await PreferencesService.getThemeColor();
-
-    final styleValue =
-        await PreferencesService.getThemeStyle();
+    final colorValue = await PreferencesService.getThemeColor();
+    final styleValue = await PreferencesService.getThemeStyle();
 
     if (!mounted) return;
 
     setState(() {
-      _selectedTheme =
-          AppTheme.colorFromString(colorValue);
-
-      _selectedStyle =
-          AppTheme.styleFromString(styleValue);
-
+      _selectedTheme = AppTheme.colorFromString(colorValue);
+      _selectedStyle = AppTheme.styleFromString(styleValue);
       _preferencesLoaded = true;
     });
   }
 
-  Future<void> _changeTheme(
-    AppThemeColor color,
-  ) async {
+  Future<void> _changeTheme(AppThemeColor color) async {
     setState(() {
       _selectedTheme = color;
     });
@@ -63,9 +54,7 @@ class _ThisLinuxAppState extends State<ThisLinuxApp> {
     );
   }
 
-  Future<void> _changeStyle(
-    AppThemeStyle style,
-  ) async {
+  Future<void> _changeStyle(AppThemeStyle style) async {
     setState(() {
       _selectedStyle = style;
     });
@@ -105,3 +94,4 @@ class _ThisLinuxAppState extends State<ThisLinuxApp> {
     );
   }
 }
+
