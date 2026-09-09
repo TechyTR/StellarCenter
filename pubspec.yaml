@@ -1,5 +1,5 @@
 name: stellarcenter
-description: "Stellar Center system utility application."
+description: "stellar center system utility application."
 publish_to: 'none'
 
 version: 2.5.0+1
