@@ -463,3 +463,9 @@ jobs:
 
           make_latest: true
           overwrite_files: true
+
+      - name: Rename Android release APK
+        shell: bash
+        run: |
+          set -e
+          mv release/apk/app-release.apk release/apk/stellar-center-release.apk
