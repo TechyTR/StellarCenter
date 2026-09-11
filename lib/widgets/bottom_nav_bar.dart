@@ -48,6 +48,11 @@ class BottomNavBar extends StatelessWidget {
             selectedIcon: Icon(Icons.info),
             label: 'App',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.storage_outlined),
+            selectedIcon: Icon(Icons.storage),
+            label: 'Storage',
+          ),
         ],
       );
     }
@@ -55,7 +60,9 @@ class BottomNavBar extends StatelessWidget {
     return _LiquidGlassNavigationBar(
       currentIndex: currentIndex,
       onDestinationSelected: onDestinationSelected,
-      isLight: selectedStyle == AppThemeStyle.liquidGlassLight,
+      isLight:
+          selectedStyle ==
+          AppThemeStyle.liquidGlassLight,
     );
   }
 }
@@ -73,18 +80,21 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme =
+        Theme.of(context).colorScheme;
+
     final accent = scheme.primary;
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(
-        14,
+        10,
         8,
-        14,
+        10,
         10,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius:
+            BorderRadius.circular(32),
         child: BackdropFilter(
           filter: ImageFilter.blur(
             sigmaX: 30,
@@ -93,22 +103,16 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-
-              // Ana cam yüzeyi:
-              // Ortası mümkün olduğunca saydam.
+              borderRadius:
+                  BorderRadius.circular(32),
               color: isLight
                   ? Colors.white.withOpacity(0.22)
                   : Colors.black.withOpacity(0.28),
-
-              // Camın dış kenarı.
               border: Border.all(
                 color: isLight
                     ? Colors.white.withOpacity(0.68)
                     : Colors.white.withOpacity(0.28),
-                width: 1.0,
               ),
-
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(
@@ -122,7 +126,6 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Üst kenardaki cam ışığı.
                 Positioned(
                   left: 14,
                   right: 14,
@@ -130,7 +133,8 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                   height: 1.5,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient:
+                          LinearGradient(
                         colors: [
                           Colors.transparent,
                           Colors.white.withOpacity(
@@ -143,15 +147,18 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                   ),
                 ),
 
-                // Çok hafif iç parlama.
                 Positioned.fill(
                   child: IgnorePointer(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                        borderRadius:
+                            BorderRadius.circular(32),
+                        gradient:
+                            LinearGradient(
+                          begin:
+                              Alignment.topCenter,
+                          end:
+                              Alignment.bottomCenter,
                           colors: [
                             Colors.white.withOpacity(
                               isLight ? 0.12 : 0.07,
@@ -168,106 +175,83 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                 ),
 
                 LayoutBuilder(
-                  builder: (context, constraints) {
-                    final itemWidth = constraints.maxWidth / 5;
+                  builder:
+                      (context, constraints) {
+                    final itemWidth =
+                        constraints.maxWidth / 6;
 
                     return Stack(
                       children: [
-                        // Hareket eden gerçek cam seçim parçası.
                         AnimatedPositioned(
-                          duration: const Duration(
+                          duration:
+                              const Duration(
                             milliseconds: 500,
                           ),
-                          curve: Curves.easeOutCubic,
-                          left: itemWidth * currentIndex + 5,
+                          curve:
+                              Curves.easeOutCubic,
+                          left:
+                              itemWidth *
+                                  currentIndex +
+                              4,
                           top: 7,
-                          width: itemWidth - 10,
+                          width:
+                              itemWidth - 8,
                           height: 56,
                           child: IgnorePointer(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(25),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(
+                                25,
+                              ),
+                              child:
+                                  BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(
                                   sigmaX: 18,
                                   sigmaY: 18,
                                 ),
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
+                                child:
+                                    DecoratedBox(
+                                  decoration:
+                                      BoxDecoration(
                                     borderRadius:
-                                        BorderRadius.circular(25),
-
-                                    // Seçili cam parçasının içi
-                                    // özellikle saydam tutuluyor.
-                                    color: isLight
-                                        ? Colors.white.withOpacity(0.16)
-                                        : Colors.white.withOpacity(0.08),
-
-                                    // Kenarlar merkezden çok daha belirgin.
-                                    border: Border.all(
-                                      color: isLight
-                                          ? Colors.white.withOpacity(0.72)
-                                          : Colors.white.withOpacity(0.32),
-                                      width: 1.0,
+                                        BorderRadius
+                                            .circular(
+                                      25,
                                     ),
-
+                                    color: isLight
+                                        ? Colors.white
+                                            .withOpacity(
+                                            0.16,
+                                          )
+                                        : Colors.white
+                                            .withOpacity(
+                                            0.08,
+                                          ),
+                                    border:
+                                        Border.all(
+                                      color: isLight
+                                          ? Colors.white
+                                              .withOpacity(
+                                              0.72,
+                                            )
+                                          : Colors.white
+                                              .withOpacity(
+                                              0.32,
+                                            ),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: accent.withOpacity(
-                                          isLight ? 0.18 : 0.14,
+                                        color: accent
+                                            .withOpacity(
+                                          isLight
+                                              ? 0.18
+                                              : 0.14,
                                         ),
                                         blurRadius: 18,
-                                        spreadRadius: -2,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(
-                                          isLight ? 0.10 : 0.05,
-                                        ),
-                                        blurRadius: 8,
-                                        spreadRadius: -1,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      // Seçili camın üst highlight'ı.
-                                      Positioned(
-                                        left: 10,
-                                        right: 10,
-                                        top: 0,
-                                        height: 1.5,
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                Colors.transparent,
-                                                Colors.white.withOpacity(
-                                                  isLight ? 0.72 : 0.34,
-                                                ),
-                                                Colors.transparent,
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Hafif iç highlight.
-                                      Positioned.fill(
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topCenter,
-                                              end: Alignment.bottomCenter,
-                                              colors: [
-                                                Colors.white.withOpacity(
-                                                  isLight ? 0.08 : 0.04,
-                                                ),
-                                                Colors.transparent,
-                                              ],
-                                            ),
-                                          ),
-                                        ),
+                                        spreadRadius:
+                                            -2,
                                       ),
                                     ],
                                   ),
@@ -281,7 +265,8 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                           children: [
                             _item(
                               context,
-                              Icons.dashboard_outlined,
+                              Icons
+                                  .dashboard_outlined,
                               Icons.dashboard,
                               'Home',
                               0,
@@ -297,7 +282,8 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                             ),
                             _item(
                               context,
-                              Icons.monitor_heart_outlined,
+                              Icons
+                                  .monitor_heart_outlined,
                               Icons.monitor_heart,
                               'Monitor',
                               2,
@@ -317,6 +303,14 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               Icons.info,
                               'App',
                               4,
+                              accent,
+                            ),
+                            _item(
+                              context,
+                              Icons.storage_outlined,
+                              Icons.storage,
+                              'Storage',
+                              5,
                               accent,
                             ),
                           ],
@@ -341,7 +335,8 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
     int index,
     Color accent,
   ) {
-    final selected = currentIndex == index;
+    final selected =
+        currentIndex == index;
 
     final mutedColor = Theme.of(context)
         .colorScheme
@@ -349,56 +344,69 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
 
     return Expanded(
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onDestinationSelected(index),
+        behavior:
+            HitTestBehavior.opaque,
+        onTap: () =>
+            onDestinationSelected(index),
         child: SizedBox(
           height: 70,
           child: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
               children: [
                 AnimatedScale(
-                  scale: selected ? 1.06 : 1.0,
-                  duration: const Duration(
+                  scale:
+                      selected ? 1.06 : 1.0,
+                  duration:
+                      const Duration(
                     milliseconds: 300,
                   ),
-                  curve: Curves.easeOutCubic,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(
+                  curve:
+                      Curves.easeOutCubic,
+                  child:
+                      AnimatedSwitcher(
+                    duration:
+                        const Duration(
                       milliseconds: 220,
                     ),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
                     child: Icon(
-                      selected ? selectedIcon : icon,
+                      selected
+                          ? selectedIcon
+                          : icon,
                       key: ValueKey(
                         '$index-$selected',
                       ),
-                      size: 21,
+                      size: 20,
                       color: selected
                           ? accent
-                          : mutedColor.withOpacity(0.82),
+                          : mutedColor
+                              .withOpacity(
+                              0.82,
+                            ),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 3),
-
                 AnimatedDefaultTextStyle(
-                  duration: const Duration(
+                  duration:
+                      const Duration(
                     milliseconds: 220,
                   ),
-                  curve: Curves.easeOutCubic,
+                  child: Text(label),
                   style: TextStyle(
-                    fontSize: selected ? 10.5 : 10,
+                    fontSize:
+                        selected ? 9.5 : 9,
                     fontWeight: selected
                         ? FontWeight.w600
                         : FontWeight.w400,
                     color: selected
                         ? accent
-                        : mutedColor.withOpacity(0.82),
+                        : mutedColor
+                            .withOpacity(
+                            0.82,
+                          ),
                   ),
-                  child: Text(label),
                 ),
               ],
             ),
