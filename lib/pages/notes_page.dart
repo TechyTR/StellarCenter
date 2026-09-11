@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -20,6 +21,8 @@ class _NotesPageState extends State<NotesPage> {
       TextEditingController();
 
   List<String> _notes = [];
+
+  bool get _isAndroid => Platform.isAndroid;
 
   bool get _isGlass {
     final brightness = Theme.of(context).brightness;
@@ -117,8 +120,6 @@ class _NotesPageState extends State<NotesPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        final scheme = Theme.of(dialogContext).colorScheme;
-
         return AlertDialog(
           backgroundColor: _isGlass
               ? (_isLightGlass
@@ -155,7 +156,8 @@ class _NotesPageState extends State<NotesPage> {
                         : null,
                     border: _isGlass
                         ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius:
+                                BorderRadius.circular(18),
                             borderSide: BorderSide(
                               color: _glassBorder,
                             ),
@@ -163,7 +165,8 @@ class _NotesPageState extends State<NotesPage> {
                         : null,
                     enabledBorder: _isGlass
                         ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius:
+                                BorderRadius.circular(18),
                             borderSide: BorderSide(
                               color: _glassBorder,
                             ),
@@ -189,7 +192,8 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                     enabledBorder: _isGlass
                         ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius:
+                                BorderRadius.circular(18),
                             borderSide: BorderSide(
                               color: _glassBorder,
                             ),
@@ -323,7 +327,8 @@ class _NotesPageState extends State<NotesPage> {
                         color: _isLightGlass
                             ? Colors.white.withOpacity(0.9)
                             : Colors.white.withOpacity(0.20),
-                        borderRadius: BorderRadius.circular(50),
+                        borderRadius:
+                            BorderRadius.circular(50),
                       ),
                     ),
                   ),
@@ -381,9 +386,7 @@ class _NotesPageState extends State<NotesPage> {
                 height: 220,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: themeColor.withOpacity(
-                    _isLightGlass ? 0.08 : 0.08,
-                  ),
+                  color: themeColor.withOpacity(0.08),
                 ),
               ),
             ),
@@ -443,7 +446,6 @@ class _NotesPageState extends State<NotesPage> {
     required String content,
   }) {
     final scheme = Theme.of(context).colorScheme;
-
     final note = _notes[index];
 
     return Dismissible(
@@ -478,7 +480,8 @@ class _NotesPageState extends State<NotesPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -502,9 +505,8 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: scheme.primary.withOpacity(
-                        0.75,
-                      ),
+                      color: scheme.primary
+                          .withOpacity(0.75),
                       boxShadow: [
                         BoxShadow(
                           color: scheme.primary
@@ -549,6 +551,34 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 
+  Widget _androidAddButton() {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Positioned(
+      right: 18,
+      bottom: 18,
+      child: FloatingActionButton(
+        onPressed: _showAddNoteDialog,
+        elevation: _isGlass ? 0 : 6,
+        backgroundColor: _isGlass
+            ? Colors.white.withOpacity(
+                _isLightGlass ? 0.32 : 0.10,
+              )
+            : null,
+        foregroundColor: scheme.primary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: _isGlass
+              ? BorderSide(
+                  color: _glassBorder,
+                )
+              : BorderSide.none,
+        ),
+        child: const Icon(Icons.add_rounded),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -560,6 +590,7 @@ class _NotesPageState extends State<NotesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: _isGlass,
+
       appBar: AppBar(
         title: const Text(
           'Notlar',
@@ -573,29 +604,38 @@ class _NotesPageState extends State<NotesPage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddNoteDialog,
-        elevation: _isGlass ? 0 : 6,
-        backgroundColor: _isGlass
-            ? Colors.white.withOpacity(
-                _isLightGlass ? 0.32 : 0.10,
-              )
-            : null,
-        foregroundColor:
-            Theme.of(context).colorScheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: _isGlass
-              ? BorderSide(
-                  color: _glassBorder,
-                )
-              : BorderSide.none,
-        ),
-        child: const Icon(Icons.add_rounded),
-      ),
+
+      // Linux'ta FAB normal Scaffold FAB olarak kalıyor.
+      // Android'de bottom navigation tarafından kapatılmaması
+      // için FAB aşağıdaki Stack içine taşınıyor.
+      floatingActionButton: _isAndroid
+          ? null
+          : FloatingActionButton(
+              onPressed: _showAddNoteDialog,
+              elevation: _isGlass ? 0 : 6,
+              backgroundColor: _isGlass
+                  ? Colors.white.withOpacity(
+                      _isLightGlass ? 0.32 : 0.10,
+                    )
+                  : null,
+              foregroundColor:
+                  Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(20),
+                side: _isGlass
+                    ? BorderSide(
+                        color: _glassBorder,
+                      )
+                    : BorderSide.none,
+              ),
+              child: const Icon(Icons.add_rounded),
+            ),
+
       body: Stack(
         children: [
           _backgroundGlow(),
+
           if (_notes.isEmpty)
             _emptyState()
           else
@@ -618,9 +658,14 @@ class _NotesPageState extends State<NotesPage> {
                 );
               },
             ),
+
+          // SADECE ANDROID
+          //
+          // HomeShell'deki bottom navigation'ın
+          // nested Scaffold FAB'ını kapatmasını önler.
+          if (_isAndroid) _androidAddButton(),
         ],
       ),
     );
   }
 }
-
