@@ -24,7 +24,13 @@ class UpdateService {
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
       final response = await http
-          .get(Uri.parse(versionUrl))
+          .get(
+            Uri.parse(versionUrl),
+            headers: const {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+          )
           .timeout(
             const Duration(seconds: 10),
           );
@@ -38,11 +44,13 @@ class UpdateService {
 
       final latestVersion =
           (data['latest_version'] ?? data['version'])
-              ?.toString();
+              ?.toString()
+              .trim();
 
       final downloadUrl =
           (data['download_url'] ?? data['url'])
-              ?.toString();
+              ?.toString()
+              .trim();
 
       if (latestVersion == null ||
           latestVersion.isEmpty ||
@@ -51,10 +59,11 @@ class UpdateService {
         return null;
       }
 
-      final parsedUrl = Uri.tryParse(downloadUrl);
+      final uri = Uri.tryParse(downloadUrl);
 
-      if (parsedUrl == null ||
-          parsedUrl.scheme != 'https') {
+      if (uri == null ||
+          uri.scheme != 'https' ||
+          uri.host.isEmpty) {
         return null;
       }
 
@@ -74,11 +83,11 @@ class UpdateService {
     final current = _parseVersion(currentVersion);
     final latest = _parseVersion(latestVersion);
 
-    final maxLength = current.length > latest.length
+    final length = current.length > latest.length
         ? current.length
         : latest.length;
 
-    for (var i = 0; i < maxLength; i++) {
+    for (var i = 0; i < length; i++) {
       final currentPart =
           i < current.length ? current[i] : 0;
 
@@ -97,13 +106,11 @@ class UpdateService {
     return false;
   }
 
-  static List<int> _parseVersion(
-    String version,
-  ) {
+  static List<int> _parseVersion(String version) {
     return version
         .trim()
         .replaceFirst(
-          RegExp(r'^v'),
+          RegExp(r'^v', caseSensitive: false),
           '',
         )
         .split('.')
@@ -127,8 +134,9 @@ class UpdateService {
     final uri = Uri.tryParse(downloadUrl);
 
     if (uri == null ||
-        uri.scheme != 'https') {
-      throw PlatformException(
+        uri.scheme != 'https' ||
+        uri.host.isEmpty) {
+      throw const PlatformException(
         code: 'INVALID_URL',
         message: 'APK URL geçersiz.',
       );
@@ -144,7 +152,7 @@ class UpdateService {
     } on PlatformException {
       rethrow;
     } on MissingPluginException {
-      throw PlatformException(
+      throw const PlatformException(
         code: 'NATIVE_UPDATER_MISSING',
         message:
             'Android güncelleme bileşeni bulunamadı.',
@@ -152,4 +160,3 @@ class UpdateService {
     }
   }
 }
-
