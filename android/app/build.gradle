@@ -24,16 +24,35 @@ android {
         applicationId = "org.test.thislinux"
 
         minSdk = 23
-
         targetSdk = flutter.targetSdkVersion
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv("STELLAR_KEYSTORE_PATH")
+            def keystorePassword = System.getenv("STELLAR_KEYSTORE_PASSWORD")
+            def keyAlias = System.getenv("STELLAR_KEY_ALIAS")
+            def keyPassword = System.getenv("STELLAR_KEY_PASSWORD")
+
+            if (keystorePath != null &&
+                keystorePassword != null &&
+                keyAlias != null &&
+                keyPassword != null) {
+
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.release
         }
     }
 }
@@ -41,3 +60,4 @@ android {
 flutter {
     source = "../.."
 }
+
