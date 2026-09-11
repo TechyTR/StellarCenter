@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
-
 import '../Linux/widgets/linux_navigation_bar.dart';
 
 import 'app_info_page.dart';
@@ -97,11 +96,11 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _selectDestination(int index) {
-    if (index == _currentIndex) {
+    if (index < 0 || index >= _pages.length) {
       return;
     }
 
-    if (index < 0 || index >= _pages.length) {
+    if (_currentIndex == index) {
       return;
     }
 
@@ -126,7 +125,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final bool glass =
+    final glass =
         widget.selectedStyle != AppThemeStyle.normal;
 
     return Scaffold(
@@ -142,8 +141,12 @@ class _HomeShellState extends State<HomeShell> {
 
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 320),
-              reverseDuration: const Duration(milliseconds: 220),
+              duration: const Duration(
+                milliseconds: 320,
+              ),
+              reverseDuration: const Duration(
+                milliseconds: 220,
+              ),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               layoutBuilder: (
@@ -154,7 +157,8 @@ class _HomeShellState extends State<HomeShell> {
                   alignment: Alignment.center,
                   children: [
                     ...previousChildren,
-                    if (currentChild != null) currentChild,
+                    if (currentChild != null)
+                      currentChild,
                   ],
                 );
               },
@@ -193,7 +197,8 @@ class _HomeShellState extends State<HomeShell> {
           : BottomNavBar(
               currentIndex: _currentIndex,
               selectedStyle: widget.selectedStyle,
-              onDestinationSelected: _selectDestination,
+              onDestinationSelected:
+                  _selectDestination,
             ),
     );
   }
