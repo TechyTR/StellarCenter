@@ -8,37 +8,26 @@ on:
 permissions:
   contents: write
 
+# ============================================================
+# ANDROID BUILD
+# ============================================================
+
 jobs:
-  build:
+  android:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      # ============================================================
+      # ========================================================
       # CHECKOUT
-      # ============================================================
+      # ========================================================
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ============================================================
-      # LINUX BUILD DEPENDENCIES
-      # ============================================================
-
-      - name: Install Linux Build Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            cmake \
-            ninja-build \
-            pkg-config \
-            libgtk-3-dev \
-            liblzma-dev \
-            dpkg-dev
-
-      # ============================================================
+      # ========================================================
       # JAVA
-      # ============================================================
+      # ========================================================
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -46,9 +35,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ============================================================
+      # ========================================================
       # FLUTTER
-      # ============================================================
+      # ========================================================
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -56,38 +45,34 @@ jobs:
           flutter-version: '3.24.0'
           channel: stable
 
-      - name: Enable Linux Desktop
-        run: |
-          flutter config --enable-linux-desktop
-
-      # ============================================================
+      # ========================================================
       # ANDROID LOCAL PROPERTIES
-      # ============================================================
+      # ========================================================
 
       - name: Create Flutter local.properties
         run: |
           mkdir -p android
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
-      # ============================================================
+      # ========================================================
       # DEPENDENCIES
-      # ============================================================
+      # ========================================================
 
       - name: Get dependencies
         run: |
           flutter pub get
 
-      # ============================================================
+      # ========================================================
       # APP ICON
-      # ============================================================
+      # ========================================================
 
       - name: Generate app icon
         run: |
           dart run flutter_launcher_icons
 
-      # ============================================================
+      # ========================================================
       # VERSION
-      # ============================================================
+      # ========================================================
 
       - name: Read app version
         id: version
@@ -101,11 +86,12 @@ jobs:
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
           echo "Building Stellar Center v$VERSION"
 
-      # ============================================================
-      # ANDROID
-      # ============================================================
+      # ========================================================
+      # BUILD APK
+      # ========================================================
 
       - name: Build APK
         run: |
@@ -113,79 +99,238 @@ jobs:
           flutter pub get
           flutter build apk --release
 
+      # ========================================================
+      # VERIFY APK
+      # ========================================================
+
       - name: Verify APK
         run: |
           test -f build/app/outputs/flutter-apk/app-release.apk
+
+          echo "APK:"
           ls -lh build/app/outputs/flutter-apk/app-release.apk
+
+      # ========================================================
+      # UPLOAD APK ARTIFACT
+      # ========================================================
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-${{ steps.version.outputs.version }}
+          name: stellarcenter-apk-${{ steps.version.outputs.version }}
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # ============================================================
-      # CREATE LINUX PLATFORM
-      # ============================================================
+
+  # ============================================================
+  # LINUX / PARDUS BUILD
+  # ============================================================
+
+  linux:
+    name: Build Linux / Pardus
+    runs-on: ubuntu-latest
+
+    # Debian 12 is used intentionally because Pardus 23
+    # is based on Debian 12.
+    container:
+      image: debian:12
+
+    steps:
+      # ========================================================
+      # SYSTEM DEPENDENCIES
+      # ========================================================
+
+      - name: Install Linux build dependencies
+        shell: bash
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+
+          apt-get update
+
+          apt-get install -y \
+            git \
+            curl \
+            wget \
+            unzip \
+            xz-utils \
+            zip \
+            file \
+            ca-certificates \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            libstdc++-12-dev \
+            dpkg-dev
+
+      # ========================================================
+      # CHECKOUT
+      # ========================================================
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ========================================================
+      # JAVA
+      # ========================================================
+
+      - name: Install Java 17
+        shell: bash
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+
+          apt-get update
+
+          apt-get install -y \
+            openjdk-17-jdk
+
+          java -version
+
+      # ========================================================
+      # FLUTTER
+      # ========================================================
+
+      - name: Install Flutter 3.24.0
+        shell: bash
+        run: |
+          git clone \
+            --branch 3.24.0 \
+            --depth 1 \
+            https://github.com/flutter/flutter.git \
+            /opt/flutter
+
+          export PATH="/opt/flutter/bin:$PATH"
+
+          flutter --version
+
+      # ========================================================
+      # FLUTTER PATH
+      # ========================================================
+
+      - name: Configure Flutter environment
+        shell: bash
+        run: |
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+          echo "/opt/flutter/bin/cache/dart-sdk/bin" >> "$GITHUB_PATH"
+
+      # ========================================================
+      # ENABLE LINUX DESKTOP
+      # ========================================================
+
+      - name: Enable Linux Desktop
+        shell: bash
+        run: |
+          flutter config --enable-linux-desktop
+
+      # ========================================================
+      # CREATE FLUTTER LINUX PLATFORM
+      # ========================================================
 
       - name: Create Linux Platform
+        shell: bash
         run: |
           rm -rf linux
+
           flutter create \
             --platforms=linux \
             --project-name=stellarcenter \
             .
 
-      # ============================================================
-      # BUILD LINUX / PARDUS
-      # ============================================================
+      # ========================================================
+      # DEPENDENCIES
+      # ========================================================
+
+      - name: Get dependencies
+        shell: bash
+        run: |
+          flutter pub get
+
+      # ========================================================
+      # VERSION
+      # ========================================================
+
+      - name: Read app version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not read version from pubspec.yaml"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Building Stellar Center Linux v$VERSION"
+
+      # ========================================================
+      # BUILD LINUX
+      # ========================================================
 
       - name: Build Linux
+        shell: bash
         run: |
           flutter clean
           flutter pub get
+
           flutter build linux --release
 
-      # ============================================================
+      # ========================================================
       # VERIFY LINUX BUILD
-      # ============================================================
+      # ========================================================
 
       - name: Verify Linux Build
         shell: bash
         run: |
           test -d build/linux/x64/release/bundle
 
-          echo "Linux bundle contents:"
-          ls -lh build/linux/x64/release/bundle/
+          test -f \
+            build/linux/x64/release/bundle/stellarcenter
 
-          if [ ! -f "build/linux/x64/release/bundle/stellarcenter" ]; then
-            echo "ERROR: stellarcenter executable was not found."
-            exit 1
-          fi
+          echo "Linux bundle:"
+          ls -lh \
+            build/linux/x64/release/bundle/
 
-      # ============================================================
+      # ========================================================
       # LINUX TAR.GZ
-      # ============================================================
+      # ========================================================
 
       - name: Create Linux TAR.GZ
+        shell: bash
         run: |
           cd build/linux/x64/release/bundle
-          tar -czf "${{ github.workspace }}/stellar-center-linux-x64.tar.gz" .
+
+          tar -czf \
+            "${GITHUB_WORKSPACE}/stellar-center-linux-x64.tar.gz" \
+            .
+
+      # ========================================================
+      # VERIFY TAR.GZ
+      # ========================================================
 
       - name: Verify TAR.GZ
+        shell: bash
         run: |
           test -f stellar-center-linux-x64.tar.gz
-          ls -lh stellar-center-linux-x64.tar.gz
+
+          ls -lh \
+            stellar-center-linux-x64.tar.gz
+
+      # ========================================================
+      # UPLOAD TAR.GZ
+      # ========================================================
 
       - name: Upload Linux TAR.GZ artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ steps.version.outputs.version }}
+          name: stellarcenter-linux-${{ steps.version.outputs.version }}
           path: stellar-center-linux-x64.tar.gz
 
-      # ============================================================
-      # DEBIAN / PARDUS .DEB
-      # ============================================================
+      # ========================================================
+      # DEBIAN / PARDUS PACKAGE
+      # ========================================================
 
       - name: Create Debian Package Structure
         shell: bash
@@ -200,32 +345,45 @@ jobs:
             "deb-package/usr/share/applications" \
             "deb-package/usr/share/icons/hicolor/256x256/apps"
 
+          # Copy complete Flutter Linux bundle.
           cp -r \
             build/linux/x64/release/bundle/* \
             "deb-package/opt/stellarcenter/"
 
+          # ======================================================
+          # DEBIAN CONTROL
+          # ======================================================
+
           cat > "deb-package/DEBIAN/control" <<EOF
-          Package: stellarcenter
-          Version: ${VERSION}
-          Section: utils
-          Priority: optional
-          Architecture: amd64
-          Maintainer: TechyTR
-          Description: Stellar Center
-           Stellar Center system utility application for Linux and Pardus.
-          Depends: libc6, libgtk-3-0
-          EOF
+Package: stellarcenter
+Version: ${VERSION}
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: TechyTR
+Description: Stellar Center
+ Stellar Center system utility application for Linux and Pardus.
+Depends: libc6, libgtk-3-0
+EOF
+
+          # ======================================================
+          # DESKTOP ENTRY
+          # ======================================================
 
           cat > "deb-package/usr/share/applications/stellarcenter.desktop" <<EOF
-          [Desktop Entry]
-          Name=Stellar Center
-          Comment=Stellar Center system utility application
-          Exec=/opt/stellarcenter/stellarcenter
-          Icon=stellarcenter
-          Terminal=false
-          Type=Application
-          Categories=Utility;System;
-          EOF
+[Desktop Entry]
+Name=Stellar Center
+Comment=Stellar Center system utility application
+Exec=/opt/stellarcenter/stellarcenter
+Icon=stellarcenter
+Terminal=false
+Type=Application
+Categories=Utility;System;
+EOF
+
+          # ======================================================
+          # ICON
+          # ======================================================
 
           if [ -f "assets/icon.png" ]; then
             cp \
@@ -233,11 +391,12 @@ jobs:
               "deb-package/usr/share/icons/hicolor/256x256/apps/stellarcenter.png"
           fi
 
-      # ============================================================
-      # BUILD .DEB
-      # ============================================================
+      # ========================================================
+      # BUILD DEB
+      # ========================================================
 
       - name: Build DEB Package
+        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
@@ -247,35 +406,136 @@ jobs:
             deb-package \
             "stellar-center_${VERSION}_amd64.deb"
 
-      # ============================================================
-      # VERIFY .DEB
-      # ============================================================
+      # ========================================================
+      # VERIFY DEB
+      # ========================================================
 
       - name: Verify DEB
+        shell: bash
         run: |
-          test -f "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+          test -f \
+            "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
 
           dpkg-deb \
             --info \
             "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
 
           echo "DEB package:"
-          ls -lh "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+          ls -lh \
+            "stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+
+      # ========================================================
+      # UPLOAD DEB
+      # ========================================================
 
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deb-${{ steps.version.outputs.version }}
+          name: stellarcenter-deb-${{ steps.version.outputs.version }}
           path: stellar-center_${{ steps.version.outputs.version }}_amd64.deb
 
-      # ============================================================
-      # GITHUB RELEASE
-      # ============================================================
+
+  # ============================================================
+  # GITHUB RELEASE
+  # ============================================================
+
+  release:
+    name: Create GitHub Release
+    needs:
+      - android
+      - linux
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # ========================================================
+      # CHECKOUT
+      # ========================================================
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ========================================================
+      # READ VERSION
+      # ========================================================
+
+      - name: Read app version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not read version from pubspec.yaml"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Preparing Stellar Center v$VERSION"
+
+      # ========================================================
+      # DOWNLOAD APK
+      # ========================================================
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: stellarcenter-apk-${{ steps.version.outputs.version }}
+          path: release-files/apk
+
+      # ========================================================
+      # DOWNLOAD LINUX TAR.GZ
+      # ========================================================
+
+      - name: Download Linux TAR.GZ
+        uses: actions/download-artifact@v4
+        with:
+          name: stellarcenter-linux-${{ steps.version.outputs.version }}
+          path: release-files/linux
+
+      # ========================================================
+      # DOWNLOAD DEB
+      # ========================================================
+
+      - name: Download DEB
+        uses: actions/download-artifact@v4
+        with:
+          name: stellarcenter-deb-${{ steps.version.outputs.version }}
+          path: release-files/deb
+
+      # ========================================================
+      # VERIFY RELEASE FILES
+      # ========================================================
+
+      - name: Verify release files
+        shell: bash
+        run: |
+          echo "Release files:"
+
+          find release-files \
+            -type f \
+            -maxdepth 3 \
+            -print
+
+          test -f \
+            release-files/apk/app-release.apk
+
+          test -f \
+            release-files/linux/stellar-center-linux-x64.tar.gz
+
+          test -f \
+            "release-files/deb/stellar-center_${{ steps.version.outputs.version }}_amd64.deb"
+
+      # ========================================================
+      # CREATE GITHUB RELEASE
+      # ========================================================
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
+
           name: Stellar Center v${{ steps.version.outputs.version }}
 
           body: |
@@ -283,15 +543,23 @@ jobs:
 
             ## Downloads
 
-            - Android APK
-            - Linux / Pardus TAR.GZ
-            - Debian / Pardus AMD64 .deb package
+            ### Android
+            - Stellar Center Android APK
+
+            ### Linux / Pardus
+            - Linux x64 TAR.GZ
+            - Debian / Pardus AMD64 .deb
+
+            ## Compatibility
+
+            The Linux build is compiled in a Debian 12
+            environment for improved compatibility with
+            Pardus 23.
 
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            stellar-center-linux-x64.tar.gz
-            stellar-center_${{ steps.version.outputs.version }}_amd64.deb
+            release-files/apk/app-release.apk
+            release-files/linux/stellar-center-linux-x64.tar.gz
+            release-files/deb/stellar-center_${{ steps.version.outputs.version }}_amd64.deb
 
           make_latest: true
           overwrite_files: true
-
