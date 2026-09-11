@@ -60,6 +60,51 @@ jobs:
 
           echo "Building Stellar Center v$VERSION"
 
+      # ==========================================================
+      # ANDROID RELEASE SIGNING
+      # ==========================================================
+
+      - name: Prepare Android signing
+        shell: bash
+        env:
+          STELLAR_KEYSTORE_BASE64: ${{ secrets.STELLAR_KEYSTORE_BASE64 }}
+          STELLAR_KEYSTORE_PASSWORD: ${{ secrets.STELLAR_KEYSTORE_PASSWORD }}
+          STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
+          STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
+        run: |
+          set -e
+
+          if [ -z "$STELLAR_KEYSTORE_BASE64" ]; then
+            echo "STELLAR_KEYSTORE_BASE64 is missing."
+            exit 1
+          fi
+
+          if [ -z "$STELLAR_KEYSTORE_PASSWORD" ]; then
+            echo "STELLAR_KEYSTORE_PASSWORD is missing."
+            exit 1
+          fi
+
+          if [ -z "$STELLAR_KEY_ALIAS" ]; then
+            echo "STELLAR_KEY_ALIAS is missing."
+            exit 1
+          fi
+
+          if [ -z "$STELLAR_KEY_PASSWORD" ]; then
+            echo "STELLAR_KEY_PASSWORD is missing."
+            exit 1
+          fi
+
+          echo "$STELLAR_KEYSTORE_BASE64" | base64 --decode > "$GITHUB_WORKSPACE/stellar-release.jks"
+
+          test -s "$GITHUB_WORKSPACE/stellar-release.jks"
+
+          echo "STELLAR_KEYSTORE_PATH=$GITHUB_WORKSPACE/stellar-release.jks" >> "$GITHUB_ENV"
+          echo "STELLAR_KEYSTORE_PASSWORD=$STELLAR_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "STELLAR_KEY_ALIAS=$STELLAR_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "STELLAR_KEY_PASSWORD=$STELLAR_KEY_PASSWORD" >> "$GITHUB_ENV"
+
+          echo "Android signing keystore prepared."
+
       - name: Build APK
         run: |
           flutter clean
@@ -217,9 +262,9 @@ jobs:
           echo "Bundle:"
           ls -lah "$BUNDLE"
 
-      # ------------------------------------------------------------
+      # ----------------------------------------------------------
       # TAR.GZ
-      # ------------------------------------------------------------
+      # ----------------------------------------------------------
 
       - name: Create Linux TAR.GZ
         shell: bash
@@ -241,9 +286,9 @@ jobs:
           name: stellarcenter-linux-${{ steps.version.outputs.version }}
           path: stellar-center-linux-x64.tar.gz
 
-      # ------------------------------------------------------------
+      # ----------------------------------------------------------
       # DEB
-      # ------------------------------------------------------------
+      # ----------------------------------------------------------
 
       - name: Create Debian package
         shell: bash
