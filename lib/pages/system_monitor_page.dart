@@ -55,6 +55,7 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
 
   bool _loading = true;
   bool _refreshing = false;
+  bool _collecting = false;
 
   bool get _isLinux => Platform.isLinux;
 
@@ -75,7 +76,11 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
 
     _timer = Timer.periodic(
       const Duration(seconds: 1),
-      (_) => _loadData(),
+      (_) {
+        if (!_collecting && mounted) {
+          _loadData();
+        }
+      },
     );
   }
 
@@ -86,12 +91,18 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
   }
 
   Future<void> _loadData() async {
-    if (!mounted) return;
+    if (!mounted || _collecting) {
+      return;
+    }
+
+    _collecting = true;
 
     try {
       final snapshot = await _collectSnapshot();
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _cpuUsage = snapshot.cpuUsage;
@@ -115,12 +126,16 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
         _refreshing = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _loading = false;
         _refreshing = false;
       });
+    } finally {
+      _collecting = false;
     }
   }
 
@@ -604,7 +619,9 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
     for (final part in input.split(',')) {
       final value = part.trim();
 
-      if (value.isEmpty) continue;
+      if (value.isEmpty) {
+        continue;
+      }
 
       if (value.contains('-')) {
         final range = value.split('-');
@@ -678,7 +695,9 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
   }
 
   Future<void> _refresh() async {
-    if (_refreshing) return;
+    if (_refreshing || _collecting) {
+      return;
+    }
 
     setState(() {
       _refreshing = true;
@@ -691,13 +710,17 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
   }
 
   String _ram(double value) {
-    if (value <= 0) return '--';
+    if (value <= 0) {
+      return '--';
+    }
 
     return '${value.toStringAsFixed(1)} GB';
   }
 
   String _frequency(double value) {
-    if (value <= 0) return '--';
+    if (value <= 0) {
+      return '--';
+    }
 
     if (value >= 1000000) {
       return '${(value / 1000000).toStringAsFixed(2)} GHz';
@@ -707,7 +730,9 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
   }
 
   String _temperature(double? value) {
-    if (value == null) return '--';
+    if (value == null) {
+      return '--';
+    }
 
     return '${value.toStringAsFixed(1)} °C';
   }
@@ -936,7 +961,7 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
               ),
               const Spacer(),
               Text(
-                '${(_ramAvailable).toStringAsFixed(1)} GB boş',
+                '${_ramAvailable.toStringAsFixed(1)} GB boş',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context)
@@ -1204,7 +1229,9 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
           IconButton(
             tooltip: 'Yenile',
             onPressed:
-                _refreshing ? null : _refresh,
+                _refreshing || _collecting
+                    ? null
+                    : _refresh,
             icon: _refreshing
                 ? const SizedBox(
                     width: 19,
