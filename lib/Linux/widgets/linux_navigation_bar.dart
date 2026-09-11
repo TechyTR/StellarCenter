@@ -87,6 +87,7 @@ class LinuxNavigationBar extends StatelessWidget {
                         isGlass: isGlass,
                         isLight: isLight,
                       ),
+
                       _navigationItem(
                         context,
                         index: 1,
@@ -96,6 +97,7 @@ class LinuxNavigationBar extends StatelessWidget {
                         isGlass: isGlass,
                         isLight: isLight,
                       ),
+
                       _navigationItem(
                         context,
                         index: 2,
@@ -105,15 +107,17 @@ class LinuxNavigationBar extends StatelessWidget {
                         isGlass: isGlass,
                         isLight: isLight,
                       ),
+
                       _navigationItem(
                         context,
                         index: 3,
-                        icon: Icons.music_note_outlined,
-                        selectedIcon: Icons.music_note,
-                        label: 'Music',
+                        icon: Icons.notes_outlined,
+                        selectedIcon: Icons.notes,
+                        label: 'Notes',
                         isGlass: isGlass,
                         isLight: isLight,
                       ),
+
                       _navigationItem(
                         context,
                         index: 4,
@@ -167,9 +171,7 @@ class LinuxNavigationBar extends StatelessWidget {
               onDestinationSelected(index);
             },
             child: AnimatedContainer(
-              duration: const Duration(
-                milliseconds: 280,
-              ),
+              duration: const Duration(milliseconds: 280),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
@@ -190,8 +192,7 @@ class LinuxNavigationBar extends StatelessWidget {
                 boxShadow: selected
                     ? [
                         BoxShadow(
-                          color:
-                              accent.withOpacity(0.16),
+                          color: accent.withOpacity(0.16),
                           blurRadius: 18,
                           spreadRadius: -2,
                         ),
@@ -209,13 +210,10 @@ class LinuxNavigationBar extends StatelessWidget {
                         milliseconds: 220,
                       ),
                       child: Icon(
-                        selected
-                            ? selectedIcon
-                            : icon,
+                        selected ? selectedIcon : icon,
                         size: 23,
-                        color: selected
-                            ? accent
-                            : muted,
+                        color:
+                            selected ? accent : muted,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -228,9 +226,8 @@ class LinuxNavigationBar extends StatelessWidget {
                         fontWeight: selected
                             ? FontWeight.w600
                             : FontWeight.w400,
-                        color: selected
-                            ? accent
-                            : muted,
+                        color:
+                            selected ? accent : muted,
                       ),
                     ),
                   ],
