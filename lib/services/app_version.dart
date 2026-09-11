@@ -1,5 +1,5 @@
 class AppVersion {
-  static const String current = '2.5';
+  static const String current = '3.3';
 
   const AppVersion._();
 }
