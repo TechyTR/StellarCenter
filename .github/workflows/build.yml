@@ -8,9 +8,13 @@ on:
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
+
+  # ============================================================
+  # ANDROID
+  # ============================================================
+
   android:
     name: Build Android APK
     runs-on: ubuntu-latest
@@ -23,39 +27,38 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: "3.24.0"
           channel: stable
           cache: true
 
-      - name: Prepare Android
-        run: |
-          mkdir -p android
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Generate app icons
+      - name: Generate icons
         run: dart run flutter_launcher_icons
 
       - name: Read version
         id: version
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read version"
+            echo "Version could not be detected."
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Stellar Center v$VERSION"
+
+          echo "Building Stellar Center v$VERSION"
 
       - name: Build APK
         run: |
@@ -66,6 +69,7 @@ jobs:
       - name: Verify APK
         run: |
           test -f build/app/outputs/flutter-apk/app-release.apk
+          file build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK
@@ -75,17 +79,24 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
 
 
+  # ============================================================
+  # LINUX / PARDUS 23
+  # ============================================================
+
   linux:
-    name: Build Linux / Pardus 23
+    name: Build Linux x64 / Pardus 23
     runs-on: ubuntu-latest
 
     container:
       image: debian:12
 
     steps:
-      - name: Install dependencies
+
+      - name: Install system dependencies
         shell: bash
         run: |
+          set -e
+
           export DEBIAN_FRONTEND=noninteractive
 
           apt-get update
@@ -97,6 +108,7 @@ jobs:
             unzip \
             xz-utils \
             zip \
+            tar \
             file \
             ca-certificates \
             clang \
@@ -106,95 +118,138 @@ jobs:
             libgtk-3-dev \
             liblzma-dev \
             libstdc++-12-dev \
-            dpkg-dev \
-            openjdk-17-jdk
+            dpkg-dev
 
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      - name: Install Flutter 3.24.0
         shell: bash
         run: |
+          set -e
+
           git clone \
-            --branch 3.24.0 \
             --depth 1 \
+            --branch 3.24.0 \
             https://github.com/flutter/flutter.git \
             /opt/flutter
 
           echo "/opt/flutter/bin" >> "$GITHUB_PATH"
           echo "/opt/flutter/bin/cache/dart-sdk/bin" >> "$GITHUB_PATH"
 
-          export PATH="/opt/flutter/bin:$PATH"
+          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
 
           flutter config --enable-linux-desktop
+
           flutter --version
 
-      - name: Create Linux platform
+      - name: Verify Linux toolchain
         shell: bash
         run: |
-          rm -rf linux
+          set -e
 
-          flutter create \
-            --platforms=linux \
-            --project-name=stellarcenter \
-            .
+          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+
+          flutter doctor -v
+
+      - name: Prepare Linux platform
+        shell: bash
+        run: |
+          set -e
+
+          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+
+          if [ ! -d "linux" ]; then
+            flutter create \
+              --platforms=linux \
+              --project-name=stellarcenter \
+              .
+          fi
 
       - name: Get dependencies
         shell: bash
-        run: flutter pub get
+        run: |
+          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+
+          flutter pub get
 
       - name: Read version
         id: version
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read version"
+            echo "Version could not be detected."
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Stellar Center Linux v$VERSION"
 
-      - name: Build Linux
+          echo "Building Stellar Center Linux v$VERSION"
+
+      - name: Build Linux x64
         shell: bash
         run: |
+          set -e
+
+          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+
           flutter clean
           flutter pub get
+
           flutter build linux --release
 
-      - name: Verify Linux
+      - name: Verify Linux binary
         shell: bash
         run: |
-          test -d build/linux/x64/release/bundle
-          test -f build/linux/x64/release/bundle/stellarcenter
+          set -e
 
-          ls -lh build/linux/x64/release/bundle/
+          BUNDLE="build/linux/x64/release/bundle"
 
-      - name: Create TAR.GZ
+          test -d "$BUNDLE"
+          test -f "$BUNDLE/stellarcenter"
+
+          echo "Linux binary:"
+          file "$BUNDLE/stellarcenter"
+
+          echo ""
+          echo "Bundle:"
+          ls -lah "$BUNDLE"
+
+      # ------------------------------------------------------------
+      # TAR.GZ
+      # ------------------------------------------------------------
+
+      - name: Create Linux TAR.GZ
         shell: bash
         run: |
+          set -e
+
           tar -czf \
             stellar-center-linux-x64.tar.gz \
             -C build/linux/x64/release/bundle \
             .
 
-      - name: Verify TAR.GZ
-        shell: bash
-        run: |
           test -f stellar-center-linux-x64.tar.gz
+
           ls -lh stellar-center-linux-x64.tar.gz
 
-      - name: Upload TAR.GZ
+      - name: Upload Linux TAR.GZ
         uses: actions/upload-artifact@v4
         with:
           name: stellarcenter-linux-${{ steps.version.outputs.version }}
           path: stellar-center-linux-x64.tar.gz
 
-      - name: Create DEB
+      # ------------------------------------------------------------
+      # DEB
+      # ------------------------------------------------------------
+
+      - name: Create Debian package
         shell: bash
         run: |
+          set -e
+
           VERSION="${{ steps.version.outputs.version }}"
 
           rm -rf deb-package
@@ -205,32 +260,31 @@ jobs:
             "deb-package/usr/share/applications" \
             "deb-package/usr/share/icons/hicolor/256x256/apps"
 
-          cp -r \
+          cp -a \
             build/linux/x64/release/bundle/. \
             "deb-package/opt/stellarcenter/"
 
           cat > "deb-package/DEBIAN/control" <<EOF
-Package: stellarcenter
-Version: ${VERSION}
-Section: utils
-Priority: optional
-Architecture: amd64
-Maintainer: TechyTR
-Depends: libc6, libgtk-3-0
-Description: Stellar Center
- Stellar Center system utility application for Linux and Pardus.
-EOF
+          Package: stellarcenter
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: TechyTR
+          Depends: libc6, libgtk-3-0
+          Description: Stellar Center
+           Stellar Center system utility application for Linux and Pardus.
+          EOF
 
           cat > "deb-package/usr/share/applications/stellarcenter.desktop" <<EOF
-[Desktop Entry]
-Name=Stellar Center
-Comment=Stellar Center system utility application
-Exec=/opt/stellarcenter/stellarcenter
-Icon=stellarcenter
-Terminal=false
-Type=Application
-Categories=Utility;System;
-EOF
+          [Desktop Entry]
+          Name=Stellar Center
+          Comment=Stellar Center system utility application
+          Exec=/opt/stellarcenter/stellarcenter
+          Terminal=false
+          Type=Application
+          Categories=Utility;System;
+          EOF
 
           if [ -f "assets/icon.png" ]; then
             cp \
@@ -241,6 +295,8 @@ EOF
       - name: Build DEB
         shell: bash
         run: |
+          set -e
+
           VERSION="${{ steps.version.outputs.version }}"
 
           dpkg-deb \
@@ -252,15 +308,19 @@ EOF
       - name: Verify DEB
         shell: bash
         run: |
+          set -e
+
           VERSION="${{ steps.version.outputs.version }}"
 
-          test -f "stellar-center_${VERSION}_amd64.deb"
+          DEB="stellar-center_${VERSION}_amd64.deb"
 
-          dpkg-deb \
-            --info \
-            "stellar-center_${VERSION}_amd64.deb"
+          test -f "$DEB"
 
-          ls -lh "stellar-center_${VERSION}_amd64.deb"
+          dpkg-deb --info "$DEB"
+
+          echo ""
+          echo "DEB:"
+          ls -lh "$DEB"
 
       - name: Upload DEB
         uses: actions/upload-artifact@v4
@@ -268,6 +328,10 @@ EOF
           name: stellarcenter-deb-${{ steps.version.outputs.version }}
           path: stellar-center_${{ steps.version.outputs.version }}_amd64.deb
 
+
+  # ============================================================
+  # GITHUB RELEASE
+  # ============================================================
 
   release:
     name: Create GitHub Release
@@ -278,6 +342,7 @@ EOF
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -285,43 +350,46 @@ EOF
         id: version
         shell: bash
         run: |
-          VERSION=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\)+.*$/\1/p' pubspec.yaml | head -n 1)
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
 
           if [ -z "$VERSION" ]; then
-            echo "Could not read version"
+            echo "Version could not be detected."
             exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Download APK
+      - name: Download Android APK
         uses: actions/download-artifact@v4
         with:
           name: stellarcenter-apk-${{ steps.version.outputs.version }}
-          path: release-files/apk
+          path: release/apk
 
-      - name: Download Linux
+      - name: Download Linux TAR.GZ
         uses: actions/download-artifact@v4
         with:
           name: stellarcenter-linux-${{ steps.version.outputs.version }}
-          path: release-files/linux
+          path: release/linux
 
-      - name: Download DEB
+      - name: Download Linux DEB
         uses: actions/download-artifact@v4
         with:
           name: stellarcenter-deb-${{ steps.version.outputs.version }}
-          path: release-files/deb
+          path: release/deb
 
       - name: Verify release files
         shell: bash
         run: |
+          set -e
+
           VERSION="${{ steps.version.outputs.version }}"
 
-          test -f release-files/apk/app-release.apk
-          test -f release-files/linux/stellar-center-linux-x64.tar.gz
-          test -f "release-files/deb/stellar-center_${VERSION}_amd64.deb"
+          test -f release/apk/app-release.apk
+          test -f release/linux/stellar-center-linux-x64.tar.gz
+          test -f "release/deb/stellar-center_${VERSION}_amd64.deb"
 
-          echo "All release files are ready."
+          echo "Release files:"
+          find release -type f -exec ls -lh {} \;
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -332,24 +400,135 @@ EOF
           body: |
             # Stellar Center v${{ steps.version.outputs.version }}
 
-            ## Downloads
+            ## Android
+            - APK
 
-            ### Android
-            - Stellar Center APK
-
-            ### Linux / Pardus 23
-            - Linux x64 TAR.GZ
-            - Debian / Pardus AMD64 DEB
+            ## Linux
+            - x64 TAR.GZ
+            - Debian/Pardus AMD64 DEB
 
             ## Compatibility
-
-            Linux binaries are built inside Debian 12
+            Linux binaries are compiled using Debian 12
             for compatibility with Pardus 23.
 
           files: |
-            release-files/apk/app-release.apk
-            release-files/linux/stellar-center-linux-x64.tar.gz
-            release-files/deb/stellar-center_${{ steps.version.outputs.version }}_amd64.deb
+            release/apk/app-release.apk
+            release/linux/stellar-center-linux-x64.tar.gz
+            release/deb/stellar-center_${{ steps.version.outputs.version }}_amd64.deb
 
           make_latest: true
           overwrite_files: true
+
+      - name: Close Stale Issues
+  uses: actions/stale@v11.0.0
+  with:
+    # Token for the repository. Can be passed in using `{{ secrets.GITHUB_TOKEN }}`.
+    repo-token: # optional, default is ${{ github.token }}
+    # The message to post on the issue when tagging it. If none provided, will not mark issues stale.
+    stale-issue-message: # optional
+    # The message to post on the pull request when tagging it. If none provided, will not mark pull requests stale.
+    stale-pr-message: # optional
+    # The message to post on the issue when closing it. If none provided, will not comment when closing an issue.
+    close-issue-message: # optional
+    # The message to post on the pull request when closing it. If none provided, will not comment when closing a pull requests.
+    close-pr-message: # optional
+    # The number of days old an issue or a pull request can be before marking it stale. Set to -1 to never mark issues or pull requests as stale automatically.
+    days-before-stale: # optional, default is 60
+    # The number of days old an issue can be before marking it stale. Set to -1 to never mark issues as stale automatically. Override "days-before-stale" option regarding only the issues.
+    days-before-issue-stale: # optional
+    # The number of days old a pull request can be before marking it stale. Set to -1 to never mark pull requests as stale automatically. Override "days-before-stale" option regarding only the pull requests.
+    days-before-pr-stale: # optional
+    # The number of days to wait to close an issue or a pull request after it being marked stale. Set to -1 to never close stale issues or pull requests.
+    days-before-close: # optional, default is 7
+    # The number of days to wait to close an issue after it being marked stale. Set to -1 to never close stale issues. Override "days-before-close" option regarding only the issues.
+    days-before-issue-close: # optional
+    # The number of days to wait to close a pull request after it being marked stale. Set to -1 to never close stale pull requests. Override "days-before-close" option regarding only the pull requests.
+    days-before-pr-close: # optional
+    # The label to apply when an issue is stale.
+    stale-issue-label: # optional, default is Stale
+    # The label to apply when an issue is closed.
+    close-issue-label: # optional
+    # The labels that mean an issue is exempt from being marked stale. Separate multiple labels with commas (eg. "label1,label2").
+    exempt-issue-labels: # optional, default is 
+    # The reason to use when closing an issue.
+    close-issue-reason: # optional, default is not_planned
+    # The label to apply when a pull request is stale.
+    stale-pr-label: # optional, default is Stale
+    # The label to apply when a pull request is closed.
+    close-pr-label: # optional
+    # The labels that mean a pull request is exempt from being marked as stale. Separate multiple labels with commas (eg. "label1,label2").
+    exempt-pr-labels: # optional, default is 
+    # The milestones that mean an issue or a pull request is exempt from being marked as stale. Separate multiple milestones with commas (eg. "milestone1,milestone2").
+    exempt-milestones: # optional, default is 
+    # The milestones that mean an issue is exempt from being marked as stale. Separate multiple milestones with commas (eg. "milestone1,milestone2"). Override "exempt-milestones" option regarding only the issues.
+    exempt-issue-milestones: # optional, default is 
+    # The milestones that mean a pull request is exempt from being marked as stale. Separate multiple milestones with commas (eg. "milestone1,milestone2"). Override "exempt-milestones" option regarding only the pull requests.
+    exempt-pr-milestones: # optional, default is 
+    # Exempt all issues and pull requests with milestones from being marked as stale. Default to false.
+    exempt-all-milestones: # optional, default is false
+    # Exempt all issues with milestones from being marked as stale. Override "exempt-all-milestones" option regarding only the issues.
+    exempt-all-issue-milestones: # optional, default is 
+    # Exempt all pull requests with milestones from being marked as stale. Override "exempt-all-milestones" option regarding only the pull requests.
+    exempt-all-pr-milestones: # optional, default is 
+    # Only issues or pull requests with all of these labels are checked if stale. Defaults to `` (disabled) and can be a comma-separated list of labels.
+    only-labels: # optional, default is 
+    # Only issues or pull requests with at least one of these labels are checked if stale. Defaults to `` (disabled) and can be a comma-separated list of labels.
+    any-of-labels: # optional, default is 
+    # Only issues with at least one of these labels are checked if stale. Defaults to `` (disabled) and can be a comma-separated list of labels. Override "any-of-labels" option regarding only the issues.
+    any-of-issue-labels: # optional, default is 
+    # Only pull requests with at least one of these labels are checked if stale. Defaults to `` (disabled) and can be a comma-separated list of labels. Override "any-of-labels" option regarding only the pull requests.
+    any-of-pr-labels: # optional, default is 
+    # Only issues with all of these labels are checked if stale. Defaults to `[]` (disabled) and can be a comma-separated list of labels. Override "only-labels" option regarding only the issues.
+    only-issue-labels: # optional, default is 
+    # Only pull requests with all of these labels are checked if stale. Defaults to `[]` (disabled) and can be a comma-separated list of labels. Override "only-labels" option regarding only the pull requests.
+    only-pr-labels: # optional, default is 
+    # The maximum number of operations per run, used to control rate limiting (GitHub API CRUD related).
+    operations-per-run: # optional, default is 30
+    # Remove stale labels from issues and pull requests when they are updated or commented on.
+    remove-stale-when-updated: # optional, default is true
+    # Remove stale labels from issues when they are updated or commented on. Override "remove-stale-when-updated" option regarding only the issues.
+    remove-issue-stale-when-updated: # optional, default is 
+    # Remove stale labels from pull requests when they are updated or commented on. Override "remove-stale-when-updated" option regarding only the pull requests.
+    remove-pr-stale-when-updated: # optional, default is 
+    # Run the processor in debug mode without actually performing any operations on live issues.
+    debug-only: # optional, default is false
+    # The order to get issues or pull requests. Defaults to false, which is descending.
+    ascending: # optional, default is false
+    # What to sort results by. Valid options are `created`, `updated`, and `comments`. Defaults to `created`.
+    sort-by: # optional, default is created
+    # Delete the git branch after closing a stale pull request.
+    delete-branch: # optional, default is false
+    # The date used to skip the stale action on issue/pull request created before it (ISO 8601 or RFC 2822).
+    start-date: # optional, default is 
+    # The assignees which exempt an issue or a pull request from being marked as stale. Separate multiple assignees with commas (eg. "user1,user2").
+    exempt-assignees: # optional, default is 
+    # The assignees which exempt an issue from being marked as stale. Separate multiple assignees with commas (eg. "user1,user2"). Override "exempt-assignees" option regarding only the issues.
+    exempt-issue-assignees: # optional, default is 
+    # The assignees which exempt a pull request from being marked as stale. Separate multiple assignees with commas (eg. "user1,user2"). Override "exempt-assignees" option regarding only the pull requests.
+    exempt-pr-assignees: # optional, default is 
+    # Exempt all issues and pull requests with assignees from being marked as stale. Default to false.
+    exempt-all-assignees: # optional, default is false
+    # Exempt all issues with assignees from being marked as stale. Override "exempt-all-assignees" option regarding only the issues.
+    exempt-all-issue-assignees: # optional, default is 
+    # Exempt all pull requests with assignees from being marked as stale. Override "exempt-all-assignees" option regarding only the pull requests.
+    exempt-all-pr-assignees: # optional, default is 
+    # Exempt draft pull requests from being marked as stale. Default to false.
+    exempt-draft-pr: # optional, default is false
+    # Display some statistics at the end regarding the stale workflow (only when the logs are enabled).
+    enable-statistics: # optional, default is true
+    # A comma delimited list of labels to add when an issue or pull request becomes unstale.
+    labels-to-add-when-unstale: # optional, default is 
+    # A comma delimited list of labels to remove when an issue or pull request becomes stale.
+    labels-to-remove-when-stale: # optional, default is 
+    # A comma delimited list of labels to remove when an issue or pull request becomes unstale.
+    labels-to-remove-when-unstale: # optional, default is 
+    # Any update (update/comment) can reset the stale idle time on the issues and pull requests.
+    ignore-updates: # optional, default is false
+    # Any update (update/comment) can reset the stale idle time on the issues. Override "ignore-updates" option regarding only the issues.
+    ignore-issue-updates: # optional, default is 
+    # Any update (update/comment) can reset the stale idle time on the pull requests. Override "ignore-updates" option regarding only the pull requests.
+    ignore-pr-updates: # optional, default is 
+    # Only the issues or the pull requests with an assignee will be marked as stale automatically.
+    include-only-assigned: # optional, default is false
+    # Only issues with a matching type are processed as stale/closed. Defaults to `[]` (disabled) and can be a comma-separated list of issue types.
+    only-issue-types: # optional, default is 
