@@ -7,8 +7,7 @@ class StorageManagerPage extends StatefulWidget {
   const StorageManagerPage({super.key});
 
   @override
-  State<StorageManagerPage> createState() =>
-      _StorageManagerPageState();
+  State<StorageManagerPage> createState() => _StorageManagerPageState();
 }
 
 class _StorageManagerPageState extends State<StorageManagerPage> {
@@ -17,6 +16,8 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
   int _fileCount = 0;
   double _totalBytes = 0;
+  double _usedBytes = 0;
+  double _freeBytes = 0;
 
   final Map<String, double> _categories = {
     'Görseller': 0,
@@ -41,7 +42,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
   @override
   void initState() {
     super.initState();
-    _scanStorage();
+    _loadStorage();
   }
 
   String get _rootPath {
@@ -56,7 +57,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     return Directory.current.path;
   }
 
-  Future<void> _scanStorage() async {
+  Future<void> _loadStorage() async {
     if (_scanning) return;
 
     _scanning = true;
@@ -64,16 +65,98 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     if (mounted) {
       setState(() {
         _loading = true;
-        _fileCount = 0;
-        _totalBytes = 0;
-
-        for (final key in _categories.keys) {
-          _categories[key] = 0;
-          _counts[key] = 0;
-        }
       });
     }
 
+    try {
+      await _readDiskUsage();
+      await _scanImportantDirectories();
+    } catch (_) {}
+
+    if (!mounted) {
+      _scanning = false;
+      return;
+    }
+
+    setState(() {
+      _loading = false;
+    });
+
+    _scanning = false;
+  }
+
+  Future<void> _readDiskUsage() async {
+    try {
+      if (Platform.isLinux) {
+        final result = await Process.run(
+          'df',
+          ['-B1', _rootPath],
+        );
+
+        if (result.exitCode == 0) {
+          final lines = result.stdout
+              .toString()
+              .trim()
+              .split('\n');
+
+          if (lines.length >= 2) {
+            final parts = lines.last
+                .trim()
+                .split(RegExp(r'\s+'));
+
+            if (parts.length >= 4) {
+              final total = double.tryParse(parts[1]) ?? 0;
+              final used = double.tryParse(parts[2]) ?? 0;
+              final free = double.tryParse(parts[3]) ?? 0;
+
+              if (mounted) {
+                setState(() {
+                  _totalBytes = total;
+                  _usedBytes = used;
+                  _freeBytes = free;
+                });
+              }
+
+              return;
+            }
+          }
+        }
+      }
+
+      final root = Directory(_rootPath);
+
+      if (await root.exists()) {
+        await _fallbackDirectorySize(root);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _fallbackDirectorySize(
+    Directory root,
+  ) async {
+    var total = 0.0;
+
+    try {
+      await for (final entity in root.list(
+        recursive: false,
+        followLinks: false,
+      )) {
+        if (entity is File) {
+          try {
+            total += await entity.length();
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    setState(() {
+      _usedBytes = total;
+    });
+  }
+
+  Future<void> _scanImportantDirectories() async {
     final categories = <String, double>{
       for (final key in _categories.keys) key: 0,
     };
@@ -82,29 +165,32 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
       for (final key in _counts.keys) key: 0,
     };
 
-    var totalBytes = 0.0;
     var fileCount = 0;
 
-    try {
-      final root = Directory(_rootPath);
+    final directories = _directoriesToScan();
 
-      if (await root.exists()) {
+    for (final directory in directories) {
+      if (!await directory.exists()) continue;
+
+      try {
         await _scanDirectory(
-          root,
+          directory,
           categories,
           counts,
-          (size) {
-            totalBytes += size;
+          (size, category) {
+            categories[category] =
+                (categories[category] ?? 0) + size;
+
+            counts[category] =
+                (counts[category] ?? 0) + 1;
+
             fileCount++;
           },
         );
-      }
-    } catch (_) {}
-
-    if (!mounted) {
-      _scanning = false;
-      return;
+      } catch (_) {}
     }
+
+    if (!mounted) return;
 
     setState(() {
       _categories
@@ -115,22 +201,48 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
         ..clear()
         ..addAll(counts);
 
-      _totalBytes = totalBytes;
       _fileCount = fileCount;
-      _loading = false;
     });
+  }
 
-    _scanning = false;
+  List<Directory> _directoriesToScan() {
+    final root = Directory(_rootPath);
+
+    if (Platform.isAndroid) {
+      return [
+        Directory('${root.path}/DCIM'),
+        Directory('${root.path}/Pictures'),
+        Directory('${root.path}/Movies'),
+        Directory('${root.path}/Music'),
+        Directory('${root.path}/Documents'),
+        Directory('${root.path}/Download'),
+        Directory('${root.path}/Downloads'),
+      ];
+    }
+
+    if (Platform.isLinux) {
+      return [
+        Directory('${root.path}/Desktop'),
+        Directory('${root.path}/Documents'),
+        Directory('${root.path}/Downloads'),
+        Directory('${root.path}/Music'),
+        Directory('${root.path}/Pictures'),
+        Directory('${root.path}/Videos'),
+      ];
+    }
+
+    return [root];
   }
 
   Future<void> _scanDirectory(
     Directory directory,
     Map<String, double> categories,
     Map<String, int> counts,
-    void Function(double) onFile,
+    void Function(double size, String category) onFile,
   ) async {
     try {
       await for (final entity in directory.list(
+        recursive: false,
         followLinks: false,
       )) {
         try {
@@ -138,13 +250,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
             final size = (await entity.length()).toDouble();
             final category = _categoryFor(entity.path);
 
-            categories[category] =
-                (categories[category] ?? 0) + size;
-
-            counts[category] =
-                (counts[category] ?? 0) + 1;
-
-            onFile(size);
+            onFile(size, category);
             continue;
           }
 
@@ -154,7 +260,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                 .last
                 .toLowerCase();
 
-            if (_shouldSkipDirectory(entity.path, name)) {
+            if (_shouldSkipDirectory(name)) {
               continue;
             }
 
@@ -170,26 +276,37 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     } catch (_) {}
   }
 
-  bool _shouldSkipDirectory(
-    String path,
-    String name,
-  ) {
-    if (name == '.cache' ||
-        name == '.cache' ||
-        name == '.local' ||
-        name == '.config' ||
-        name == '.var' ||
-        name == '.git' ||
-        name == 'node_modules' ||
-        name == '.dart_tool' ||
-        name == 'build') {
+  bool _shouldSkipDirectory(String name) {
+    const commonSkips = {
+      '.cache',
+      '.local',
+      '.config',
+      '.var',
+      '.git',
+      '.dart_tool',
+      'build',
+      'node_modules',
+      'cache',
+      'caches',
+      'temp',
+      'tmp',
+    };
+
+    if (commonSkips.contains(name)) {
       return true;
     }
 
     if (Platform.isAndroid) {
-      if (name == 'android') return true;
-      if (name == '.thumbnails') return true;
-      if (name == '.trash') return true;
+      const androidSkips = {
+        'android',
+        '.thumbnails',
+        '.trash',
+        'android',
+      };
+
+      if (androidSkips.contains(name)) {
+        return true;
+      }
     }
 
     return false;
@@ -237,6 +354,10 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
   String _formatSize(double bytes) {
     if (bytes <= 0) return '0 B';
+
+    if (bytes >= 1024 * 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024 / 1024 / 1024).toStringAsFixed(2)} TB';
+    }
 
     if (bytes >= 1024 * 1024 * 1024) {
       return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GB';
@@ -306,9 +427,8 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: _scanning ? null : _scanStorage,
+            onPressed: _scanning ? null : _loadStorage,
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Yenile',
           ),
         ],
       ),
@@ -317,13 +437,24 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
               child: CircularProgressIndicator(),
             )
           : RefreshIndicator(
-              onRefresh: _scanStorage,
+              onRefresh: _loadStorage,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 children: [
                   _summaryCard(context),
                   const SizedBox(height: 20),
+                  Text(
+                    'Depolama kullanımı',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ..._storageStats(context),
+                  const SizedBox(height: 18),
                   Text(
                     'Dosya kategorileri',
                     style: TextStyle(
@@ -337,8 +468,8 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                   const SizedBox(height: 12),
                   Text(
                     Platform.isLinux
-                        ? 'Linux kullanıcı dizini taranıyor: $_rootPath'
-                        : 'Paylaşılan dahili depolama taranıyor.',
+                        ? 'Linux: yalnızca kullanıcı dosyaları taranıyor.'
+                        : 'Android: yaygın kullanıcı klasörleri taranıyor.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -354,8 +485,6 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
   Widget _summaryCard(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final values = _categories.values.toList();
-
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -366,7 +495,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
               height: 210,
               child: CustomPaint(
                 painter: _StorageChartPainter(
-                  values: values,
+                  values: _categories.values.toList(),
                   primaryColor: scheme.primary,
                   secondaryColor: scheme.secondary,
                   tertiaryColor: scheme.tertiary,
@@ -378,7 +507,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _formatSize(_totalBytes),
+                        _formatSize(_usedBytes),
                         style: const TextStyle(
                           fontSize: 27,
                           fontWeight: FontWeight.bold,
@@ -386,7 +515,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Taranan alan',
+                        'Kullanılan',
                         style: TextStyle(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -398,7 +527,10 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
             ),
             const SizedBox(height: 10),
             Text(
-              '$_fileCount dosya',
+              _totalBytes > 0
+                  ? '${_formatSize(_freeBytes)} boş / '
+                      '${_formatSize(_totalBytes)} toplam'
+                  : 'Depolama bilgisi alınamadı',
               style: TextStyle(
                 color: scheme.onSurfaceVariant,
               ),
@@ -409,6 +541,67 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     );
   }
 
+  List<Widget> _storageStats(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return [
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.storage_rounded),
+          title: const Text('Toplam'),
+          trailing: Text(
+            _formatSize(_totalBytes),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.folder_rounded,
+            color: scheme.primary,
+          ),
+          title: const Text('Kullanılan'),
+          trailing: Text(
+            _formatSize(_usedBytes),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.check_circle_outline_rounded,
+            color: scheme.tertiary,
+          ),
+          title: const Text('Boş'),
+          trailing: Text(
+            _formatSize(_freeBytes),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.insert_drive_file_outlined),
+          title: const Text('Taranan dosya'),
+          trailing: Text(
+            '$_fileCount',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
   List<Widget> _categoryWidgets(BuildContext context) {
     return _categories.entries.map((entry) {
       final size = entry.value;
@@ -417,8 +610,10 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
           ? 0.0
           : size / _totalBytes * 100;
 
-      final color =
-          _categoryColor(context, entry.key);
+      final color = _categoryColor(
+        context,
+        entry.key,
+      );
 
       return Card(
         margin: const EdgeInsets.only(bottom: 10),
@@ -460,7 +655,6 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
 class _StorageChartPainter extends CustomPainter {
   final List<double> values;
-
   final Color primaryColor;
   final Color secondaryColor;
   final Color tertiaryColor;
@@ -475,10 +669,7 @@ class _StorageChartPainter extends CustomPainter {
   });
 
   @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
+  void paint(Canvas canvas, Size size) {
     final total = values.fold<double>(
       0,
       (sum, value) => sum + value,
@@ -550,10 +741,7 @@ class _StorageChartPainter extends CustomPainter {
   bool shouldRepaint(
     covariant _StorageChartPainter oldDelegate,
   ) {
-    return oldDelegate.values != values ||
-        oldDelegate.primaryColor != primaryColor ||
-        oldDelegate.secondaryColor != secondaryColor ||
-        oldDelegate.tertiaryColor != tertiaryColor ||
-        oldDelegate.backgroundColor != backgroundColor;
+    return true;
   }
 }
+
