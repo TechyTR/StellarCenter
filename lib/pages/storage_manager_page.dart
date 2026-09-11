@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class StorageManagerPage extends StatefulWidget {
   const StorageManagerPage({super.key});
@@ -12,14 +11,9 @@ class StorageManagerPage extends StatefulWidget {
       _StorageManagerPageState();
 }
 
-class _StorageManagerPageState
-    extends State<StorageManagerPage>
-    with WidgetsBindingObserver {
-  static const MethodChannel _channel =
-      MethodChannel('org.test.thislinux/native');
-
+class _StorageManagerPageState extends State<StorageManagerPage> {
   bool _loading = true;
-  bool _hasStorageAccess = false;
+  bool _scanning = false;
 
   int _fileCount = 0;
   double _totalBytes = 0;
@@ -47,76 +41,25 @@ class _StorageManagerPageState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _checkAccess();
+    _scanStorage();
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(
-    AppLifecycleState state,
-  ) {
-    if (state == AppLifecycleState.resumed) {
-      _checkAccess();
+  String get _rootPath {
+    if (Platform.isLinux) {
+      return Platform.environment['HOME'] ?? '/home';
     }
-  }
 
-  Future<void> _checkAccess() async {
-    try {
-      final result = await _channel.invokeMethod<bool>(
-        'hasStorageAccess',
-      );
-
-      final access = result ?? false;
-
-      if (!mounted) return;
-
-      setState(() {
-        _hasStorageAccess = access;
-      });
-
-      if (access) {
-        await _scanStorage();
-      } else {
-        setState(() {
-          _loading = false;
-        });
-      }
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _hasStorageAccess = false;
-        _loading = false;
-      });
+    if (Platform.isAndroid) {
+      return '/storage/emulated/0';
     }
-  }
 
-  Future<void> _openStorageSettings() async {
-    try {
-      await _channel.invokeMethod(
-        'openStorageAccessSettings',
-      );
-    } catch (_) {}
-
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
-
-    if (mounted) {
-      await _checkAccess();
-    }
+    return Directory.current.path;
   }
 
   Future<void> _scanStorage() async {
-    if (!_hasStorageAccess) {
-      return;
-    }
+    if (_scanning) return;
+
+    _scanning = true;
 
     if (mounted) {
       setState(() {
@@ -131,7 +74,7 @@ class _StorageManagerPageState
       });
     }
 
-    final result = <String, double>{
+    final categories = <String, double>{
       for (final key in _categories.keys) key: 0,
     };
 
@@ -139,83 +82,85 @@ class _StorageManagerPageState
       for (final key in _counts.keys) key: 0,
     };
 
-    double totalBytes = 0;
-    int totalFiles = 0;
+    var totalBytes = 0.0;
+    var fileCount = 0;
 
     try {
-      final root =
-          Directory('/storage/emulated/0');
+      final root = Directory(_rootPath);
 
       if (await root.exists()) {
         await _scanDirectory(
           root,
-          result,
+          categories,
           counts,
           (size) {
             totalBytes += size;
-            totalFiles++;
+            fileCount++;
           },
         );
       }
     } catch (_) {}
 
-    if (!mounted) return;
+    if (!mounted) {
+      _scanning = false;
+      return;
+    }
 
     setState(() {
       _categories
         ..clear()
-        ..addAll(result);
+        ..addAll(categories);
 
       _counts
         ..clear()
         ..addAll(counts);
 
       _totalBytes = totalBytes;
-      _fileCount = totalFiles;
+      _fileCount = fileCount;
       _loading = false;
     });
+
+    _scanning = false;
   }
 
   Future<void> _scanDirectory(
     Directory directory,
-    Map<String, double> result,
+    Map<String, double> categories,
     Map<String, int> counts,
     void Function(double) onFile,
   ) async {
     try {
-      await for (final entity
-          in directory.list(
+      await for (final entity in directory.list(
         followLinks: false,
       )) {
         try {
           if (entity is File) {
-            final size =
-                (await entity.length()).toDouble();
+            final size = (await entity.length()).toDouble();
+            final category = _categoryFor(entity.path);
 
-            final category =
-                _categoryFor(entity.path);
-
-            result[category] =
-                (result[category] ?? 0) + size;
+            categories[category] =
+                (categories[category] ?? 0) + size;
 
             counts[category] =
                 (counts[category] ?? 0) + 1;
 
             onFile(size);
-          } else if (entity is Directory) {
-            final name =
-                entity.path.split('/').last;
+            continue;
+          }
 
-            if (_shouldSkipDirectory(
-              entity.path,
-              name,
-            )) {
+          if (entity is Directory) {
+            final name = entity.path
+                .split(Platform.pathSeparator)
+                .last
+                .toLowerCase();
+
+            if (_shouldSkipDirectory(entity.path, name)) {
               continue;
             }
 
             await _scanDirectory(
               entity,
-              result,
+              categories,
               counts,
               onFile,
             );
@@ -229,27 +174,29 @@ class _StorageManagerPageState
     String path,
     String name,
   ) {
-    final lower =
-        name.toLowerCase();
-
-    if (lower == 'android') {
+    if (name == '.cache' ||
+        name == '.cache' ||
+        name == '.local' ||
+        name == '.config' ||
+        name == '.var' ||
+        name == '.git' ||
+        name == 'node_modules' ||
+        name == '.dart_tool' ||
+        name == 'build') {
       return true;
     }
 
-    if (lower == '.thumbnails' ||
-        lower == '.trash' ||
-        lower == '.cache') {
-      return true;
+    if (Platform.isAndroid) {
+      if (name == 'android') return true;
+      if (name == '.thumbnails') return true;
+      if (name == '.trash') return true;
     }
 
-    return path
-        .toLowerCase()
-        .contains('/android/');
+    return false;
   }
 
   String _categoryFor(String path) {
-    final lower =
-        path.toLowerCase();
+    final lower = path.toLowerCase();
 
     if (RegExp(
       r'\.(jpg|jpeg|png|webp|gif|heic|heif|bmp|tiff|svg)$',
@@ -269,9 +216,7 @@ class _StorageManagerPageState
       return 'Ses';
     }
 
-    if (RegExp(
-      r'\.apk$',
-    ).hasMatch(lower)) {
+    if (lower.endsWith('.apk')) {
       return 'APK';
     }
 
@@ -291,9 +236,7 @@ class _StorageManagerPageState
   }
 
   String _formatSize(double bytes) {
-    if (bytes <= 0) {
-      return '0 B';
-    }
+    if (bytes <= 0) return '0 B';
 
     if (bytes >= 1024 * 1024 * 1024) {
       return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GB';
@@ -314,22 +257,16 @@ class _StorageManagerPageState
     switch (category) {
       case 'Görseller':
         return Icons.image_outlined;
-
       case 'Videolar':
         return Icons.video_library_outlined;
-
       case 'Ses':
         return Icons.audiotrack_outlined;
-
       case 'Belgeler':
         return Icons.description_outlined;
-
       case 'APK':
         return Icons.android_outlined;
-
       case 'Arşivler':
         return Icons.archive_outlined;
-
       default:
         return Icons.folder_outlined;
     }
@@ -339,28 +276,21 @@ class _StorageManagerPageState
     BuildContext context,
     String category,
   ) {
-    final scheme =
-        Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     switch (category) {
       case 'Görseller':
         return scheme.primary;
-
       case 'Videolar':
         return scheme.secondary;
-
       case 'Ses':
         return scheme.tertiary;
-
       case 'Belgeler':
         return Colors.orange;
-
       case 'APK':
         return Colors.green;
-
       case 'Arşivler':
         return Colors.blueGrey;
-
       default:
         return scheme.outline;
     }
@@ -368,24 +298,19 @@ class _StorageManagerPageState
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasStorageAccess) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'Storage Manager',
-          ),
-          centerTitle: true,
-        ),
-        body: _permissionView(context),
-      );
-    }
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Storage Manager',
-        ),
+        title: const Text('Storage Manager'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _scanning ? null : _scanStorage,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Yenile',
+          ),
+        ],
       ),
       body: _loading
           ? const Center(
@@ -394,24 +319,30 @@ class _StorageManagerPageState
           : RefreshIndicator(
               onRefresh: _scanStorage,
               child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.all(20),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
                 children: [
                   _summaryCard(context),
                   const SizedBox(height: 20),
-                  _categoryList(context),
+                  Text(
+                    'Dosya kategorileri',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ..._categoryWidgets(context),
                   const SizedBox(height: 12),
                   Text(
-                    'Paylaşılan dahili depolama taranır. '
-                    'Android sistem klasörleri dahil edilmez.',
+                    Platform.isLinux
+                        ? 'Linux kullanıcı dizini taranıyor: $_rootPath'
+                        : 'Paylaşılan dahili depolama taranıyor.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -420,78 +351,10 @@ class _StorageManagerPageState
     );
   }
 
-  Widget _permissionView(
-    BuildContext context,
-  ) {
-    final scheme =
-        Theme.of(context).colorScheme;
+  Widget _summaryCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.primary
-                    .withOpacity(0.14),
-              ),
-              child: Icon(
-                Icons.folder_open_rounded,
-                size: 44,
-                color: scheme.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Depolama erişimi gerekli',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Storage Manager, dosyaların boyutlarını '
-              've kategorilerini hesaplayabilmek için '
-              'paylaşılan depolamaya erişim ister.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: scheme.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 28),
-            FilledButton.icon(
-              onPressed:
-                  _openStorageSettings,
-              icon: const Icon(
-                Icons.lock_open_rounded,
-              ),
-              label: const Text(
-                'Depolama erişimi ver',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _summaryCard(
-    BuildContext context,
-  ) {
-    final scheme =
-        Theme.of(context).colorScheme;
-
-    final values =
-        _categories.values.toList();
+    final values = _categories.values.toList();
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -500,42 +363,32 @@ class _StorageManagerPageState
         child: Column(
           children: [
             SizedBox(
-              height: 220,
+              height: 210,
               child: CustomPaint(
-                painter:
-                    _StorageChartPainter(
+                painter: _StorageChartPainter(
                   values: values,
-                  primaryColor:
-                      scheme.primary,
-                  secondaryColor:
-                      scheme.secondary,
-                  tertiaryColor:
-                      scheme.tertiary,
+                  primaryColor: scheme.primary,
+                  secondaryColor: scheme.secondary,
+                  tertiaryColor: scheme.tertiary,
                   backgroundColor:
                       scheme.surfaceContainerHighest,
                 ),
                 child: Center(
                   child: Column(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _formatSize(
-                          _totalBytes,
-                        ),
-                        style:
-                            const TextStyle(
+                        _formatSize(_totalBytes),
+                        style: const TextStyle(
                           fontSize: 27,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Taranan alan',
                         style: TextStyle(
-                          color: scheme
-                              .onSurfaceVariant,
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -543,12 +396,11 @@ class _StorageManagerPageState
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               '$_fileCount dosya',
               style: TextStyle(
-                color:
-                    scheme.onSurfaceVariant,
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -557,80 +409,56 @@ class _StorageManagerPageState
     );
   }
 
-  Widget _categoryList(
-    BuildContext context,
-  ) {
-    return Column(
-      children: _categories.entries.map(
-        (entry) {
-          final size = entry.value;
+  List<Widget> _categoryWidgets(BuildContext context) {
+    return _categories.entries.map((entry) {
+      final size = entry.value;
 
-          final percentage =
-              _totalBytes <= 0
-                  ? 0.0
-                  : size /
-                      _totalBytes *
-                      100;
+      final percentage = _totalBytes <= 0
+          ? 0.0
+          : size / _totalBytes * 100;
 
-          final color =
-              _categoryColor(
-            context,
+      final color =
+          _categoryColor(context, entry.key);
+
+      return Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: ListTile(
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              _categoryIcon(entry.key),
+              color: color,
+            ),
+          ),
+          title: Text(
             entry.key,
-          );
-
-          return Card(
-            margin:
-                const EdgeInsets.only(
-              bottom: 10,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
             ),
-            child: ListTile(
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color:
-                      color.withOpacity(0.14),
-                  borderRadius:
-                      BorderRadius.circular(
-                    14,
-                  ),
-                ),
-                child: Icon(
-                  _categoryIcon(
-                    entry.key,
-                  ),
-                  color: color,
-                ),
-              ),
-              title: Text(
-                entry.key,
-                style: const TextStyle(
-                  fontWeight:
-                      FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                '${_counts[entry.key] ?? 0} dosya • '
-                '${_formatSize(size)}',
-              ),
-              trailing: Text(
-                '${percentage.toStringAsFixed(1)}%',
-                style: TextStyle(
-                  fontWeight:
-                      FontWeight.bold,
-                  color: color,
-                ),
-              ),
+          ),
+          subtitle: Text(
+            '${_counts[entry.key] ?? 0} dosya • '
+            '${_formatSize(size)}',
+          ),
+          trailing: Text(
+            '${percentage.toStringAsFixed(1)}%',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-          );
-        },
-      ).toList(),
-    );
+          ),
+        ),
+      );
+    }).toList();
   }
 }
 
-class _StorageChartPainter
-    extends CustomPainter {
+class _StorageChartPainter extends CustomPainter {
   final List<double> values;
 
   final Color primaryColor;
@@ -651,8 +479,7 @@ class _StorageChartPainter
     Canvas canvas,
     Size size,
   ) {
-    final total =
-        values.fold<double>(
+    final total = values.fold<double>(
       0,
       (sum, value) => sum + value,
     );
@@ -663,19 +490,11 @@ class _StorageChartPainter
     );
 
     final radius =
-        min(
-          size.width,
-          size.height,
-        ) /
-            2 -
-        12;
+        min(size.width, size.height) / 2 - 15;
 
     final trackPaint = Paint()
-      ..style =
-          PaintingStyle.stroke
+      ..style = PaintingStyle.stroke
       ..strokeWidth = 28
-      ..strokeCap =
-          StrokeCap.butt
       ..color = backgroundColor;
 
     canvas.drawCircle(
@@ -684,9 +503,7 @@ class _StorageChartPainter
       trackPaint,
     );
 
-    if (total <= 0) {
-      return;
-    }
+    if (total <= 0) return;
 
     final colors = [
       primaryColor,
@@ -698,29 +515,21 @@ class _StorageChartPainter
       backgroundColor,
     ];
 
-    double startAngle = -pi / 2;
+    var startAngle = -pi / 2;
 
-    for (var i = 0;
-        i < values.length;
-        i++) {
-      if (values[i] <= 0) {
-        continue;
-      }
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] <= 0) continue;
 
       final sweep =
-          values[i] /
-              total *
-              2 *
-              pi;
+          (values[i] / total) * pi * 2;
 
       final paint = Paint()
-        ..style =
-            PaintingStyle.stroke
+        ..style = PaintingStyle.stroke
         ..strokeWidth = 28
-        ..strokeCap =
-            StrokeCap.butt
-        ..color =
-            colors[i % colors.length];
+        ..strokeCap = StrokeCap.butt
+        ..color = colors[
+          i.clamp(0, colors.length - 1)
+        ];
 
       canvas.drawArc(
         Rect.fromCircle(
@@ -739,17 +548,12 @@ class _StorageChartPainter
 
   @override
   bool shouldRepaint(
-    covariant _StorageChartPainter
-        oldDelegate,
+    covariant _StorageChartPainter oldDelegate,
   ) {
     return oldDelegate.values != values ||
-        oldDelegate.primaryColor !=
-            primaryColor ||
-        oldDelegate.secondaryColor !=
-            secondaryColor ||
-        oldDelegate.tertiaryColor !=
-            tertiaryColor ||
-        oldDelegate.backgroundColor !=
-            backgroundColor;
+        oldDelegate.primaryColor != primaryColor ||
+        oldDelegate.secondaryColor != secondaryColor ||
+        oldDelegate.tertiaryColor != tertiaryColor ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }
