@@ -1,20 +1,29 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class StorageManagerPage extends StatefulWidget {
-  const StorageManagerPage({super.key});
+  const StorageManagerPage({
+    super.key,
+  });
 
   @override
-  State<StorageManagerPage> createState() => _StorageManagerPageState();
+  State<StorageManagerPage> createState() =>
+      _StorageManagerPageState();
 }
 
-class _StorageManagerPageState extends State<StorageManagerPage> {
+class _StorageManagerPageState
+    extends State<StorageManagerPage> {
+  static const MethodChannel _channel =
+      MethodChannel('org.test.thislinux/native');
+
   bool _loading = true;
   bool _scanning = false;
+  bool _hasStorageAccess = true;
 
   int _fileCount = 0;
+
   double _totalBytes = 0;
   double _usedBytes = 0;
   double _freeBytes = 0;
@@ -58,7 +67,9 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
   }
 
   Future<void> _loadStorage() async {
-    if (_scanning) return;
+    if (_scanning) {
+      return;
+    }
 
     _scanning = true;
 
@@ -69,8 +80,24 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     }
 
     try {
+      if (Platform.isAndroid) {
+        _hasStorageAccess =
+            await _checkAndroidStorageAccess();
+
+        if (!_hasStorageAccess) {
+          if (mounted) {
+            setState(() {
+              _loading = false;
+            });
+          }
+
+          _scanning = false;
+          return;
+        }
+      }
+
       await _readDiskUsage();
-      await _scanImportantDirectories();
+      await _scanStorage();
     } catch (_) {}
 
     if (!mounted) {
@@ -83,6 +110,27 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     });
 
     _scanning = false;
+  }
+
+  Future<bool> _checkAndroidStorageAccess() async {
+    try {
+      final result =
+          await _channel.invokeMethod<bool>(
+        'hasStorageAccess',
+      );
+
+      return result ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _openStorageSettings() async {
+    try {
+      await _channel.invokeMethod(
+        'openStorageAccessSettings',
+      );
+    } catch (_) {}
   }
 
   Future<void> _readDiskUsage() async {
@@ -105,9 +153,14 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                 .split(RegExp(r'\s+'));
 
             if (parts.length >= 4) {
-              final total = double.tryParse(parts[1]) ?? 0;
-              final used = double.tryParse(parts[2]) ?? 0;
-              final free = double.tryParse(parts[3]) ?? 0;
+              final total =
+                  double.tryParse(parts[1]) ?? 0;
+
+              final used =
+                  double.tryParse(parts[2]) ?? 0;
+
+              final free =
+                  double.tryParse(parts[3]) ?? 0;
 
               if (mounted) {
                 setState(() {
@@ -120,6 +173,38 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
               return;
             }
           }
+        }
+      }
+
+      if (Platform.isAndroid) {
+        final result =
+            await _channel.invokeMethod<
+                Map<dynamic, dynamic>>(
+          'getDeviceInfo',
+        );
+
+        if (result != null) {
+          final total =
+              (result['total_storage'] as num?)
+                      ?.toDouble() ??
+                  0;
+
+          final free =
+              (result['available_storage'] as num?)
+                      ?.toDouble() ??
+                  0;
+
+          if (mounted) {
+            setState(() {
+              _totalBytes = total;
+              _freeBytes = free;
+              _usedBytes =
+                  (total - free)
+                      .clamp(0, double.infinity);
+            });
+          }
+
+          return;
         }
       }
 
@@ -138,59 +223,66 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
     try {
       await for (final entity in root.list(
-        recursive: false,
+        recursive: true,
         followLinks: false,
       )) {
         if (entity is File) {
           try {
-            total += await entity.length();
+            total +=
+                (await entity.length()).toDouble();
           } catch (_) {}
         }
       }
     } catch (_) {}
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _usedBytes = total;
     });
   }
 
-  Future<void> _scanImportantDirectories() async {
+  Future<void> _scanStorage() async {
     final categories = <String, double>{
-      for (final key in _categories.keys) key: 0,
+      for (final key in _categories.keys)
+        key: 0,
     };
 
     final counts = <String, int>{
-      for (final key in _counts.keys) key: 0,
+      for (final key in _counts.keys)
+        key: 0,
     };
 
     var fileCount = 0;
 
-    final directories = _directoriesToScan();
+    final root = Directory(_rootPath);
 
-    for (final directory in directories) {
-      if (!await directory.exists()) continue;
-
-      try {
-        await _scanDirectory(
-          directory,
-          categories,
-          counts,
-          (size, category) {
-            categories[category] =
-                (categories[category] ?? 0) + size;
-
-            counts[category] =
-                (counts[category] ?? 0) + 1;
-
-            fileCount++;
-          },
-        );
-      } catch (_) {}
+    if (!await root.exists()) {
+      return;
     }
 
-    if (!mounted) return;
+    try {
+      await _scanDirectory(
+        root,
+        categories,
+        counts,
+        (size, category) {
+          categories[category] =
+              (categories[category] ?? 0) + size;
+
+          counts[category] =
+              (counts[category] ?? 0) + 1;
+
+          fileCount++;
+        },
+      );
+    } catch (_) {}
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _categories
@@ -205,40 +297,14 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     });
   }
 
-  List<Directory> _directoriesToScan() {
-    final root = Directory(_rootPath);
-
-    if (Platform.isAndroid) {
-      return [
-        Directory('${root.path}/DCIM'),
-        Directory('${root.path}/Pictures'),
-        Directory('${root.path}/Movies'),
-        Directory('${root.path}/Music'),
-        Directory('${root.path}/Documents'),
-        Directory('${root.path}/Download'),
-        Directory('${root.path}/Downloads'),
-      ];
-    }
-
-    if (Platform.isLinux) {
-      return [
-        Directory('${root.path}/Desktop'),
-        Directory('${root.path}/Documents'),
-        Directory('${root.path}/Downloads'),
-        Directory('${root.path}/Music'),
-        Directory('${root.path}/Pictures'),
-        Directory('${root.path}/Videos'),
-      ];
-    }
-
-    return [root];
-  }
-
   Future<void> _scanDirectory(
     Directory directory,
     Map<String, double> categories,
     Map<String, int> counts,
-    void Function(double size, String category) onFile,
+    void Function(
+      double size,
+      String category,
+    ) onFile,
   ) async {
     try {
       await for (final entity in directory.list(
@@ -247,8 +313,12 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
       )) {
         try {
           if (entity is File) {
-            final size = (await entity.length()).toDouble();
-            final category = _categoryFor(entity.path);
+            final size =
+                (await entity.length())
+                    .toDouble();
+
+            final category =
+                _categoryFor(entity.path);
 
             onFile(size, category);
             continue;
@@ -256,7 +326,9 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
           if (entity is Directory) {
             final name = entity.path
-                .split(Platform.pathSeparator)
+                .split(
+                  Platform.pathSeparator,
+                )
                 .last
                 .toLowerCase();
 
@@ -298,10 +370,9 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
 
     if (Platform.isAndroid) {
       const androidSkips = {
-        'android',
         '.thumbnails',
         '.trash',
-        
+        'Android',
       };
 
       if (androidSkips.contains(name)) {
@@ -353,13 +424,17 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
   }
 
   String _formatSize(double bytes) {
-    if (bytes <= 0) return '0 B';
+    if (bytes <= 0) {
+      return '0 B';
+    }
 
-    if (bytes >= 1024 * 1024 * 1024 * 1024) {
+    if (bytes >=
+        1024 * 1024 * 1024 * 1024) {
       return '${(bytes / 1024 / 1024 / 1024 / 1024).toStringAsFixed(2)} TB';
     }
 
-    if (bytes >= 1024 * 1024 * 1024) {
+    if (bytes >=
+        1024 * 1024 * 1024) {
       return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GB';
     }
 
@@ -374,7 +449,9 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     return '${bytes.toStringAsFixed(0)} B';
   }
 
-  IconData _categoryIcon(String category) {
+  IconData _categoryIcon(
+    String category,
+  ) {
     switch (category) {
       case 'Görseller':
         return Icons.image_outlined;
@@ -397,7 +474,8 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     BuildContext context,
     String category,
   ) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme =
+        Theme.of(context).colorScheme;
 
     switch (category) {
       case 'Görseller':
@@ -418,106 +496,214 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget build(
+    BuildContext context,
+  ) {
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Storage Manager'),
+        title: const Text(
+          'Storage Manager',
+        ),
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: _scanning ? null : _loadStorage,
-            icon: const Icon(Icons.refresh_rounded),
+            onPressed:
+                _scanning
+                    ? null
+                    : _loadStorage,
+            icon: const Icon(
+              Icons.refresh_rounded,
+            ),
           ),
         ],
       ),
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadStorage,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                children: [
-                  _summaryCard(context),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Depolama kullanımı',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurfaceVariant,
-                    ),
+      body: Platform.isAndroid &&
+              !_hasStorageAccess
+          ? _permissionView(context)
+          : _loading
+              ? const Center(
+                  child:
+                      CircularProgressIndicator(),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadStorage,
+                  child: ListView(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    padding:
+                        const EdgeInsets.all(20),
+                    children: [
+                      _summaryCard(context),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Depolama kullanımı',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight:
+                              FontWeight.w700,
+                          color: scheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      ..._storageStats(
+                        context,
+                      ),
+                      const SizedBox(
+                        height: 18,
+                      ),
+                      Text(
+                        'Dosya kategorileri',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight:
+                              FontWeight.w700,
+                          color: scheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      ..._categoryWidgets(
+                        context,
+                      ),
+                      const SizedBox(
+                        height: 12,
+                      ),
+                      Text(
+                        'Tüm kullanıcı depolaması taranıyor.',
+                        textAlign:
+                            TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme
+                              .onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  ..._storageStats(context),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Dosya kategorileri',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ..._categoryWidgets(context),
-                  const SizedBox(height: 12),
-                  Text(
-                    Platform.isLinux
-                        ? 'Linux: yalnızca kullanıcı dosyaları taranıyor.'
-                        : 'Android: yaygın kullanıcı klasörleri taranıyor.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 
-  Widget _summaryCard(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _permissionView(
+    BuildContext context,
+  ) {
+    final scheme =
+        Theme.of(context).colorScheme;
+
+    return Center(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize:
+              MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.folder_off_rounded,
+              size: 64,
+              color: scheme.primary,
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Depolama erişimi gerekli',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight:
+                    FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Stellar Center cihazdaki dosyaları '
+              'tarayabilmek için tüm dosyalara '
+              'erişim iznine ihtiyaç duyuyor.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color:
+                    scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 22),
+            FilledButton.icon(
+              onPressed:
+                  _openStorageSettings,
+              icon: const Icon(
+                Icons.settings_rounded,
+              ),
+              label: const Text(
+                'Erişime izin ver',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryCard(
+    BuildContext context,
+  ) {
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return Card(
-      clipBehavior: Clip.antiAlias,
+      clipBehavior:
+          Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding:
+            const EdgeInsets.all(20),
         child: Column(
           children: [
             SizedBox(
               height: 210,
               child: CustomPaint(
-                painter: _StorageChartPainter(
-                  values: _categories.values.toList(),
-                  primaryColor: scheme.primary,
-                  secondaryColor: scheme.secondary,
-                  tertiaryColor: scheme.tertiary,
+                painter:
+                    _StorageChartPainter(
+                  values:
+                      _categories.values.toList(),
+                  primaryColor:
+                      scheme.primary,
+                  secondaryColor:
+                      scheme.secondary,
+                  tertiaryColor:
+                      scheme.tertiary,
                   backgroundColor:
-                      scheme.surfaceContainerHighest,
+                      scheme
+                          .surfaceContainerHighest,
                 ),
                 child: Center(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize:
+                        MainAxisSize.min,
                     children: [
                       Text(
-                        _formatSize(_usedBytes),
-                        style: const TextStyle(
+                        _formatSize(
+                          _usedBytes,
+                        ),
+                        style:
+                            const TextStyle(
                           fontSize: 27,
-                          fontWeight: FontWeight.bold,
+                          fontWeight:
+                              FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       Text(
                         'Kullanılan',
                         style: TextStyle(
-                          color: scheme.onSurfaceVariant,
+                          color: scheme
+                              .onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -532,7 +718,8 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
                       '${_formatSize(_totalBytes)} toplam'
                   : 'Depolama bilgisi alınamadı',
               style: TextStyle(
-                color: scheme.onSurfaceVariant,
+                color:
+                    scheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -541,18 +728,28 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     );
   }
 
-  List<Widget> _storageStats(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  List<Widget> _storageStats(
+    BuildContext context,
+  ) {
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return [
       Card(
         child: ListTile(
-          leading: const Icon(Icons.storage_rounded),
-          title: const Text('Toplam'),
+          leading: const Icon(
+            Icons.storage_rounded,
+          ),
+          title:
+              const Text('Toplam'),
           trailing: Text(
-            _formatSize(_totalBytes),
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
+            _formatSize(
+              _totalBytes,
+            ),
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
         ),
@@ -563,11 +760,16 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
             Icons.folder_rounded,
             color: scheme.primary,
           ),
-          title: const Text('Kullanılan'),
+          title:
+              const Text('Kullanılan'),
           trailing: Text(
-            _formatSize(_usedBytes),
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
+            _formatSize(
+              _usedBytes,
+            ),
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
         ),
@@ -578,23 +780,33 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
             Icons.check_circle_outline_rounded,
             color: scheme.tertiary,
           ),
-          title: const Text('Boş'),
+          title:
+              const Text('Boş'),
           trailing: Text(
-            _formatSize(_freeBytes),
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
+            _formatSize(
+              _freeBytes,
+            ),
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
         ),
       ),
       Card(
         child: ListTile(
-          leading: const Icon(Icons.insert_drive_file_outlined),
-          title: const Text('Taranan dosya'),
+          leading: const Icon(
+            Icons.insert_drive_file_outlined,
+          ),
+          title:
+              const Text('Taranan dosya'),
           trailing: Text(
             '$_fileCount',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.w700,
             ),
           ),
         ),
@@ -602,65 +814,61 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
     ];
   }
 
-  List<Widget> _categoryWidgets(BuildContext context) {
-    return _categories.entries.map((entry) {
-      final size = entry.value;
+  List<Widget> _categoryWidgets(
+    BuildContext context,
+  ) {
+    return _categories.entries.map(
+      (entry) {
+        final category =
+            entry.key;
 
-      final percentage = _totalBytes <= 0
-          ? 0.0
-          : size / _totalBytes * 100;
+        final size =
+            entry.value;
 
-      final color = _categoryColor(
-        context,
-        entry.key,
-      );
+        final count =
+            _counts[category] ?? 0;
 
-      return Card(
-        margin: const EdgeInsets.only(bottom: 10),
-        child: ListTile(
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(14),
+        return Card(
+          child: ListTile(
+            leading: Icon(
+              _categoryIcon(
+                category,
+              ),
+              color:
+                  _categoryColor(
+                context,
+                category,
+              ),
             ),
-            child: Icon(
-              _categoryIcon(entry.key),
-              color: color,
-            ),
-          ),
-          title: Text(
-            entry.key,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            '${_counts[entry.key] ?? 0} dosya • '
-            '${_formatSize(size)}',
-          ),
-          trailing: Text(
-            '${percentage.toStringAsFixed(1)}%',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
+            title:
+                Text(category),
+            subtitle:
+                Text('$count dosya'),
+            trailing: Text(
+              _formatSize(size),
+              style:
+                  const TextStyle(
+                fontWeight:
+                    FontWeight.w700,
+              ),
             ),
           ),
-        ),
-      );
-    }).toList();
+        );
+      },
+    ).toList();
   }
 }
 
-class _StorageChartPainter extends CustomPainter {
+class _StorageChartPainter
+    extends CustomPainter {
   final List<double> values;
+
   final Color primaryColor;
   final Color secondaryColor;
   final Color tertiaryColor;
   final Color backgroundColor;
 
-  _StorageChartPainter({
+  const _StorageChartPainter({
     required this.values,
     required this.primaryColor,
     required this.secondaryColor,
@@ -669,32 +877,44 @@ class _StorageChartPainter extends CustomPainter {
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final total = values.fold<double>(
-      0,
-      (sum, value) => sum + value,
-    );
-
-    final center = Offset(
+  void paint(
+    Canvas canvas,
+    Size size,
+  ) {
+    final center =
+        Offset(
       size.width / 2,
       size.height / 2,
     );
 
     final radius =
-        min(size.width, size.height) / 2 - 15;
+        size.shortestSide / 2 - 12;
 
-    final trackPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 28
-      ..color = backgroundColor;
+    final total =
+        values.fold<double>(
+      0,
+      (a, b) => a + b,
+    );
+
+    final backgroundPaint =
+        Paint()
+          ..style =
+              PaintingStyle.stroke
+          ..strokeWidth = 24
+          ..strokeCap =
+              StrokeCap.round
+          ..color =
+              backgroundColor;
 
     canvas.drawCircle(
       center,
       radius,
-      trackPaint,
+      backgroundPaint,
     );
 
-    if (total <= 0) return;
+    if (total <= 0) {
+      return;
+    }
 
     final colors = [
       primaryColor,
@@ -703,24 +923,40 @@ class _StorageChartPainter extends CustomPainter {
       Colors.orange,
       Colors.green,
       Colors.blueGrey,
-      backgroundColor,
+      Colors.grey,
     ];
 
-    var startAngle = -pi / 2;
+    var startAngle =
+        -pi / 2;
 
-    for (var i = 0; i < values.length; i++) {
-      if (values[i] <= 0) continue;
+    for (
+      var i = 0;
+      i < values.length;
+      i++
+    ) {
+      final value =
+          values[i];
+
+      if (value <= 0) {
+        continue;
+      }
 
       final sweep =
-          (values[i] / total) * pi * 2;
+          (value / total) *
+              pi *
+              2;
 
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 28
-        ..strokeCap = StrokeCap.butt
-        ..color = colors[
-          i.clamp(0, colors.length - 1)
-        ];
+      final paint =
+          Paint()
+            ..style =
+                PaintingStyle.stroke
+            ..strokeWidth = 24
+            ..strokeCap =
+                StrokeCap.round
+            ..color =
+                colors[
+                    i %
+                        colors.length];
 
       canvas.drawArc(
         Rect.fromCircle(
@@ -733,7 +969,8 @@ class _StorageChartPainter extends CustomPainter {
         paint,
       );
 
-      startAngle += sweep;
+      startAngle +=
+          sweep;
     }
   }
 
@@ -741,7 +978,15 @@ class _StorageChartPainter extends CustomPainter {
   bool shouldRepaint(
     covariant _StorageChartPainter oldDelegate,
   ) {
-    return true;
+    return oldDelegate.values !=
+            values ||
+        oldDelegate.primaryColor !=
+            primaryColor ||
+        oldDelegate.secondaryColor !=
+            secondaryColor ||
+        oldDelegate.tertiaryColor !=
+            tertiaryColor ||
+        oldDelegate.backgroundColor !=
+            backgroundColor;
   }
 }
-
