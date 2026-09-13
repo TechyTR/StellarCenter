@@ -157,7 +157,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
     final kernel = await _command('uname', ['-r']);
     final architecture = await _command('uname', ['-m']);
-    final hostname = await _command('hostname');
+    final hostname = await _command('hostname', []);
 
     final cpuInfo = await _readFile('/proc/cpuinfo');
 
