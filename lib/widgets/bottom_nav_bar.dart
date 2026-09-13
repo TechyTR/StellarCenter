@@ -48,11 +48,6 @@ class BottomNavBar extends StatelessWidget {
             selectedIcon: Icon(Icons.info),
             label: 'App',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.storage_outlined),
-            selectedIcon: Icon(Icons.storage),
-            label: 'Storage',
-          ),
         ],
       );
     }
@@ -303,14 +298,6 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               Icons.info,
                               'App',
                               4,
-                              accent,
-                            ),
-                            _item(
-                              context,
-                              Icons.storage_outlined,
-                              Icons.storage,
-                              'Storage',
-                              5,
                               accent,
                             ),
                           ],
