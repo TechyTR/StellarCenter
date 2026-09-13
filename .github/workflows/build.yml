@@ -10,11 +10,6 @@ permissions:
   contents: write
 
 jobs:
-
-  # ============================================================
-  # ANDROID
-  # ============================================================
-
   android:
     name: Build Android APK
     runs-on: ubuntu-latest
@@ -36,9 +31,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
-
       - name: Get dependencies
         run: flutter pub get
 
@@ -58,53 +50,6 @@ jobs:
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          echo "Building Stellar Center v$VERSION"
-
-      # ==========================================================
-      # ANDROID RELEASE SIGNING
-      # ==========================================================
-
-      - name: Prepare Android signing
-        shell: bash
-        env:
-          STELLAR_KEYSTORE_BASE64: ${{ secrets.STELLAR_KEYSTORE_BASE64 }}
-          STELLAR_KEYSTORE_PASSWORD: ${{ secrets.STELLAR_KEYSTORE_PASSWORD }}
-          STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
-          STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
-        run: |
-          set -e
-
-          if [ -z "$STELLAR_KEYSTORE_BASE64" ]; then
-            echo "STELLAR_KEYSTORE_BASE64 is missing."
-            exit 1
-          fi
-
-          if [ -z "$STELLAR_KEYSTORE_PASSWORD" ]; then
-            echo "STELLAR_KEYSTORE_PASSWORD is missing."
-            exit 1
-          fi
-
-          if [ -z "$STELLAR_KEY_ALIAS" ]; then
-            echo "STELLAR_KEY_ALIAS is missing."
-            exit 1
-          fi
-
-          if [ -z "$STELLAR_KEY_PASSWORD" ]; then
-            echo "STELLAR_KEY_PASSWORD is missing."
-            exit 1
-          fi
-
-          echo "$STELLAR_KEYSTORE_BASE64" | base64 --decode > "$GITHUB_WORKSPACE/stellar-release.jks"
-
-          test -s "$GITHUB_WORKSPACE/stellar-release.jks"
-
-          echo "STELLAR_KEYSTORE_PATH=$GITHUB_WORKSPACE/stellar-release.jks" >> "$GITHUB_ENV"
-          echo "STELLAR_KEYSTORE_PASSWORD=$STELLAR_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
-          echo "STELLAR_KEY_ALIAS=$STELLAR_KEY_ALIAS" >> "$GITHUB_ENV"
-          echo "STELLAR_KEY_PASSWORD=$STELLAR_KEY_PASSWORD" >> "$GITHUB_ENV"
-
-          echo "Android signing keystore prepared."
-
       - name: Build APK
         run: |
           flutter clean
@@ -123,11 +68,6 @@ jobs:
           name: stellarcenter-apk-${{ steps.version.outputs.version }}
           path: build/app/outputs/flutter-apk/app-release.apk
 
-
-  # ============================================================
-  # LINUX / PARDUS 23
-  # ============================================================
-
   linux:
     name: Build Linux x64 / Pardus 23
     runs-on: ubuntu-latest
@@ -136,12 +76,10 @@ jobs:
       image: debian:12
 
     steps:
-
       - name: Install system dependencies
         shell: bash
         run: |
           set -e
-
           export DEBIAN_FRONTEND=noninteractive
 
           apt-get update
@@ -185,17 +123,7 @@ jobs:
           export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
 
           flutter config --enable-linux-desktop
-
           flutter --version
-
-      - name: Verify Linux toolchain
-        shell: bash
-        run: |
-          set -e
-
-          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
-          flutter doctor -v
 
       - name: Prepare Linux platform
         shell: bash
@@ -215,7 +143,6 @@ jobs:
         shell: bash
         run: |
           export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
           flutter pub get
 
       - name: Read version
@@ -231,8 +158,6 @@ jobs:
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          echo "Building Stellar Center Linux v$VERSION"
-
       - name: Build Linux x64
         shell: bash
         run: |
@@ -242,7 +167,6 @@ jobs:
 
           flutter clean
           flutter pub get
-
           flutter build linux --release
 
       - name: Verify Linux binary
@@ -255,16 +179,8 @@ jobs:
           test -d "$BUNDLE"
           test -f "$BUNDLE/stellarcenter"
 
-          echo "Linux binary:"
           file "$BUNDLE/stellarcenter"
-
-          echo ""
-          echo "Bundle:"
           ls -lah "$BUNDLE"
-
-      # ----------------------------------------------------------
-      # TAR.GZ
-      # ----------------------------------------------------------
 
       - name: Create Linux TAR.GZ
         shell: bash
@@ -278,17 +194,11 @@ jobs:
 
           test -f stellar-center-linux-x64.tar.gz
 
-          ls -lh stellar-center-linux-x64.tar.gz
-
       - name: Upload Linux TAR.GZ
         uses: actions/upload-artifact@v4
         with:
           name: stellarcenter-linux-${{ steps.version.outputs.version }}
           path: stellar-center-linux-x64.tar.gz
-
-      # ----------------------------------------------------------
-      # DEB
-      # ----------------------------------------------------------
 
       - name: Create Debian package
         shell: bash
@@ -356,15 +266,10 @@ jobs:
           set -e
 
           VERSION="${{ steps.version.outputs.version }}"
-
           DEB="stellar-center_${VERSION}_amd64.deb"
 
           test -f "$DEB"
-
           dpkg-deb --info "$DEB"
-
-          echo ""
-          echo "DEB:"
           ls -lh "$DEB"
 
       - name: Upload DEB
@@ -372,11 +277,6 @@ jobs:
         with:
           name: stellarcenter-deb-${{ steps.version.outputs.version }}
           path: stellar-center_${{ steps.version.outputs.version }}_amd64.deb
-
-
-  # ============================================================
-  # GITHUB RELEASE
-  # ============================================================
 
   release:
     name: Create GitHub Release
@@ -387,7 +287,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -433,7 +332,6 @@ jobs:
           test -f release/linux/stellar-center-linux-x64.tar.gz
           test -f "release/deb/stellar-center_${VERSION}_amd64.deb"
 
-          echo "Release files:"
           find release -type f -exec ls -lh {} \;
 
       - name: Create GitHub Release
@@ -448,8 +346,8 @@ jobs:
             ## Android
             - APK
 
-            ## Linux
-            - x64 TAR.GZ
+            ## Linux / Pardus
+            - Linux x64 TAR.GZ
             - Debian/Pardus AMD64 DEB
 
             ## Compatibility
@@ -463,9 +361,3 @@ jobs:
 
           make_latest: true
           overwrite_files: true
-
-      - name: Rename Android release APK
-        shell: bash
-        run: |
-          set -e
-          mv release/apk/app-release.apk release/apk/stellar-center-release.apk
