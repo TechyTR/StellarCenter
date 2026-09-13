@@ -73,14 +73,15 @@ class _UpdateButtonState
       return;
     }
 
-    _showUpdateDialog(update);
+    await _showUpdateDialog(update);
   }
 
-  void _showUpdateDialog(
+  Future<void> _showUpdateDialog(
     UpdateInfo update,
-  ) {
-    showDialog<void>(
+  ) async {
+    await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text(
@@ -91,8 +92,8 @@ class _UpdateButtonState
             'v${update.latestVersion}\n\n'
             'Mevcut sürüm: '
             'v${AppVersion.current}\n\n'
-            'APK indirilecek ve Android '
-            'kurulum ekranı açılacak.',
+            'Yeni APK indirilecek ve '
+            'Android kurulum ekranı açılacak.',
           ),
           actions: [
             TextButton(
@@ -138,7 +139,21 @@ class _UpdateButtonState
       await UpdateService.downloadAndInstall(
         update.downloadUrl,
       );
-    } on Exception catch (error) {
+    } on PlatformException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            error.message ??
+                'Güncelleme başlatılamadı.',
+          ),
+        ),
+      );
+    } catch (error) {
       if (!mounted) {
         return;
       }
