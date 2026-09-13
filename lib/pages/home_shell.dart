@@ -46,7 +46,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   List<Widget> _buildPages() {
-    return [
+    final pages = <Widget>[
       DashboardPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
@@ -80,9 +80,15 @@ class _HomeShellState extends State<HomeShell> {
         onThemeChanged: widget.onThemeChanged,
         onStyleChanged: widget.onStyleChanged,
       ),
-
-      const StorageManagerPage(),
     ];
+
+    if (_isLinux) {
+      pages.add(
+        const StorageManagerPage(),
+      );
+    }
+
+    return pages;
   }
 
   void _openPage(int index) {
@@ -130,13 +136,15 @@ class _HomeShellState extends State<HomeShell> {
 
     return Scaffold(
       extendBody: !_isLinux && glass,
+
       body: Row(
         children: [
           if (_isLinux)
             LinuxNavigationBar(
               currentIndex: _currentIndex,
               selectedStyle: widget.selectedStyle,
-              onDestinationSelected: _selectDestination,
+              onDestinationSelected:
+                  _selectDestination,
             ),
 
           Expanded(
@@ -147,8 +155,11 @@ class _HomeShellState extends State<HomeShell> {
               reverseDuration: const Duration(
                 milliseconds: 220,
               ),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
+              switchInCurve:
+                  Curves.easeOutCubic,
+              switchOutCurve:
+                  Curves.easeInCubic,
+
               layoutBuilder: (
                 Widget? currentChild,
                 List<Widget> previousChildren,
@@ -162,6 +173,7 @@ class _HomeShellState extends State<HomeShell> {
                   ],
                 );
               },
+
               transitionBuilder: (
                 child,
                 animation,
@@ -184,6 +196,7 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                 );
               },
+
               child: KeyedSubtree(
                 key: ValueKey(_currentIndex),
                 child: _pages[_currentIndex],
@@ -192,11 +205,13 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ],
       ),
+
       bottomNavigationBar: _isLinux
           ? null
           : BottomNavBar(
               currentIndex: _currentIndex,
-              selectedStyle: widget.selectedStyle,
+              selectedStyle:
+                  widget.selectedStyle,
               onDestinationSelected:
                   _selectDestination,
             ),
