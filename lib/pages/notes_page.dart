@@ -556,7 +556,7 @@ class _NotesPageState extends State<NotesPage> {
 
     return Positioned(
       right: 18,
-      bottom: 18,
+      bottom: 92,
       child: FloatingActionButton(
         onPressed: _showAddNoteDialog,
         elevation: _isGlass ? 0 : 6,
