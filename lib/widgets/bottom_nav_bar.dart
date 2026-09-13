@@ -173,7 +173,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                   builder:
                       (context, constraints) {
                     final itemWidth =
-                        constraints.maxWidth / 6;
+                        constraints.maxWidth / 5;
 
                     return Stack(
                       children: [
