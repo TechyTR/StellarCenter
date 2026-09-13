@@ -49,7 +49,43 @@ jobs:
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          
+      - name: Prepare Android signing
+        shell: bash
+        env:
+          STELLAR_KEYSTORE_BASE64: ${{ secrets.STELLAR_KEYSTORE_BASE64 }}
+        run: |
+          set -e
 
+          test -n "$STELLAR_KEYSTORE_BASE64"
+
+          echo "$STELLAR_KEYSTORE_BASE64" | base64 --decode > android/app/stellar-release.jks
+
+          test -s android/app/stellar-release.jks
+
+      - name: Build APK
+        env:
+          STELLAR_KEYSTORE_PATH: ${{ github.workspace }}/android/app/stellar-release.jks
+          STELLAR_KEYSTORE_PASSWORD: ${{ secrets.STELLAR_KEYSTORE_PASSWORD }}
+          STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
+          STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          set -e
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+
+          test -n "$APKSIGNER"
+
+          "$APKSIGNER" verify --verbose \
+            build/app/outputs/flutter-apk/app-release.apk
+            
       - name: Build APK
         run: |
           flutter clean
