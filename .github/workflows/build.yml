@@ -126,8 +126,8 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-ugly
 
-- name: Generate Linux desktop project
-  run: flutter create --platforms=linux --project-name stellarcenter --no-pub .
+       - name: Generate Linux desktop project
+         run: flutter create --platforms=linux --project-name stellarcenter --no-pub .
 
       - name: Install Flutter dependencies
         run: flutter pub get
