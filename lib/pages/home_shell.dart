@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../Linux/widgets/linux_navigation_bar.dart';
+import '../Linux/pages/music_page.dart';
 
 import 'app_info_page.dart';
 import 'dashboard_page.dart';
@@ -46,7 +47,49 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   List<Widget> _buildPages() {
-    final pages = <Widget>[
+    if (_isLinux) {
+      return [
+        DashboardPage(
+          selectedTheme: widget.selectedTheme,
+          selectedStyle: widget.selectedStyle,
+          onThemeChanged: widget.onThemeChanged,
+          onStyleChanged: widget.onStyleChanged,
+          onSystemInfo: () => _openPage(1),
+          onSystemMonitor: () => _openPage(2),
+          onNotes: () => _openPage(5),
+          onAppInfo: () => _openPage(4),
+        ),
+
+        SystemInfoPage(
+          selectedTheme: widget.selectedTheme,
+          selectedStyle: widget.selectedStyle,
+          onThemeChanged: widget.onThemeChanged,
+          onStyleChanged: widget.onStyleChanged,
+        ),
+
+        SystemMonitorPage(
+          selectedTheme: widget.selectedTheme,
+          selectedStyle: widget.selectedStyle,
+          onThemeChanged: widget.onThemeChanged,
+          onStyleChanged: widget.onStyleChanged,
+        ),
+
+        const LinuxMusicPage(),
+
+        AppInfoPage(
+          selectedTheme: widget.selectedTheme,
+          selectedStyle: widget.selectedStyle,
+          onThemeChanged: widget.onThemeChanged,
+          onStyleChanged: widget.onStyleChanged,
+        ),
+
+        const NotesPage(),
+
+        const StorageManagerPage(),
+      ];
+    }
+
+    return [
       DashboardPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
@@ -81,14 +124,6 @@ class _HomeShellState extends State<HomeShell> {
         onStyleChanged: widget.onStyleChanged,
       ),
     ];
-
-    if (_isLinux) {
-      pages.add(
-        const StorageManagerPage(),
-      );
-    }
-
-    return pages;
   }
 
   void _openPage(int index) {
@@ -102,8 +137,14 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   void _selectDestination(int index) {
-    if (index < 0 || index >= _pages.length) {
-      return;
+    if (_isLinux) {
+      if (index < 0 || index > 4) {
+        return;
+      }
+    } else {
+      if (index < 0 || index >= _pages.length) {
+        return;
+      }
     }
 
     if (_currentIndex == index) {
@@ -121,8 +162,10 @@ class _HomeShellState extends State<HomeShell> {
   ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.selectedTheme != widget.selectedTheme ||
-        oldWidget.selectedStyle != widget.selectedStyle) {
+    if (oldWidget.selectedTheme !=
+            widget.selectedTheme ||
+        oldWidget.selectedStyle !=
+            widget.selectedStyle) {
       setState(() {
         _pages = _buildPages();
       });
@@ -132,7 +175,8 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final glass =
-        widget.selectedStyle != AppThemeStyle.normal;
+        widget.selectedStyle !=
+            AppThemeStyle.normal;
 
     return Scaffold(
       extendBody: !_isLinux && glass,
@@ -142,7 +186,8 @@ class _HomeShellState extends State<HomeShell> {
           if (_isLinux)
             LinuxNavigationBar(
               currentIndex: _currentIndex,
-              selectedStyle: widget.selectedStyle,
+              selectedStyle:
+                  widget.selectedStyle,
               onDestinationSelected:
                   _selectDestination,
             ),
@@ -152,14 +197,14 @@ class _HomeShellState extends State<HomeShell> {
               duration: const Duration(
                 milliseconds: 320,
               ),
-              reverseDuration: const Duration(
+              reverseDuration:
+                  const Duration(
                 milliseconds: 220,
               ),
               switchInCurve:
                   Curves.easeOutCubic,
               switchOutCurve:
                   Curves.easeInCubic,
-
               layoutBuilder: (
                 Widget? currentChild,
                 List<Widget> previousChildren,
@@ -173,18 +218,21 @@ class _HomeShellState extends State<HomeShell> {
                   ],
                 );
               },
-
               transitionBuilder: (
                 child,
                 animation,
               ) {
-                final fade = CurvedAnimation(
+                final fade =
+                    CurvedAnimation(
                   parent: animation,
-                  curve: Curves.easeOutCubic,
+                  curve:
+                      Curves.easeOutCubic,
                 );
 
-                final slide = Tween<Offset>(
-                  begin: const Offset(0.025, 0),
+                final slide =
+                    Tween<Offset>(
+                  begin:
+                      const Offset(0.025, 0),
                   end: Offset.zero,
                 ).animate(fade);
 
@@ -196,10 +244,12 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                 );
               },
-
               child: KeyedSubtree(
-                key: ValueKey(_currentIndex),
-                child: _pages[_currentIndex],
+                key: ValueKey(
+                  _currentIndex,
+                ),
+                child:
+                    _pages[_currentIndex],
               ),
             ),
           ),
