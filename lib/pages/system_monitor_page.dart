@@ -180,7 +180,12 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
     int totalCpuCount = _totalCpuCount;
 
     try {
-      final cpu = await _readProcCpu();
+      // Android native katmanı zaten online CPU listesini veriyor.
+      // Bu nedenle /sys/devices/system/cpu/online dosyasını
+      // ikinci kez okumuyoruz.
+      final cpu = await _readProcCpu(
+        readOnlineCpus: false,
+      );
 
       cpuUsage = cpu.usage;
       totalCpuCount = cpu.totalCount;
@@ -289,7 +294,9 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
     return _readProcCpu();
   }
 
-  Future<_CpuSnapshot> _readProcCpu() async {
+  Future<_CpuSnapshot> _readProcCpu({
+    bool readOnlineCpus = true,
+  }) async {
     try {
       final file = File('/proc/stat');
 
@@ -355,22 +362,26 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
 
       final totalCount = cpuLines.length;
 
-      final onlineFile = File(
-        '/sys/devices/system/cpu/online',
-      );
-
       List<String> online = [];
 
-      if (await onlineFile.exists()) {
-        final value = (await onlineFile.readAsString()).trim();
-        online = _expandCpuList(value);
-      }
-
-      if (online.isEmpty) {
-        online = List.generate(
-          totalCount,
-          (index) => '$index',
+      if (readOnlineCpus) {
+        final onlineFile = File(
+          '/sys/devices/system/cpu/online',
         );
+
+        if (await onlineFile.exists()) {
+          final value =
+              (await onlineFile.readAsString()).trim();
+
+          online = _expandCpuList(value);
+        }
+
+        if (online.isEmpty) {
+          online = List.generate(
+            totalCount,
+            (index) => '$index',
+          );
+        }
       }
 
       return _CpuSnapshot(
@@ -491,7 +502,8 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
           .listSync()
           .whereType<Directory>()
           .where(
-            (entry) => entry.path.split('/').last.startsWith('BAT'),
+            (entry) =>
+                entry.path.split('/').last.startsWith('BAT'),
           )
           .toList();
 
@@ -594,8 +606,7 @@ class _SystemMonitorPageState extends State<SystemMonitorPage> {
           '${zone.path}/type',
         );
 
-        String name =
-            zone.path.split('/').last;
+        String name = zone.path.split('/').last;
 
         if (await typeFile.exists()) {
           final type =
