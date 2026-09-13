@@ -33,7 +33,9 @@ class _UpdateButtonState
     final update =
         await UpdateService.checkForUpdate();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _checking = false;
@@ -124,7 +126,9 @@ class _UpdateButtonState
   Future<void> _installUpdate(
     UpdateInfo update,
   ) async {
-    if (_installing) return;
+    if (_installing) {
+      return;
+    }
 
     setState(() {
       _installing = true;
@@ -135,7 +139,9 @@ class _UpdateButtonState
         update.downloadUrl,
       );
     } on Exception catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
