@@ -30,28 +30,36 @@ android {
         versionName = flutter.versionName
     }
 
-signingConfigs {
-    release {
-        def keystorePath = System.getenv("STELLAR_KEYSTORE_PATH")
-        def keystorePassword = System.getenv("STELLAR_KEYSTORE_PASSWORD")
-        def stellarKeyAlias = System.getenv("STELLAR_KEY_ALIAS")
-        def keyPassword = System.getenv("STELLAR_KEY_PASSWORD")
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv("STELLAR_KEYSTORE_PATH")
+            def keystorePassword = System.getenv("STELLAR_KEYSTORE_PASSWORD")
+            def stellarKeyAlias = System.getenv("STELLAR_KEY_ALIAS")
+            def stellarKeyPassword = System.getenv("STELLAR_KEY_PASSWORD")
 
-        if (keystorePath == null ||
-            keystorePassword == null ||
-            stellarKeyAlias == null ||
-            keyPassword == null) {
-            throw new GradleException(
-                "Android release signing secrets are missing."
-            )
+            if (keystorePath == null ||
+                keystorePassword == null ||
+                stellarKeyAlias == null ||
+                stellarKeyPassword == null) {
+                throw new GradleException(
+                    "Android release signing secrets are missing."
+                )
+            }
+
+            storeFile = file(keystorePath)
+            storePassword = keystorePassword
+            keyAlias = stellarKeyAlias
+            keyPassword = stellarKeyPassword
         }
+    }
 
-        storeFile = file(keystorePath)
-        storePassword = keystorePassword
-        keyAlias = stellarKeyAlias
-        this.keyPassword = keyPassword
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.release
+        }
     }
 }
+
 flutter {
     source = "../.."
 }
