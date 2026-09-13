@@ -27,7 +27,7 @@ class UpdateService {
           .get(
             Uri.parse(versionUrl),
             headers: const {
-              'Cache-Control': 'no-cache',
+              'Cache-Control': 'no-cache, no-store',
               'Pragma': 'no-cache',
             },
           )
@@ -40,15 +40,18 @@ class UpdateService {
       }
 
       final data =
-          jsonDecode(response.body) as Map<String, dynamic>;
+          jsonDecode(response.body)
+              as Map<String, dynamic>;
 
       final latestVersion =
-          (data['latest_version'] ?? data['version'])
+          (data['latest_version'] ??
+                  data['version'])
               ?.toString()
               .trim();
 
       final downloadUrl =
-          (data['download_url'] ?? data['url'])
+          (data['download_url'] ??
+                  data['url'])
               ?.toString()
               .trim();
 
@@ -59,7 +62,8 @@ class UpdateService {
         return null;
       }
 
-      final uri = Uri.tryParse(downloadUrl);
+      final uri =
+          Uri.tryParse(downloadUrl);
 
       if (uri == null ||
           uri.scheme != 'https' ||
@@ -80,19 +84,27 @@ class UpdateService {
     String currentVersion,
     String latestVersion,
   ) {
-    final current = _parseVersion(currentVersion);
-    final latest = _parseVersion(latestVersion);
+    final current =
+        _parseVersion(currentVersion);
 
-    final length = current.length > latest.length
-        ? current.length
-        : latest.length;
+    final latest =
+        _parseVersion(latestVersion);
+
+    final length =
+        current.length > latest.length
+            ? current.length
+            : latest.length;
 
     for (var i = 0; i < length; i++) {
       final currentPart =
-          i < current.length ? current[i] : 0;
+          i < current.length
+              ? current[i]
+              : 0;
 
       final latestPart =
-          i < latest.length ? latest[i] : 0;
+          i < latest.length
+              ? latest[i]
+              : 0;
 
       if (latestPart > currentPart) {
         return true;
@@ -106,18 +118,24 @@ class UpdateService {
     return false;
   }
 
-  static List<int> _parseVersion(String version) {
+  static List<int> _parseVersion(
+    String version,
+  ) {
     return version
         .trim()
         .replaceFirst(
-          RegExp(r'^v', caseSensitive: false),
+          RegExp(
+            r'^v',
+            caseSensitive: false,
+          ),
           '',
         )
         .split('.')
         .map(
           (part) {
             final match =
-                RegExp(r'\d+').firstMatch(part);
+                RegExp(r'\d+')
+                    .firstMatch(part);
 
             return int.tryParse(
                   match?.group(0) ?? '0',
@@ -131,7 +149,8 @@ class UpdateService {
   static Future<void> downloadAndInstall(
     String downloadUrl,
   ) async {
-    final uri = Uri.tryParse(downloadUrl);
+    final uri =
+        Uri.tryParse(downloadUrl);
 
     if (uri == null ||
         uri.scheme != 'https' ||
@@ -156,6 +175,12 @@ class UpdateService {
         code: 'NATIVE_UPDATER_MISSING',
         message:
             'Android güncelleme bileşeni bulunamadı.',
+      );
+    } catch (error) {
+      throw PlatformException(
+        code: 'UPDATE_ERROR',
+        message:
+            'Güncelleme işlemi başarısız: $error',
       );
     }
   }
