@@ -18,8 +18,6 @@ class LinuxNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     if (selectedStyle == AppThemeStyle.normal) {
       return _NormalLinuxNavigationBar(
         currentIndex: currentIndex,
@@ -53,7 +51,9 @@ class _NormalLinuxNavigationBar extends StatelessWidget {
       child: Center(
         child: Container(
           width: 76,
+          height: 360,
           margin: const EdgeInsets.symmetric(
+            horizontal: 12,
             vertical: 24,
           ),
           decoration: BoxDecoration(
@@ -104,7 +104,9 @@ class _LiquidGlassLinuxNavigationBar
       child: Center(
         child: Container(
           width: 76,
+          height: 360,
           margin: const EdgeInsets.symmetric(
+            horizontal: 12,
             vertical: 24,
           ),
           decoration: BoxDecoration(
@@ -229,19 +231,14 @@ class _NavigationItems extends StatelessWidget {
       'Monitor',
     ),
     (
-      Icons.note_outlined,
-      Icons.note,
-      'Notes',
+      Icons.music_note_outlined,
+      Icons.music_note,
+      'Music',
     ),
     (
       Icons.info_outline,
       Icons.info,
       'App',
-    ),
-    (
-      Icons.storage_outlined,
-      Icons.storage,
-      'Storage',
     ),
   ];
 
@@ -302,7 +299,8 @@ class _NavigationItems extends StatelessWidget {
                             : null,
                         boxShadow: [
                           BoxShadow(
-                            color: accent.withOpacity(
+                            color:
+                                accent.withOpacity(
                               isGlass
                                   ? 0.18
                                   : 0.14,
