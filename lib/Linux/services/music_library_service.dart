@@ -66,26 +66,32 @@ class MusicLibraryService {
         continue;
       }
 
-      final track = await _readTrack(entity);
-
-      tracks.add(track);
+      tracks.add(
+        await _readTrack(entity),
+      );
     }
 
     tracks.sort(
       (a, b) => a.title
           .toLowerCase()
-          .compareTo(b.title.toLowerCase()),
+          .compareTo(
+            b.title.toLowerCase(),
+          ),
     );
 
     return tracks;
   }
 
-  Future<MusicTrack> _readTrack(File mp3) async {
+  Future<MusicTrack> _readTrack(
+    File mp3,
+  ) async {
     final directory = mp3.parent;
 
-    final fileName = mp3.uri.pathSegments.last;
+    final fileName =
+        mp3.uri.pathSegments.last;
 
-    final baseName = fileName.replaceFirst(
+    final baseName =
+        fileName.replaceFirst(
       RegExp(
         r'\.mp3$',
         caseSensitive: false,
@@ -131,31 +137,42 @@ class MusicLibraryService {
 
     final folderName = directory.path
         .split(Platform.pathSeparator)
-        .where((part) => part.isNotEmpty)
+        .where(
+          (part) => part.isNotEmpty,
+        )
         .lastOrNull;
 
-    if (folderName != null && folderName.isNotEmpty) {
+    if (folderName != null &&
+        folderName.isNotEmpty) {
       album = folderName;
     }
 
+    // Önce MP3 ID3 metadata.
     final id3 = await _readId3Tags(mp3);
 
-    if (id3.title != null && id3.title!.isNotEmpty) {
+    if (id3.title != null &&
+        id3.title!.isNotEmpty) {
       title = id3.title!;
     }
 
-    if (id3.artist != null && id3.artist!.isNotEmpty) {
+    if (id3.artist != null &&
+        id3.artist!.isNotEmpty) {
       artist = id3.artist!;
     }
 
-    if (id3.album != null && id3.album!.isNotEmpty) {
+    if (id3.album != null &&
+        id3.album!.isNotEmpty) {
       album = id3.album!;
     }
 
+    // Filename fallback:
+    // Artist - Title.mp3
     final parts = baseName
         .split(' - ')
         .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
+        .where(
+          (part) => part.isNotEmpty,
+        )
         .toList();
 
     if (id3.artist == null &&
@@ -163,6 +180,34 @@ class MusicLibraryService {
         parts.length >= 2) {
       artist = parts[0];
       title = parts.sublist(1).join(' - ');
+    }
+
+    // LRC metadata EN SON uygulanır.
+    // Böylece:
+    // [ar:Barış Manço]
+    // [ti:Toz Pembe]
+    // [al:Manço Albümü]
+    // MP3 metadata'sının üzerine yazılır.
+    if (lyrics != null) {
+      final lrcMetadata =
+          await _readLrcMetadata(
+        lyrics,
+      );
+
+      if (lrcMetadata.artist != null &&
+          lrcMetadata.artist!.isNotEmpty) {
+        artist = lrcMetadata.artist!;
+      }
+
+      if (lrcMetadata.title != null &&
+          lrcMetadata.title!.isNotEmpty) {
+        title = lrcMetadata.title!;
+      }
+
+      if (lrcMetadata.album != null &&
+          lrcMetadata.album!.isNotEmpty) {
+        album = lrcMetadata.album!;
+      }
     }
 
     return MusicTrack(
@@ -175,12 +220,100 @@ class MusicLibraryService {
     );
   }
 
-  Future<_Id3Tags> _readId3Tags(File file) async {
+  Future<_LrcMetadata> _readLrcMetadata(
+    File file,
+  ) async {
     try {
-      final handle = await file.open();
+      final content =
+          await file.readAsString();
+
+      String? artist;
+      String? title;
+      String? album;
+
+      for (final rawLine
+          in content.split('\n')) {
+        final line = rawLine
+            .replaceAll('\r', '')
+            .trim();
+
+        if (line.isEmpty) {
+          continue;
+        }
+
+        final artistMatch =
+            RegExp(
+          r'^\[ar:(.*?)\]$',
+          caseSensitive: false,
+        ).firstMatch(line);
+
+        if (artistMatch != null) {
+          final value =
+              artistMatch.group(1)?.trim();
+
+          if (value != null &&
+              value.isNotEmpty) {
+            artist = value;
+          }
+
+          continue;
+        }
+
+        final titleMatch =
+            RegExp(
+          r'^\[ti:(.*?)\]$',
+          caseSensitive: false,
+        ).firstMatch(line);
+
+        if (titleMatch != null) {
+          final value =
+              titleMatch.group(1)?.trim();
+
+          if (value != null &&
+              value.isNotEmpty) {
+            title = value;
+          }
+
+          continue;
+        }
+
+        final albumMatch =
+            RegExp(
+          r'^\[al:(.*?)\]$',
+          caseSensitive: false,
+        ).firstMatch(line);
+
+        if (albumMatch != null) {
+          final value =
+              albumMatch.group(1)?.trim();
+
+          if (value != null &&
+              value.isNotEmpty) {
+            album = value;
+          }
+        }
+      }
+
+      return _LrcMetadata(
+        artist: artist,
+        title: title,
+        album: album,
+      );
+    } catch (_) {
+      return const _LrcMetadata();
+    }
+  }
+
+  Future<_Id3Tags> _readId3Tags(
+    File file,
+  ) async {
+    try {
+      final handle =
+          await file.open();
 
       try {
-        final header = await handle.read(10);
+        final header =
+            await handle.read(10);
 
         if (header.length < 10) {
           return const _Id3Tags();
@@ -192,9 +325,11 @@ class MusicLibraryService {
           return const _Id3Tags();
         }
 
-        final versionMajor = header[3];
+        final versionMajor =
+            header[3];
 
-        final tagSize = _synchsafeInt(
+        final tagSize =
+            _synchsafeInt(
           header.sublist(6, 10),
         );
 
@@ -202,7 +337,8 @@ class MusicLibraryService {
           return const _Id3Tags();
         }
 
-        final tagData = await handle.read(tagSize);
+        final tagData =
+            await handle.read(tagSize);
 
         String? title;
         String? artist;
@@ -210,8 +346,10 @@ class MusicLibraryService {
 
         var offset = 0;
 
-        while (offset + 10 <= tagData.length) {
-          final frameId = ascii.decode(
+        while (offset + 10 <=
+            tagData.length) {
+          final frameId =
+              ascii.decode(
             tagData.sublist(
               offset,
               offset + 4,
@@ -220,44 +358,68 @@ class MusicLibraryService {
           );
 
           if (frameId.trim().isEmpty ||
-              !RegExp(r'^[A-Z0-9]{4}$').hasMatch(frameId)) {
+              !RegExp(
+                r'^[A-Z0-9]{4}$',
+              ).hasMatch(frameId)) {
             break;
           }
 
-          final frameSizeBytes = tagData.sublist(
+          final frameSizeBytes =
+              tagData.sublist(
             offset + 4,
             offset + 8,
           );
 
-          final frameSize = versionMajor >= 4
-              ? _synchsafeInt(frameSizeBytes)
-              : _bigEndianInt(frameSizeBytes);
+          final frameSize =
+              versionMajor >= 4
+                  ? _synchsafeInt(
+                      frameSizeBytes,
+                    )
+                  : _bigEndianInt(
+                      frameSizeBytes,
+                    );
 
           if (frameSize <= 0 ||
-              offset + 10 + frameSize > tagData.length) {
+              offset +
+                      10 +
+                      frameSize >
+                  tagData.length) {
             break;
           }
 
-          final frameData = tagData.sublist(
+          final frameData =
+              tagData.sublist(
             offset + 10,
-            offset + 10 + frameSize,
+            offset +
+                10 +
+                frameSize,
           );
 
           switch (frameId) {
             case 'TIT2':
-              title = _decodeTextFrame(frameData);
+              title =
+                  _decodeTextFrame(
+                frameData,
+              );
               break;
 
             case 'TPE1':
-              artist = _decodeTextFrame(frameData);
+              artist =
+                  _decodeTextFrame(
+                frameData,
+              );
               break;
 
             case 'TALB':
-              album = _decodeTextFrame(frameData);
+              album =
+                  _decodeTextFrame(
+                frameData,
+              );
               break;
           }
 
-          offset += 10 + frameSize;
+          offset +=
+              10 + frameSize;
         }
 
         return _Id3Tags(
@@ -273,13 +435,18 @@ class MusicLibraryService {
     }
   }
 
-  String? _decodeTextFrame(List<int> data) {
+  String? _decodeTextFrame(
+    List<int> data,
+  ) {
     if (data.isEmpty) {
       return null;
     }
 
-    final encoding = data[0];
-    final bytes = data.sublist(1);
+    final encoding =
+        data[0];
+
+    final bytes =
+        data.sublist(1);
 
     if (bytes.isEmpty) {
       return null;
@@ -289,8 +456,14 @@ class MusicLibraryService {
       switch (encoding) {
         case 0:
           return latin1
-              .decode(bytes, allowInvalid: true)
-              .replaceAll('\u0000', '')
+              .decode(
+                bytes,
+                allowInvalid: true,
+              )
+              .replaceAll(
+                '\u0000',
+                '',
+              )
               .trim();
 
         case 1:
@@ -298,8 +471,13 @@ class MusicLibraryService {
               bytes[0] == 0xFF &&
               bytes[1] == 0xFE) {
             return utf16
-                .decode(bytes.sublist(2))
-                .replaceAll('\u0000', '')
+                .decode(
+                  bytes.sublist(2),
+                )
+                .replaceAll(
+                  '\u0000',
+                  '',
+                )
                 .trim();
           }
 
@@ -313,19 +491,34 @@ class MusicLibraryService {
 
           return utf16
               .decode(bytes)
-              .replaceAll('\u0000', '')
+              .replaceAll(
+                '\u0000',
+                '',
+              )
               .trim();
 
         case 2:
           return utf16
-              .decode(bytes, allowInvalid: true)
-              .replaceAll('\u0000', '')
+              .decode(
+                bytes,
+                allowInvalid: true,
+              )
+              .replaceAll(
+                '\u0000',
+                '',
+              )
               .trim();
 
         case 3:
           return utf8
-              .decode(bytes, allowMalformed: true)
-              .replaceAll('\u0000', '')
+              .decode(
+                bytes,
+                allowMalformed: true,
+              )
+              .replaceAll(
+                '\u0000',
+                '',
+              )
               .trim();
 
         default:
@@ -336,21 +529,35 @@ class MusicLibraryService {
     }
   }
 
-  String _decodeUtf16BigEndian(List<int> bytes) {
+  String _decodeUtf16BigEndian(
+    List<int> bytes,
+  ) {
     final units = <int>[];
 
-    for (var i = 0; i + 1 < bytes.length; i += 2) {
+    for (
+      var i = 0;
+      i + 1 < bytes.length;
+      i += 2
+    ) {
       units.add(
-        (bytes[i] << 8) | bytes[i + 1],
+        (bytes[i] << 8) |
+            bytes[i + 1],
       );
     }
 
-    return String.fromCharCodes(units)
-        .replaceAll('\u0000', '')
+    return String.fromCharCodes(
+      units,
+    )
+        .replaceAll(
+          '\u0000',
+          '',
+        )
         .trim();
   }
 
-  int _synchsafeInt(List<int> bytes) {
+  int _synchsafeInt(
+    List<int> bytes,
+  ) {
     if (bytes.length < 4) {
       return 0;
     }
@@ -361,7 +568,9 @@ class MusicLibraryService {
         bytes[3];
   }
 
-  int _bigEndianInt(List<int> bytes) {
+  int _bigEndianInt(
+    List<int> bytes,
+  ) {
     if (bytes.length < 4) {
       return 0;
     }
@@ -381,6 +590,18 @@ class _Id3Tags {
   const _Id3Tags({
     this.title,
     this.artist,
+    this.album,
+  });
+}
+
+class _LrcMetadata {
+  final String? artist;
+  final String? title;
+  final String? album;
+
+  const _LrcMetadata({
+    this.artist,
+    this.title,
     this.album,
   });
 }
