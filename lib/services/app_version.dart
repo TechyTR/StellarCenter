@@ -3,5 +3,3 @@ class AppVersion {
 
   const AppVersion._();
 }
-
-
