@@ -13,7 +13,13 @@ permissions:
   contents: write
 
 jobs:
-  build:
+
+  # ============================================================
+  # ANDROID
+  # ============================================================
+
+  android:
+    name: Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -33,36 +39,11 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Enable Linux desktop
-        run: flutter config --enable-linux-desktop
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-
-          sudo apt-get install -y \
-            clang \
-            cmake \
-            ninja-build \
-            pkg-config \
-            libgtk-3-dev \
-            liblzma-dev \
-            dpkg-dev \
-            libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly
-
       - name: Install Flutter dependencies
         run: flutter pub get
 
       - name: Generate Android launcher icons
         run: dart run flutter_launcher_icons
-
-      - name: Verify Flutter project
-        run: flutter doctor -v
 
       - name: Read version
         id: version
@@ -96,6 +77,67 @@ jobs:
           cp \
             build/app/outputs/flutter-apk/app-release.apk \
             "stellar-center-${{ steps.version.outputs.version }}.apk"
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stellar-center-android-${{ steps.version.outputs.version }}
+          path: stellar-center-${{ steps.version.outputs.version }}.apk
+
+
+  # ============================================================
+  # LINUX
+  # ============================================================
+
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.0"
+          channel: stable
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            dpkg-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly
+
+      - name: Generate Linux desktop project
+        run: flutter create --platforms=linux --no-pub .
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build Linux
         run: |
@@ -150,27 +192,54 @@ jobs:
             debian-package \
             "stellar-center-${VERSION}-amd64.deb"
 
-      - name: Upload build artifacts
+      - name: Upload Linux artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: stellar-center-${{ steps.version.outputs.version }}
+          name: stellar-center-linux-${{ steps.version.outputs.version }}
           path: |
-            stellar-center-${{ steps.version.outputs.version }}.apk
             stellar-center-${{ steps.version.outputs.version }}-linux-x64.tar.gz
             stellar-center-${{ steps.version.outputs.version }}-amd64.deb
 
+
+  # ============================================================
+  # RELEASE
+  # ============================================================
+
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+
+    needs:
+      - android
+      - linux
+
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download Android artifact
+        uses: actions/download-artifact@v5
+        with:
+          pattern: stellar-center-android-*
+          path: release
+          merge-multiple: true
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: stellar-center-linux-*
+          path: release
+          merge-multiple: true
+
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF_NAME}"
-          VERSION="${{ steps.version.outputs.version }}"
 
           gh release create "$TAG" \
-            "stellar-center-${VERSION}.apk" \
-            "stellar-center-${VERSION}-linux-x64.tar.gz" \
-            "stellar-center-${VERSION}-amd64.deb" \
-            --title "Stellar Center ${VERSION}" \
+            release/*.apk \
+            release/*.tar.gz \
+            release/*.deb \
+            --title "Stellar Center ${TAG#v}" \
             --generate-notes \
             --latest
