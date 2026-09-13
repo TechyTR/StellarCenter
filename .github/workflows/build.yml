@@ -1,24 +1,23 @@
-name: Build APK and Linux Release
+name: Stellar Center Build
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
-  android:
-    name: Build Android APK
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -31,253 +30,93 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Get dependencies
-        run: flutter pub get
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
 
-      - name: Generate icons
-        run: dart run flutter_launcher_icons
-
-      - name: Read version
-        id: version
-        shell: bash
+      - name: Install Linux dependencies
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-
-          if [ -z "$VERSION" ]; then
-            echo "Version could not be detected."
-            exit 1
-          fi
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Prepare Android signing
-        shell: bash
-        env:
-          STELLAR_KEYSTORE_BASE64: ${{ secrets.STELLAR_KEYSTORE_BASE64 }}
-        run: |
-          set -e
-
-          test -n "$STELLAR_KEYSTORE_BASE64"
-
-          echo "$STELLAR_KEYSTORE_BASE64" | base64 --decode > android/app/stellar-release.jks
-
-          test -s android/app/stellar-release.jks
-
-      - name: Build APK
-        env:
-          STELLAR_KEYSTORE_PATH: ${{ github.workspace }}/android/app/stellar-release.jks
-          STELLAR_KEYSTORE_PASSWORD: ${{ secrets.STELLAR_KEYSTORE_PASSWORD }}
-          STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
-          STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
-        run: |
-          set -e
-
-          flutter clean
-          flutter pub get
-          flutter build apk --release
-
-      - name: Verify APK signature
-        shell: bash
-        run: |
-          set -e
-
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
-
-          test -n "$APKSIGNER"
-
-          "$APKSIGNER" verify --verbose \
-            build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Verify APK
-        shell: bash
-        run: |
-          set -e
-
-          test -f build/app/outputs/flutter-apk/app-release.apk
-
-          file build/app/outputs/flutter-apk/app-release.apk
-
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: stellarcenter-apk-${{ steps.version.outputs.version }}
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-  linux:
-    name: Build Linux x64 / Pardus 23
-    runs-on: ubuntu-latest
-
-    container:
-      image: debian:12
-
-    steps:
-      - name: Install system dependencies
-        shell: bash
-        run: |
-          set -e
-
-          export DEBIAN_FRONTEND=noninteractive
-
-          apt-get update
-
-          apt-get install -y \
-            git \
-            curl \
-            wget \
-            unzip \
-            xz-utils \
-            zip \
-            tar \
-            file \
-            ca-certificates \
+          sudo apt-get update
+          sudo apt-get install -y \
             clang \
             cmake \
             ninja-build \
             pkg-config \
             libgtk-3-dev \
             liblzma-dev \
-            libstdc++-12-dev \
-            libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
             dpkg-dev
 
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Flutter 3.24.0
-        shell: bash
-        run: |
-          set -e
-
-          git clone \
-            --depth 1 \
-            --branch 3.24.0 \
-            https://github.com/flutter/flutter.git \
-            /opt/flutter
-
-          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
-          echo "/opt/flutter/bin/cache/dart-sdk/bin" >> "$GITHUB_PATH"
-
-          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
-          flutter config --enable-linux-desktop
-          flutter --version
-
-      - name: Prepare Linux platform
-        shell: bash
-        run: |
-          set -e
-
-          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
-          if [ ! -d "linux" ]; then
-            flutter create \
-              --platforms=linux \
-              --project-name=stellarcenter \
-              .
-          fi
-
-      - name: Get dependencies
-        shell: bash
-        run: |
-          set -e
-
-          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
-
-          flutter pub get
+      - name: Install Flutter dependencies
+        run: flutter pub get
 
       - name: Read version
         id: version
         shell: bash
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-
-          if [ -z "$VERSION" ]; then
-            echo "Version could not be detected."
-            exit 1
-          fi
-
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Build Linux x64
+      - name: Prepare Android keystore
         shell: bash
         run: |
-          set -e
+          mkdir -p android/keystore
 
-          export PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
+          echo "${{ secrets.STELLAR_KEYSTORE_BASE64 }}" \
+            | base64 --decode \
+            > android/keystore/stellar-release.jks
 
-          flutter clean
-          flutter pub get
+          test -s android/keystore/stellar-release.jks
+
+      - name: Build Android APK
+        env:
+          STELLAR_KEYSTORE_PATH: ${{ github.workspace }}/android/keystore/stellar-release.jks
+          STELLAR_KEYSTORE_PASSWORD: ${{ secrets.STELLAR_KEYSTORE_PASSWORD }}
+          STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
+          STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
+        run: |
+          flutter build apk --release
+
+          cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            "stellar-center-${{ steps.version.outputs.version }}.apk"
+
+      - name: Build Linux
+        run: |
           flutter build linux --release
 
-      - name: Verify Linux binary
-        shell: bash
+      - name: Create Linux tar.gz
         run: |
-          set -e
-
-          BUNDLE="build/linux/x64/release/bundle"
-
-          test -d "$BUNDLE"
-          test -f "$BUNDLE/stellarcenter"
-
-          file "$BUNDLE/stellarcenter"
-
-          ls -lah "$BUNDLE"
-
-      - name: Create Linux TAR.GZ
-        shell: bash
-        run: |
-          set -e
-
           tar -czf \
-            stellar-center-linux-x64.tar.gz \
-            -C build/linux/x64/release/bundle \
-            .
+            "stellar-center-${{ steps.version.outputs.version }}-linux-x64.tar.gz" \
+            -C build/linux/x64/release bundle
 
-          test -f stellar-center-linux-x64.tar.gz
-
-      - name: Upload Linux TAR.GZ
-        uses: actions/upload-artifact@v4
-        with:
-          name: stellarcenter-linux-${{ steps.version.outputs.version }}
-          path: stellar-center-linux-x64.tar.gz
-
-      - name: Create Debian package
+      - name: Create Linux .deb
         shell: bash
         run: |
-          set -e
-
           VERSION="${{ steps.version.outputs.version }}"
 
-          rm -rf deb-package
+          rm -rf debian-package
 
           mkdir -p \
-            "deb-package/DEBIAN" \
-            "deb-package/opt/stellarcenter" \
-            "deb-package/usr/share/applications" \
-            "deb-package/usr/share/icons/hicolor/256x256/apps"
+            "debian-package/DEBIAN" \
+            "debian-package/opt/stellarcenter"
 
-          cp -a \
+          cp -r \
             build/linux/x64/release/bundle/. \
-            "deb-package/opt/stellarcenter/"
+            debian-package/opt/stellarcenter/
 
-          cat > "deb-package/DEBIAN/control" <<EOF
+          cat > debian-package/DEBIAN/control <<EOF
           Package: stellarcenter
           Version: ${VERSION}
           Section: utils
           Priority: optional
           Architecture: amd64
           Maintainer: TechyTR
-          Depends: libc6, libgtk-3-0
-          Description: Stellar Center
-           Stellar Center system utility application for Linux and Pardus.
+          Description: Stellar Center system utility application
           EOF
 
-          cat > "deb-package/usr/share/applications/stellarcenter.desktop" <<EOF
+          mkdir -p debian-package/usr/share/applications
+
+          cat > debian-package/usr/share/applications/stellarcenter.desktop <<EOF
           [Desktop Entry]
           Name=Stellar Center
           Comment=Stellar Center system utility application
@@ -287,126 +126,32 @@ jobs:
           Categories=Utility;System;
           EOF
 
-          if [ -f "assets/icon.png" ]; then
-            cp \
-              assets/icon.png \
-              "deb-package/usr/share/icons/hicolor/256x256/apps/stellarcenter.png"
-          fi
-
-      - name: Build DEB
-        shell: bash
-        run: |
-          set -e
-
-          VERSION="${{ steps.version.outputs.version }}"
-
           dpkg-deb \
             --build \
-            --root-owner-group \
-            deb-package \
-            "stellar-center_${VERSION}_amd64.deb"
+            debian-package \
+            "stellar-center-${VERSION}-amd64.deb"
 
-      - name: Verify DEB
-        shell: bash
-        run: |
-          set -e
-
-          VERSION="${{ steps.version.outputs.version }}"
-          DEB="stellar-center_${VERSION}_amd64.deb"
-
-          test -f "$DEB"
-
-          dpkg-deb --info "$DEB"
-
-          ls -lh "$DEB"
-
-      - name: Upload DEB
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: stellarcenter-deb-${{ steps.version.outputs.version }}
-          path: stellar-center_${{ steps.version.outputs.version }}_amd64.deb
-
-  release:
-    name: Create GitHub Release
-    needs:
-      - android
-      - linux
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Read version
-        id: version
-        shell: bash
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-
-          if [ -z "$VERSION" ]; then
-            echo "Version could not be detected."
-            exit 1
-          fi
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Download Android APK
-        uses: actions/download-artifact@v4
-        with:
-          name: stellarcenter-apk-${{ steps.version.outputs.version }}
-          path: release/apk
-
-      - name: Download Linux TAR.GZ
-        uses: actions/download-artifact@v4
-        with:
-          name: stellarcenter-linux-${{ steps.version.outputs.version }}
-          path: release/linux
-
-      - name: Download Linux DEB
-        uses: actions/download-artifact@v4
-        with:
-          name: stellarcenter-deb-${{ steps.version.outputs.version }}
-          path: release/deb
-
-      - name: Verify release files
-        shell: bash
-        run: |
-          set -e
-
-          VERSION="${{ steps.version.outputs.version }}"
-
-          test -f release/apk/app-release.apk
-          test -f release/linux/stellar-center-linux-x64.tar.gz
-          test -f "release/deb/stellar-center_${VERSION}_amd64.deb"
-
-          find release -type f -exec ls -lh {} \;
+          name: stellar-center-${{ steps.version.outputs.version }}
+          path: |
+            stellar-center-${{ steps.version.outputs.version }}.apk
+            stellar-center-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            stellar-center-${{ steps.version.outputs.version }}-amd64.deb
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Stellar Center v${{ steps.version.outputs.version }}
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${{ steps.version.outputs.version }}"
 
-          body: |
-            # Stellar Center v${{ steps.version.outputs.version }}
-
-            ## Android
-            - APK
-
-            ## Linux / Pardus
-            - Linux x64 TAR.GZ
-            - Debian/Pardus AMD64 DEB
-
-            ## Compatibility
-            Linux binaries are compiled using Debian 12
-            for compatibility with Pardus 23.
-
-          files: |
-            release/apk/app-release.apk
-            release/linux/stellar-center-linux-x64.tar.gz
-            release/deb/stellar-center_${{ steps.version.outputs.version }}_amd64.deb
-
-          make_latest: true
-          overwrite_files: true
-
+          gh release create "$TAG" \
+            "stellar-center-${VERSION}.apk" \
+            "stellar-center-${VERSION}-linux-x64.tar.gz" \
+            "stellar-center-${VERSION}-amd64.deb" \
+            --title "Stellar Center ${VERSION}" \
+            --generate-notes \
+            --latest
