@@ -3,6 +3,8 @@ name: Stellar Center Build
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -15,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -36,6 +38,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
+
           sudo apt-get install -y \
             clang \
             cmake \
@@ -43,10 +46,19 @@ jobs:
             pkg-config \
             libgtk-3-dev \
             liblzma-dev \
-            dpkg-dev
+            dpkg-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly
 
       - name: Install Flutter dependencies
         run: flutter pub get
+
+      - name: Verify Flutter project
+        run: flutter doctor -v
 
       - name: Read version
         id: version
@@ -73,6 +85,8 @@ jobs:
           STELLAR_KEY_ALIAS: ${{ secrets.STELLAR_KEY_ALIAS }}
           STELLAR_KEY_PASSWORD: ${{ secrets.STELLAR_KEY_PASSWORD }}
         run: |
+          flutter clean
+          flutter pub get
           flutter build apk --release
 
           cp \
@@ -81,6 +95,8 @@ jobs:
 
       - name: Build Linux
         run: |
+          flutter clean
+          flutter pub get
           flutter build linux --release
 
       - name: Create Linux tar.gz
@@ -98,7 +114,8 @@ jobs:
 
           mkdir -p \
             "debian-package/DEBIAN" \
-            "debian-package/opt/stellarcenter"
+            "debian-package/opt/stellarcenter" \
+            "debian-package/usr/share/applications"
 
           cp -r \
             build/linux/x64/release/bundle/. \
@@ -113,8 +130,6 @@ jobs:
           Maintainer: TechyTR
           Description: Stellar Center system utility application
           EOF
-
-          mkdir -p debian-package/usr/share/applications
 
           cat > debian-package/usr/share/applications/stellarcenter.desktop <<EOF
           [Desktop Entry]
@@ -132,7 +147,7 @@ jobs:
             "stellar-center-${VERSION}-amd64.deb"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stellar-center-${{ steps.version.outputs.version }}
           path: |
