@@ -136,7 +136,7 @@ class UpdateService {
     if (uri == null ||
         uri.scheme != 'https' ||
         uri.host.isEmpty) {
-      throw const PlatformException(
+      throw PlatformException(
         code: 'INVALID_URL',
         message: 'APK URL geçersiz.',
       );
@@ -152,7 +152,7 @@ class UpdateService {
     } on PlatformException {
       rethrow;
     } on MissingPluginException {
-      throw const PlatformException(
+      throw PlatformException(
         code: 'NATIVE_UPDATER_MISSING',
         message:
             'Android güncelleme bileşeni bulunamadı.',
