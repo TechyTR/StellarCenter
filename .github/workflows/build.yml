@@ -2,6 +2,7 @@ name: Stellar Center Build
 
 on:
   workflow_dispatch:
+
   push:
     branches:
       - main
@@ -57,7 +58,7 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-       - name: Generate Android launcher icons
+      - name: Generate Android launcher icons
         run: dart run flutter_launcher_icons
 
       - name: Verify Flutter project
