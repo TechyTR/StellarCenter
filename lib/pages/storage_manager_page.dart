@@ -301,7 +301,7 @@ class _StorageManagerPageState extends State<StorageManagerPage> {
         'android',
         '.thumbnails',
         '.trash',
-        'android',
+        
       };
 
       if (androidSkips.contains(name)) {
