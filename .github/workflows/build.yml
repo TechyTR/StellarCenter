@@ -94,24 +94,18 @@ jobs:
   linux:
     name: Linux x64
     runs-on: ubuntu-latest
+
+    # Debian 12 uses GLib 2.74.x.
+    # This prevents binaries from requiring
+    # g_once_init_enter_pointer (introduced in GLib 2.80).
     container:
-     image: debian:12
+      image: debian:12
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.24.0"
-          channel: stable
-          cache: true
-
-      - name: Enable Linux desktop
-        run: flutter config --enable-linux-desktop
-
-             - name: Install Linux dependencies
+      - name: Install Linux dependencies
         run: |
           apt-get update
 
@@ -137,6 +131,25 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-ugly
 
+      - name: Install Flutter
+        run: |
+          git clone \
+            --depth 1 \
+            --branch 3.24.0 \
+            https://github.com/flutter/flutter.git \
+            /opt/flutter
+
+          echo "/opt/flutter/bin" >> "$GITHUB_PATH"
+          echo "/opt/flutter/bin/cache/dart-sdk/bin" >> "$GITHUB_PATH"
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Verify GLib version
+        run: |
+          echo "GLib version:"
+          pkg-config --modversion glib-2.0
+
       - name: Generate Linux desktop project
         run: |
           flutter create \
@@ -160,6 +173,32 @@ jobs:
           flutter clean
           flutter pub get
           flutter build linux --release
+
+      - name: Check Linux binary dependencies
+        run: |
+          echo "Checking main binary dependencies..."
+
+          ldd build/linux/x64/release/bundle/stellarcenter \
+            | tee /tmp/stellarcenter-ldd.txt
+
+          if grep -q "not found" /tmp/stellarcenter-ldd.txt; then
+            echo "ERROR: Missing Linux shared library dependency."
+            exit 1
+          fi
+
+      - name: Check GLib symbol references
+        run: |
+          echo "Checking for g_once_init_enter_pointer references..."
+
+          if grep -RIl \
+            "g_once_init_enter_pointer" \
+            build/linux/x64/release/bundle \
+            2>/dev/null; then
+
+            echo "WARNING: g_once_init_enter_pointer reference found."
+          else
+            echo "OK: No direct g_once_init_enter_pointer reference found."
+          fi
 
       - name: Create Linux tar.gz
         run: |
