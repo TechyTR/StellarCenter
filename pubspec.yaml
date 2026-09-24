@@ -35,6 +35,7 @@ flutter:
 
   assets:
     - assets/icon.png
+    - assets/Stellar_Version.png
 
 flutter_launcher_icons:
   android: true
