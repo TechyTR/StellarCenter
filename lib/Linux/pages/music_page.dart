@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../music/music_track.dart';
 import '../music/edge_player.dart';
 import '../music/fullscreen_player.dart';
-import '../music/stellar_music_scanner.dart';
-import '../music/stellar_music_service.dart';
+import '../music/stellarmusic_scanner.dart';
+import '../music/music_service.dart';
 
 class LinuxMusicPage extends StatefulWidget {
   const LinuxMusicPage({super.key});
@@ -23,7 +23,6 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
   @override
   void initState() {
     super.initState();
-
     _initialize();
   }
 
@@ -39,7 +38,8 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
       });
     }
 
-    final tracks = await StellarMusicScanner.scan();
+    final tracks =
+        await StellarMusicScanner.scan();
 
     if (!mounted) return;
 
@@ -57,7 +57,6 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
     }
 
     service.setTracks(_tracks);
-
     service.playIndex(index);
 
     Navigator.of(context).push(
@@ -94,7 +93,8 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
                             'Müzik',
                             style: TextStyle(
                               fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                              fontWeight:
+                                  FontWeight.bold,
                             ),
                           ),
                           SizedBox(height: 4),
@@ -109,7 +109,8 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
                     ),
                     IconButton(
                       tooltip: 'Yenile',
-                      onPressed: _loading ? null : _scan,
+                      onPressed:
+                          _loading ? null : _scan,
                       icon: const Icon(
                         Icons.refresh_rounded,
                       ),
@@ -120,7 +121,8 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
               Expanded(
                 child: _loading
                     ? const Center(
-                        child: CircularProgressIndicator(),
+                        child:
+                            CircularProgressIndicator(),
                       )
                     : _tracks.isEmpty
                         ? const _EmptyMusic()
@@ -132,7 +134,8 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
                               18,
                               130,
                             ),
-                            itemCount: _tracks.length,
+                            itemCount:
+                                _tracks.length,
                             itemBuilder:
                                 (context, index) {
                               final track =
@@ -180,9 +183,7 @@ class _EmptyMusic extends StatelessWidget {
           SizedBox(height: 15),
           Text(
             'Henüz müzik bulunamadı',
-            style: TextStyle(
-              fontSize: 18,
-            ),
+            style: TextStyle(fontSize: 18),
           ),
           SizedBox(height: 6),
           Text(
@@ -225,7 +226,8 @@ class _SongTile extends StatelessWidget {
               child: Text(
                 track.title,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                overflow:
+                    TextOverflow.ellipsis,
               ),
             ),
             if (track.verifiedArtist)
@@ -269,7 +271,8 @@ class _Artwork extends StatelessWidget {
         width: 58,
         height: 58,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius:
+              BorderRadius.circular(10),
           gradient: const LinearGradient(
             colors: [
               Color(0xFF1769FF),
@@ -285,7 +288,8 @@ class _Artwork extends StatelessWidget {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius:
+          BorderRadius.circular(10),
       child: Image.memory(
         artwork,
         width: 58,
