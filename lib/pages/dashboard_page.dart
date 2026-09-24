@@ -265,8 +265,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 padding: padding,
                 child: child,
               ),
-
-              // Üst cam yansıması.
               Positioned(
                 left: 14,
                 right: 14,
@@ -288,8 +286,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ),
-
-              // İç taraftaki hafif ışık kırılması.
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -310,8 +306,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ),
-
-              // Çok hafif tema renkli cam yansıması.
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -798,6 +792,19 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Hesap',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AccountPage(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.account_circle_outlined,
+            ),
+          ),
+          IconButton(
             tooltip: 'Yenile',
             onPressed: () {
               _loadDeviceInfo();
@@ -986,4 +993,3 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-
