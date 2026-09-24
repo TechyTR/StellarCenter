@@ -20,7 +20,7 @@ import java.net.URL
 
 class MainActivity : FlutterActivity() {
 
-    private val CHANNEL = "org.test.thislinux/native"
+    private val CHANNEL = "com.nevruz.stellarcenter/native"
     private val UPDATER_CHANNEL = "thislinux/updater"
 
     override fun configureFlutterEngine(
