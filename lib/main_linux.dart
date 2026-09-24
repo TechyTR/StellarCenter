@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app.dart';
-import 'Linux/pages/home_shell_linux.dart';
+import 'platform/linux/home_shell_linux.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
