@@ -16,7 +16,7 @@ class StorageManagerPage extends StatefulWidget {
 class _StorageManagerPageState
     extends State<StorageManagerPage> {
   static const MethodChannel _channel =
-      MethodChannel('org.test.thislinux/native');
+      MethodChannel('com.nevruz.stellarcenter/native');
 
   bool _loading = true;
   bool _scanning = false;
