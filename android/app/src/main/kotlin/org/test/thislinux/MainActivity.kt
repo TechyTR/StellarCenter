@@ -1,4 +1,4 @@
-package org.test.thislinux
+package com.nevruz.stellarcenter
 
 import android.content.Context
 import android.content.Intent
