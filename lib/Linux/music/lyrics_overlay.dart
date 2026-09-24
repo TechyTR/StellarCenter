@@ -1,17 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'lrc_parser.dart';
+import 'music_track.dart';
 import 'stellar_lyrics_loader.dart';
 
 class StellarLyricsOverlay extends StatefulWidget {
-  final String? lyricsPath;
+  final StellarMusicTrack track;
   final Duration position;
 
   const StellarLyricsOverlay({
     super.key,
-    required this.lyricsPath,
+    required this.track,
     required this.position,
   });
 
@@ -36,14 +35,15 @@ class _StellarLyricsOverlayState
   ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.lyricsPath != widget.lyricsPath) {
+    if (oldWidget.track.lyricsPath !=
+        widget.track.lyricsPath) {
       _load();
     }
   }
 
   Future<void> _load() async {
     final lines = await StellarLyricsLoader.load(
-      widget.lyricsPath,
+      widget.track.lyricsPath,
     );
 
     if (!mounted) return;
@@ -56,64 +56,76 @@ class _StellarLyricsOverlayState
   @override
   Widget build(BuildContext context) {
     if (_lines.isEmpty) {
-      return const Center(
-        child: Text(
-          'Bu şarkı için senkronize söz bulunamadı.',
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 15,
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
-    final activeIndex =
-        StellarLrcParser.activeIndex(
+    final activeIndex = StellarLrcParser.activeIndex(
       _lines,
       widget.position,
     );
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 28,
-        vertical: 30,
-      ),
-      itemCount: _lines.length,
-      itemBuilder: (context, index) {
-        final line = _lines[index];
-        final active = index == activeIndex;
-        final previous = index == activeIndex - 1;
-        final next = index == activeIndex + 1;
+    final start = (activeIndex - 2).clamp(
+      0,
+      _lines.length - 1,
+    );
 
-        return AnimatedOpacity(
-          duration: const Duration(milliseconds: 250),
-          opacity: active
-              ? 1
-              : previous || next
-                  ? .55
-                  : .30,
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 250),
-            style: TextStyle(
-              fontSize: active ? 27 : 19,
-              height: 1.5,
-              fontWeight: active
-                  ? FontWeight.bold
-                  : FontWeight.w500,
-              color: Colors.white,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8,
-              ),
-              child: Text(
-                line.text,
-                textAlign: TextAlign.center,
-              ),
-            ),
+    final end = (activeIndex + 3).clamp(
+      0,
+      _lines.length,
+    );
+
+    final visible = _lines.sublist(start, end);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < visible.length; i++)
+          _LyricLine(
+            text: visible[i].text,
+            active: start + i == activeIndex,
           ),
-        );
-      },
+      ],
+    );
+  }
+}
+
+class _LyricLine extends StatelessWidget {
+  final String text;
+  final bool active;
+
+  const _LyricLine({
+    required this.text,
+    required this.active,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 7,
+      ),
+      child: AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        style: TextStyle(
+          fontSize: active ? 22 : 15,
+          height: 1.25,
+          fontWeight:
+              active ? FontWeight.w700 : FontWeight.w500,
+          color: active
+              ? Colors.white
+              : Colors.white.withOpacity(0.38),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 }
