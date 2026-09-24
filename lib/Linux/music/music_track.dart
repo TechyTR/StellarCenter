@@ -2,15 +2,11 @@ import 'dart:typed_data';
 
 class StellarMusicTrack {
   final String path;
-
   final String title;
   final String artist;
   final String album;
-
   final Uint8List? artwork;
-
   final String? lyricsPath;
-
   final bool verifiedArtist;
 
   const StellarMusicTrack({
@@ -38,7 +34,8 @@ class StellarMusicTrack {
       album: album ?? this.album,
       artwork: artwork ?? this.artwork,
       lyricsPath: lyricsPath ?? this.lyricsPath,
-      verifiedArtist: verifiedArtist ?? this.verifiedArtist,
+      verifiedArtist:
+          verifiedArtist ?? this.verifiedArtist,
     );
   }
 }
