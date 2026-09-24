@@ -24,13 +24,9 @@ class StellarCenterApp extends StatefulWidget {
       _StellarCenterAppState();
 }
 
-class _StellarCenterAppState
-    extends State<StellarCenterApp> {
-  AppThemeColor _selectedTheme =
-      AppThemeColor.purple;
-
-  AppThemeStyle _selectedStyle =
-      AppThemeStyle.normal;
+class _StellarCenterAppState extends State<StellarCenterApp> {
+  AppThemeColor _selectedTheme = AppThemeColor.purple;
+  AppThemeStyle _selectedStyle = AppThemeStyle.normal;
 
   bool _preferencesLoaded = false;
 
@@ -110,8 +106,7 @@ class _StellarCenterAppState
         selectedStyle: _selectedStyle,
         onThemeChanged: _changeTheme,
         onStyleChanged: _changeStyle,
-        homeShellBuilder:
-            widget.homeShellBuilder,
+        homeShellBuilder: widget.homeShellBuilder,
       ),
     );
   }
