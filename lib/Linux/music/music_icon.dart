@@ -22,38 +22,40 @@ class StellarMusicIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _StellarMusicIconPainter(
-        type: type,
-        color: color,
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _StellarMusicIconPainter(
+          type: type,
+          color: color,
+        ),
       ),
     );
   }
 }
 
-class _StellarMusicIconPainter extends CustomPainter {
+class _StellarMusicIconPainter
+    extends CustomPainter {
   final StellarMusicIconType type;
   final Color color;
 
-  _StellarMusicIconPainter({
+  const _StellarMusicIconPainter({
     required this.type,
     required this.color,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(
+    Canvas canvas,
+    Size size,
+  ) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.085
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-
-    final center = Offset(
-      size.width / 2,
-      size.height / 2,
-    );
 
     switch (type) {
       case StellarMusicIconType.play:
@@ -84,32 +86,35 @@ class _StellarMusicIconPainter extends CustomPainter {
     Paint paint,
   ) {
     final path = Path()
-      ..moveTo(size.width * 0.35, size.height * 0.22)
+      ..moveTo(
+        size.width * .32,
+        size.height * .22,
+      )
       ..quadraticBezierTo(
-        size.width * 0.30,
-        size.height * 0.20,
-        size.width * 0.30,
-        size.height * 0.28,
+        size.width * .28,
+        size.height * .20,
+        size.width * .28,
+        size.height * .28,
       )
       ..lineTo(
-        size.width * 0.30,
-        size.height * 0.72,
+        size.width * .28,
+        size.height * .72,
       )
       ..quadraticBezierTo(
-        size.width * 0.30,
-        size.height * 0.80,
-        size.width * 0.37,
-        size.height * 0.76,
+        size.width * .28,
+        size.height * .80,
+        size.width * .36,
+        size.height * .75,
       )
       ..lineTo(
-        size.width * 0.73,
-        size.height * 0.54,
+        size.width * .74,
+        size.height * .54,
       )
       ..quadraticBezierTo(
-        size.width * 0.80,
-        size.height * 0.50,
-        size.width * 0.73,
-        size.height * 0.46,
+        size.width * .81,
+        size.height * .50,
+        size.width * .74,
+        size.height * .46,
       )
       ..close();
 
@@ -121,28 +126,31 @@ class _StellarMusicIconPainter extends CustomPainter {
     Size size,
     Paint paint,
   ) {
-    final left = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.28,
-        size.height * 0.23,
-        size.width * 0.14,
-        size.height * 0.54,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * .28,
+          size.height * .23,
+          size.width * .14,
+          size.height * .54,
+        ),
+        Radius.circular(size.width * .07),
       ),
-      Radius.circular(size.width * 0.07),
+      paint,
     );
 
-    final right = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.58,
-        size.height * 0.23,
-        size.width * 0.14,
-        size.height * 0.54,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * .58,
+          size.height * .23,
+          size.width * .14,
+          size.height * .54,
+        ),
+        Radius.circular(size.width * .07),
       ),
-      Radius.circular(size.width * 0.07),
+      paint,
     );
-
-    canvas.drawRRect(left, paint);
-    canvas.drawRRect(right, paint);
   }
 
   void _next(
@@ -151,34 +159,43 @@ class _StellarMusicIconPainter extends CustomPainter {
     Paint paint,
   ) {
     final path = Path()
-      ..moveTo(size.width * 0.25, size.height * 0.28)
-      ..quadraticBezierTo(
-        size.width * 0.21,
-        size.height * 0.24,
-        size.width * 0.21,
-        size.height * 0.31,
+      ..moveTo(
+        size.width * .24,
+        size.height * .28,
       )
-      ..lineTo(size.width * 0.21, size.height * 0.69)
-      ..quadraticBezierTo(
-        size.width * 0.21,
-        size.height * 0.76,
-        size.width * 0.27,
-        size.height * 0.72,
+      ..lineTo(
+        size.width * .24,
+        size.height * .72,
       )
-      ..lineTo(size.width * 0.60, size.height * 0.52)
       ..quadraticBezierTo(
-        size.width * 0.66,
-        size.height * 0.50,
-        size.width * 0.60,
-        size.height * 0.47,
+        size.width * .24,
+        size.height * .77,
+        size.width * .30,
+        size.height * .72,
+      )
+      ..lineTo(
+        size.width * .62,
+        size.height * .52,
+      )
+      ..quadraticBezierTo(
+        size.width * .68,
+        size.height * .50,
+        size.width * .62,
+        size.height * .47,
       )
       ..close();
 
     canvas.drawPath(path, paint);
 
     canvas.drawLine(
-      Offset(size.width * 0.75, size.height * 0.25),
-      Offset(size.width * 0.75, size.height * 0.75),
+      Offset(
+        size.width * .77,
+        size.height * .25,
+      ),
+      Offset(
+        size.width * .77,
+        size.height * .75,
+      ),
       paint,
     );
   }
@@ -189,34 +206,43 @@ class _StellarMusicIconPainter extends CustomPainter {
     Paint paint,
   ) {
     final path = Path()
-      ..moveTo(size.width * 0.75, size.height * 0.28)
-      ..quadraticBezierTo(
-        size.width * 0.79,
-        size.height * 0.24,
-        size.width * 0.79,
-        size.height * 0.31,
+      ..moveTo(
+        size.width * .76,
+        size.height * .28,
       )
-      ..lineTo(size.width * 0.79, size.height * 0.69)
-      ..quadraticBezierTo(
-        size.width * 0.79,
-        size.height * 0.76,
-        size.width * 0.73,
-        size.height * 0.72,
+      ..lineTo(
+        size.width * .76,
+        size.height * .72,
       )
-      ..lineTo(size.width * 0.40, size.height * 0.52)
       ..quadraticBezierTo(
-        size.width * 0.34,
-        size.height * 0.50,
-        size.width * 0.40,
-        size.height * 0.47,
+        size.width * .76,
+        size.height * .77,
+        size.width * .70,
+        size.height * .72,
+      )
+      ..lineTo(
+        size.width * .38,
+        size.height * .52,
+      )
+      ..quadraticBezierTo(
+        size.width * .32,
+        size.height * .50,
+        size.width * .38,
+        size.height * .47,
       )
       ..close();
 
     canvas.drawPath(path, paint);
 
     canvas.drawLine(
-      Offset(size.width * 0.25, size.height * 0.25),
-      Offset(size.width * 0.25, size.height * 0.75),
+      Offset(
+        size.width * .23,
+        size.height * .25,
+      ),
+      Offset(
+        size.width * .23,
+        size.height * .75,
+      ),
       paint,
     );
   }
@@ -226,91 +252,93 @@ class _StellarMusicIconPainter extends CustomPainter {
     Size size,
     Paint paint,
   ) {
-    final path = Path();
-
-    path.moveTo(
-      size.width * 0.28,
-      size.height * 0.38,
-    );
-
-    path.cubicTo(
-      size.width * 0.34,
-      size.height * 0.25,
-      size.width * 0.57,
-      size.height * 0.25,
-      size.width * 0.68,
-      size.height * 0.39,
-    );
-
-    path.lineTo(
-      size.width * 0.78,
-      size.height * 0.39,
-    );
-
-    canvas.drawPath(path, paint);
-
-    path.reset();
-
-    path.moveTo(
-      size.width * 0.72,
-      size.height * 0.62,
-    );
-
-    path.cubicTo(
-      size.width * 0.66,
-      size.height * 0.75,
-      size.width * 0.43,
-      size.height * 0.75,
-      size.width * 0.32,
-      size.height * 0.61,
-    );
-
-    path.lineTo(
-      size.width * 0.22,
-      size.height * 0.61,
-    );
-
-    canvas.drawPath(path, paint);
-
-    final topArrow = Path()
+    final top = Path()
       ..moveTo(
-        size.width * 0.78,
-        size.height * 0.39,
+        size.width * .22,
+        size.height * .40,
+      )
+      ..cubicTo(
+        size.width * .34,
+        size.height * .22,
+        size.width * .61,
+        size.height * .25,
+        size.width * .74,
+        size.height * .40,
       )
       ..lineTo(
-        size.width * 0.68,
-        size.height * 0.31,
-      )
-      ..moveTo(
-        size.width * 0.78,
-        size.height * 0.39,
-      )
-      ..lineTo(
-        size.width * 0.68,
-        size.height * 0.47,
+        size.width * .82,
+        size.height * .40,
       );
 
-    canvas.drawPath(topArrow, paint);
+    canvas.drawPath(top, paint);
 
-    final bottomArrow = Path()
+    final bottom = Path()
       ..moveTo(
-        size.width * 0.22,
-        size.height * 0.61,
+        size.width * .78,
+        size.height * .60,
+      )
+      ..cubicTo(
+        size.width * .66,
+        size.height * .78,
+        size.width * .39,
+        size.height * .75,
+        size.width * .26,
+        size.height * .60,
       )
       ..lineTo(
-        size.width * 0.32,
-        size.height * 0.53,
-      )
-      ..moveTo(
-        size.width * 0.22,
-        size.height * 0.61,
-      )
-      ..lineTo(
-        size.width * 0.32,
-        size.height * 0.69,
+        size.width * .18,
+        size.height * .60,
       );
 
-    canvas.drawPath(bottomArrow, paint);
+    canvas.drawPath(bottom, paint);
+
+    canvas.drawLine(
+      Offset(
+        size.width * .82,
+        size.height * .40,
+      ),
+      Offset(
+        size.width * .71,
+        size.height * .32,
+      ),
+      paint,
+    );
+
+    canvas.drawLine(
+      Offset(
+        size.width * .82,
+        size.height * .40,
+      ),
+      Offset(
+        size.width * .71,
+        size.height * .48,
+      ),
+      paint,
+    );
+
+    canvas.drawLine(
+      Offset(
+        size.width * .18,
+        size.height * .60,
+      ),
+      Offset(
+        size.width * .29,
+        size.height * .52,
+      ),
+      paint,
+    );
+
+    canvas.drawLine(
+      Offset(
+        size.width * .18,
+        size.height * .60,
+      ),
+      Offset(
+        size.width * .29,
+        size.height * .68,
+      ),
+      paint,
+    );
   }
 
   @override
