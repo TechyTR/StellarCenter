@@ -39,7 +39,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   static const MethodChannel _channel =
-      MethodChannel('org.test.thislinux/native');
+      MethodChannel('com.nevruz.stellarcenter/native');
 
   Map<String, dynamic> _deviceInfo = <String, dynamic>{};
 
