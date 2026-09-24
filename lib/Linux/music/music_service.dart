@@ -33,21 +33,6 @@ class StellarMusicService {
       _repeatController =
       StreamController<StellarRepeatMode>.broadcast();
 
-  Stream<StellarMusicTrack?> get currentTrackStream =>
-      _trackController.stream;
-
-  Stream<Duration> get positionStream =>
-      _positionController.stream;
-
-  Stream<Duration> get durationStream =>
-      _durationController.stream;
-
-  Stream<bool> get playingStream =>
-      _playingController.stream;
-
-  Stream<StellarRepeatMode> get repeatModeStream =>
-      _repeatController.stream;
-
   final List<StellarMusicTrack> _tracks = [];
 
   int _currentIndex = -1;
@@ -62,6 +47,23 @@ class StellarMusicService {
 
   StellarRepeatMode _repeatMode =
       StellarRepeatMode.playlistOnce;
+
+  Stream<StellarMusicTrack?>
+      get currentTrackStream =>
+          _trackController.stream;
+
+  Stream<Duration> get positionStream =>
+      _positionController.stream;
+
+  Stream<Duration> get durationStream =>
+      _durationController.stream;
+
+  Stream<bool> get playingStream =>
+      _playingController.stream;
+
+  Stream<StellarRepeatMode>
+      get repeatModeStream =>
+          _repeatController.stream;
 
   StellarMusicTrack? get currentTrack =>
       _currentTrack;
@@ -81,30 +83,40 @@ class StellarMusicService {
   int get currentIndex => _currentIndex;
 
   Future<void> initialize() async {
-    if (_initialized) return;
+    if (_initialized) {
+      return;
+    }
 
     _initialized = true;
 
-    player.onPositionChanged.listen((value) {
-      _position = value;
-      _positionController.add(value);
-    });
+    player.onPositionChanged.listen(
+      (position) {
+        _position = position;
+        _positionController.add(position);
+      },
+    );
 
-    player.onDurationChanged.listen((value) {
-      _duration = value;
-      _durationController.add(value);
-    });
+    player.onDurationChanged.listen(
+      (duration) {
+        _duration = duration;
+        _durationController.add(duration);
+      },
+    );
 
-    player.onPlayerStateChanged.listen((state) {
-      _playing =
-          state == PlayerState.playing;
+    player.onPlayerStateChanged.listen(
+      (state) {
+        _playing =
+            state == PlayerState.playing;
 
-      _playingController.add(_playing);
-    });
+        _playingController.add(_playing);
+      },
+    );
 
-    player.onPlayerComplete.listen((_) {
-      _handleSongComplete();
-    });
+    player.onPlayerComplete.listen(
+      (_) {
+        _handleSongComplete();
+      },
+    );
   }
 
   void setTracks(
@@ -117,10 +129,13 @@ class StellarMusicService {
       ..clear()
       ..addAll(tracks);
 
-    if (currentPath == null) return;
+    if (currentPath == null) {
+      return;
+    }
 
     final index = _tracks.indexWhere(
-      (track) => track.path == currentPath,
+      (track) =>
+          track.path == currentPath,
     );
 
     if (index >= 0) {
@@ -129,7 +144,9 @@ class StellarMusicService {
     }
   }
 
-  Future<void> playIndex(int index) async {
+  Future<void> playIndex(
+    int index,
+  ) async {
     if (index < 0 ||
         index >= _tracks.length) {
       return;
@@ -144,8 +161,12 @@ class StellarMusicService {
     _duration = Duration.zero;
 
     _trackController.add(track);
-    _positionController.add(Duration.zero);
-    _durationController.add(Duration.zero);
+    _positionController.add(
+      Duration.zero,
+    );
+    _durationController.add(
+      Duration.zero,
+    );
 
     await player.stop();
 
@@ -158,7 +179,8 @@ class StellarMusicService {
     StellarMusicTrack track,
   ) async {
     final index = _tracks.indexWhere(
-      (item) => item.path == track.path,
+      (item) =>
+          item.path == track.path,
     );
 
     if (index >= 0) {
@@ -210,7 +232,9 @@ class StellarMusicService {
     _position = Duration.zero;
 
     _playingController.add(false);
-    _positionController.add(Duration.zero);
+    _positionController.add(
+      Duration.zero,
+    );
   }
 
   Future<void> next() async {
@@ -228,7 +252,9 @@ class StellarMusicService {
         if (nextIndex >= _tracks.length) {
           if (_repeatMode ==
               StellarRepeatMode.songForever) {
-            await playIndex(_currentIndex);
+            await playIndex(
+              _currentIndex,
+            );
           }
 
           return;
@@ -239,30 +265,42 @@ class StellarMusicService {
 
       case StellarRepeatMode.albumOnce:
       case StellarRepeatMode.albumForever:
-        final indexes = _albumIndexes();
+        final indexes =
+            _albumIndexes();
 
-        if (indexes.isEmpty) return;
-
-        final current =
-            indexes.indexOf(_currentIndex);
-
-        if (current < 0) {
-          await playIndex(indexes.first);
+        if (indexes.isEmpty) {
           return;
         }
 
-        final next = current + 1;
+        final current =
+            indexes.indexOf(
+          _currentIndex,
+        );
+
+        if (current < 0) {
+          await playIndex(
+            indexes.first,
+          );
+          return;
+        }
+
+        final next =
+            current + 1;
 
         if (next >= indexes.length) {
           if (_repeatMode ==
               StellarRepeatMode.albumForever) {
-            await playIndex(indexes.first);
+            await playIndex(
+              indexes.first,
+            );
           }
 
           return;
         }
 
-        await playIndex(indexes[next]);
+        await playIndex(
+          indexes[next],
+        );
         return;
     }
   }
@@ -289,17 +327,24 @@ class StellarMusicService {
         return;
 
       case StellarRepeatMode.songForever:
-        await playIndex(_currentIndex);
+        await playIndex(
+          _currentIndex,
+        );
         return;
 
       case StellarRepeatMode.albumOnce:
       case StellarRepeatMode.albumForever:
-        final indexes = _albumIndexes();
+        final indexes =
+            _albumIndexes();
 
-        if (indexes.isEmpty) return;
+        if (indexes.isEmpty) {
+          return;
+        }
 
         final current =
-            indexes.indexOf(_currentIndex);
+            indexes.indexOf(
+          _currentIndex,
+        );
 
         if (current > 0) {
           await playIndex(
@@ -308,7 +353,9 @@ class StellarMusicService {
         } else if (
             _repeatMode ==
             StellarRepeatMode.albumForever) {
-          await playIndex(indexes.last);
+          await playIndex(
+            indexes.last,
+          );
         }
 
         return;
@@ -338,7 +385,9 @@ class StellarMusicService {
         break;
     }
 
-    _repeatController.add(_repeatMode);
+    _repeatController.add(
+      _repeatMode,
+    );
   }
 
   List<int> _albumIndexes() {
@@ -374,7 +423,8 @@ class StellarMusicService {
         final nextIndex =
             _currentIndex + 1;
 
-        if (nextIndex < _tracks.length) {
+        if (nextIndex <
+            _tracks.length) {
           await playIndex(nextIndex);
         } else {
           await stop();
@@ -382,11 +432,14 @@ class StellarMusicService {
         break;
 
       case StellarRepeatMode.songForever:
-        await playIndex(_currentIndex);
+        await playIndex(
+          _currentIndex,
+        );
         break;
 
       case StellarRepeatMode.albumOnce:
-        final indexes = _albumIndexes();
+        final indexes =
+            _albumIndexes();
 
         if (indexes.isEmpty) {
           await stop();
@@ -394,10 +447,13 @@ class StellarMusicService {
         }
 
         final current =
-            indexes.indexOf(_currentIndex);
+            indexes.indexOf(
+          _currentIndex,
+        );
 
         if (current >= 0 &&
-            current + 1 < indexes.length) {
+            current + 1 <
+                indexes.length) {
           await playIndex(
             indexes[current + 1],
           );
@@ -407,7 +463,8 @@ class StellarMusicService {
         break;
 
       case StellarRepeatMode.albumForever:
-        final indexes = _albumIndexes();
+        final indexes =
+            _albumIndexes();
 
         if (indexes.isEmpty) {
           await stop();
@@ -415,15 +472,20 @@ class StellarMusicService {
         }
 
         final current =
-            indexes.indexOf(_currentIndex);
+            indexes.indexOf(
+          _currentIndex,
+        );
 
         if (current >= 0 &&
-            current + 1 < indexes.length) {
+            current + 1 <
+                indexes.length) {
           await playIndex(
             indexes[current + 1],
           );
         } else {
-          await playIndex(indexes.first);
+          await playIndex(
+            indexes.first,
+          );
         }
         break;
     }
