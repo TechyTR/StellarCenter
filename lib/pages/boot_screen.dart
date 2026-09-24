@@ -32,6 +32,7 @@ class BootScreen extends StatefulWidget {
     required this.selectedStyle,
     required this.onThemeChanged,
     required this.onStyleChanged,
+    required this.homeShellBuilder,
   });
 
   @override
