@@ -1,11 +1,18 @@
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'pages/boot_screen.dart';
 import 'services/preferences_service.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isAndroid) {
+    await Firebase.initializeApp();
+  }
 
   runApp(const StellarCenterApp());
 }
@@ -16,12 +23,17 @@ class StellarCenterApp extends StatefulWidget {
   });
 
   @override
-  State<StellarCenterApp> createState() => _StellarCenterAppState();
+  State<StellarCenterApp> createState() =>
+      _StellarCenterAppState();
 }
 
-class _StellarCenterAppState extends State<StellarCenterApp> {
-  AppThemeColor _selectedTheme = AppThemeColor.purple;
-  AppThemeStyle _selectedStyle = AppThemeStyle.normal;
+class _StellarCenterAppState
+    extends State<StellarCenterApp> {
+  AppThemeColor _selectedTheme =
+      AppThemeColor.purple;
+
+  AppThemeStyle _selectedStyle =
+      AppThemeStyle.normal;
 
   bool _preferencesLoaded = false;
 
@@ -32,19 +44,28 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
   }
 
   Future<void> _loadPreferences() async {
-    final colorValue = await PreferencesService.getThemeColor();
-    final styleValue = await PreferencesService.getThemeStyle();
+    final colorValue =
+        await PreferencesService.getThemeColor();
+
+    final styleValue =
+        await PreferencesService.getThemeStyle();
 
     if (!mounted) return;
 
     setState(() {
-      _selectedTheme = AppTheme.colorFromString(colorValue);
-      _selectedStyle = AppTheme.styleFromString(styleValue);
+      _selectedTheme =
+          AppTheme.colorFromString(colorValue);
+
+      _selectedStyle =
+          AppTheme.styleFromString(styleValue);
+
       _preferencesLoaded = true;
     });
   }
 
-  Future<void> _changeTheme(AppThemeColor color) async {
+  Future<void> _changeTheme(
+    AppThemeColor color,
+  ) async {
     setState(() {
       _selectedTheme = color;
     });
@@ -54,7 +75,9 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
     );
   }
 
-  Future<void> _changeStyle(AppThemeStyle style) async {
+  Future<void> _changeStyle(
+    AppThemeStyle style,
+  ) async {
     setState(() {
       _selectedStyle = style;
     });
@@ -94,4 +117,3 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
     );
   }
 }
-
