@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'music_metadata.dart';
 import 'music_track.dart';
@@ -27,9 +28,14 @@ class StellarMusicScanner {
       recursive: true,
       followLinks: false,
     )) {
-      if (entity is! File) continue;
+      if (entity is! File) {
+        continue;
+      }
 
-      final extension = entity.path.split('.').last.toLowerCase();
+      final extension = entity.path
+          .split('.')
+          .last
+          .toLowerCase();
 
       if (extension == 'mp3') {
         files.add(entity);
@@ -40,34 +46,37 @@ class StellarMusicScanner {
 
     for (final file in files) {
       try {
-        final metadata = StellarMusicMetadataReader.read(file);
-
-        final fileName = _fileNameWithoutExtension(file.path);
+        final metadata =
+            StellarMusicMetadataReader.read(file);
 
         final title =
-            metadata.title ??
-            fileName;
+            _clean(metadata.title) ??
+            _fileNameWithoutExtension(file.path);
 
         final artist =
-            metadata.artist ??
+            _clean(metadata.artist) ??
             _parentName(file.path);
 
         final album =
-            metadata.album ??
+            _clean(metadata.album) ??
             'Bilinmeyen Albüm';
-
-        final lrcPath = _findLyricsPath(file.path);
 
         Uint8List? artwork = metadata.artwork;
 
         if (artwork == null) {
-          artwork = await StellarLocalArtwork.find(file.path);
+          artwork =
+              await StellarLocalArtwork.find(
+            file.path,
+          );
         }
 
+        final lyricsPath =
+            _findLyricsPath(file.path);
+
         final verifiedArtist =
-            StellarArtistVerification.instance.isVerified(
-          artist,
-        );
+            StellarArtistVerification
+                .instance
+                .isVerified(artist);
 
         tracks.add(
           StellarMusicTrack(
@@ -76,26 +85,63 @@ class StellarMusicScanner {
             artist: artist,
             album: album,
             artwork: artwork,
-            lyricsPath: lrcPath,
+            lyricsPath: lyricsPath,
             verifiedArtist: verifiedArtist,
           ),
         );
       } catch (_) {
-        // Bozuk bir dosya tüm taramayı durdurmasın.
+        // Bozuk tek bir MP3 tüm taramayı bozmaz.
       }
     }
 
-    tracks.sort(
-      (a, b) => a.title.toLowerCase().compareTo(
-        b.title.toLowerCase(),
-      ),
-    );
+    tracks.sort((a, b) {
+      final artistCompare =
+          a.artist.toLowerCase().compareTo(
+                b.artist.toLowerCase(),
+              );
+
+      if (artistCompare != 0) {
+        return artistCompare;
+      }
+
+      final albumCompare =
+          a.album.toLowerCase().compareTo(
+                b.album.toLowerCase(),
+              );
+
+      if (albumCompare != 0) {
+        return albumCompare;
+      }
+
+      return a.title.toLowerCase().compareTo(
+            b.title.toLowerCase(),
+          );
+    });
 
     return tracks;
   }
 
-  static String _fileNameWithoutExtension(String path) {
-    final name = path.split(Platform.pathSeparator).last;
+  static String? _clean(String? value) {
+    if (value == null) {
+      return null;
+    }
+
+    final result = value.trim();
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return result;
+  }
+
+  static String _fileNameWithoutExtension(
+    String path,
+  ) {
+    final name = path
+        .split(Platform.pathSeparator)
+        .last;
+
     final dot = name.lastIndexOf('.');
 
     if (dot <= 0) {
@@ -106,29 +152,35 @@ class StellarMusicScanner {
   }
 
   static String _parentName(String path) {
-    final parts = path.split(Platform.pathSeparator);
+    final parts =
+        path.split(Platform.pathSeparator);
 
     if (parts.length < 2) {
       return 'Bilinmeyen Sanatçı';
     }
 
-    final parent = parts[parts.length - 2];
+    final parent =
+        parts[parts.length - 2].trim();
 
-    if (parent.trim().isEmpty) {
+    if (parent.isEmpty) {
       return 'Bilinmeyen Sanatçı';
     }
 
     return parent;
   }
 
-  static String? _findLyricsPath(String audioPath) {
-    final dot = audioPath.lastIndexOf('.');
+  static String? _findLyricsPath(
+    String audioPath,
+  ) {
+    final dot =
+        audioPath.lastIndexOf('.');
 
     if (dot <= 0) {
       return null;
     }
 
-    final base = audioPath.substring(0, dot);
+    final base =
+        audioPath.substring(0, dot);
 
     final candidates = <String>[
       '$base.lrc',
