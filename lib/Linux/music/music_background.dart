@@ -26,7 +26,9 @@ class _StellarMusicBackgroundState
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 14),
+      duration: const Duration(
+        seconds: 14,
+      ),
     )..repeat();
   }
 
@@ -41,16 +43,17 @@ class _StellarMusicBackgroundState
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final value = _controller.value * math.pi * 2;
+        final t =
+            _controller.value * math.pi * 2;
 
         final alignmentA = Alignment(
-          math.sin(value) * 0.7,
-          math.cos(value * 0.8) * 0.7,
+          math.sin(t) * 0.75,
+          math.cos(t * 0.8) * 0.75,
         );
 
         final alignmentB = Alignment(
-          math.cos(value * 0.7) * 0.7,
-          math.sin(value) * 0.7,
+          math.cos(t * 0.7) * 0.75,
+          math.sin(t) * 0.75,
         );
 
         return DecoratedBox(
