@@ -28,9 +28,7 @@ class _StellarMusicBackgroundState
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(
-        seconds: 14,
-      ),
+      duration: const Duration(seconds: 14),
     )..repeat();
   }
 
@@ -42,6 +40,15 @@ class _StellarMusicBackgroundState
 
   @override
   Widget build(BuildContext context) {
+    final colors = widget.colors.length >= 4
+        ? widget.colors
+        : [
+            Colors.blue,
+            Colors.purple,
+            Colors.pink,
+            Colors.cyan,
+          ];
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -54,57 +61,46 @@ class _StellarMusicBackgroundState
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment(
-                    math.sin(t) * 0.8,
-                    math.cos(t) * 0.8,
+                    math.cos(t) * .7,
+                    math.sin(t) * .7,
                   ),
                   end: Alignment(
-                    math.cos(t) * 0.8,
-                    math.sin(t) * 0.8,
+                    -math.cos(t) * .7,
+                    -math.sin(t) * .7,
                   ),
-                  colors: widget.colors,
+                  colors: [
+                    colors[0],
+                    colors[1],
+                    colors[2],
+                    colors[3],
+                  ],
                 ),
               ),
             ),
 
-            Positioned(
-              left: -120 + math.sin(t) * 140,
-              top: -100 + math.cos(t) * 100,
-              child: _orb(
-                widget.colors[0],
-                360,
-              ),
+            _Orb(
+              color: colors[0],
+              x: .18 + math.sin(t * .7) * .22,
+              y: .20 + math.cos(t * .9) * .18,
+              size: 420,
             ),
 
-            Positioned(
-              right: -140 + math.cos(t) * 180,
-              bottom: -120 + math.sin(t) * 140,
-              child: _orb(
-                widget.colors[
-                    widget.colors.length > 1
-                        ? 1
-                        : 0
-                ],
-                420,
-              ),
+            _Orb(
+              color: colors[2],
+              x: .78 + math.cos(t * .8) * .20,
+              y: .32 + math.sin(t * .6) * .25,
+              size: 480,
             ),
 
-            Positioned(
-              left: 120 + math.cos(t * 1.4) * 180,
-              bottom: 40 + math.sin(t * 1.2) * 160,
-              child: _orb(
-                widget.colors[
-                    widget.colors.length > 2
-                        ? 2
-                        : 0
-                ],
-                260,
-              ),
+            _Orb(
+              color: colors[3],
+              x: .48 + math.sin(t * .5) * .28,
+              y: .82 + math.cos(t * .8) * .14,
+              size: 360,
             ),
 
             Container(
-              color: Colors.black.withOpacity(
-                0.28,
-              ),
+              color: Colors.black.withOpacity(.20),
             ),
 
             child!,
@@ -114,25 +110,40 @@ class _StellarMusicBackgroundState
       child: widget.child,
     );
   }
+}
 
-  Widget _orb(
-    Color color,
-    double size,
-  ) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withOpacity(0.65),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.45),
-              blurRadius: 100,
-              spreadRadius: 35,
-            ),
-          ],
+class _Orb extends StatelessWidget {
+  final Color color;
+  final double x;
+  final double y;
+  final double size;
+
+  const _Orb({
+    required this.color,
+    required this.x,
+    required this.y,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment(
+        x * 2 - 1,
+        y * 2 - 1,
+      ),
+      child: ImageFiltered(
+        imageFilter: const ColorFilter.blur(
+          sigmaX: 60,
+          sigmaY: 60,
+        ),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withOpacity(.72),
+          ),
         ),
       ),
     );
