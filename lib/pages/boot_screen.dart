@@ -6,7 +6,6 @@ import '../services/app_version.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/update_button.dart';
-import 'home_shell.dart';
 
 class BootScreen extends StatefulWidget {
   final AppThemeColor selectedTheme;
@@ -19,6 +18,13 @@ class BootScreen extends StatefulWidget {
   final Future<void> Function(
     AppThemeStyle,
   ) onStyleChanged;
+
+  final Widget Function({
+  required AppThemeColor selectedTheme,
+  required AppThemeStyle selectedStyle,
+  required Future<void> Function(AppThemeColor) onThemeChanged,
+  required Future<void> Function(AppThemeStyle) onStyleChanged,
+}) homeShellBuilder;
 
   const BootScreen({
     super.key,
