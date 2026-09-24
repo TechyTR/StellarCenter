@@ -505,9 +505,14 @@ class AppInfoPage extends StatelessWidget {
       radius: BorderRadius.circular(30),
       child: Container(
         constraints: const BoxConstraints(
-          minHeight: 205,
+          minHeight: 225,
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          18,
+          20,
+          18,
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           gradient: LinearGradient(
@@ -526,45 +531,54 @@ class AppInfoPage extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            // Ana logonun arkasındaki yumuşak Stellar glow.
             Positioned(
-              right: -20,
-              bottom: -35,
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(
-                  sigmaX: 25,
-                  sigmaY: 25,
-                ),
-                child: Container(
-                  width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: themeColor.withOpacity(0.18),
+              top: 8,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Center(
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: 28,
+                      sigmaY: 28,
+                    ),
+                    child: Container(
+                      width: 245,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(60),
+                        gradient: RadialGradient(
+                          colors: [
+                            themeColor.withOpacity(
+                              _isLightGlass(context)
+                                  ? 0.32
+                                  : 0.24,
+                            ),
+                            themeColor.withOpacity(0.08),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(
-                      _isLightGlass(context) ? 0.22 : 0.07,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(
-                        _isLightGlass(context) ? 0.55 : 0.16,
-                      ),
-                    ),
-                  ),
+
+            // Stellar_Version.png — ana üst görsel.
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 4,
+                  bottom: 8,
+                ),
+                child: AspectRatio(
+                  aspectRatio: 991 / 644,
                   child: Image.asset(
-                    'assets/icon.png',
+                    'assets/Stellar_Version.png',
                     fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
                     errorBuilder: (
                       context,
                       error,
@@ -572,32 +586,22 @@ class AppInfoPage extends StatelessWidget {
                     ) {
                       return Icon(
                         Icons.auto_awesome_rounded,
+                        size: 72,
                         color: themeColor,
-                        size: 42,
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Stellar Center',
-                  style: TextStyle(
-                    fontSize: 29,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Linux sistem yardımcı merkezi',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                Container(
+              ),
+            ),
+
+            // Alt bölüm: sürüm rozeti.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 11,
                     vertical: 6,
@@ -620,7 +624,7 @@ class AppInfoPage extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -856,4 +860,3 @@ class AppInfoPage extends StatelessWidget {
     );
   }
 }
-
