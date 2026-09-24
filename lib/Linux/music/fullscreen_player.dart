@@ -1,294 +1,323 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import 'music_track.dart';
-import 'repeat_mode.dart';
-import 'stellar_music_background.dart';
-import 'stellar_music_cover.dart';
-import 'stellar_music_service.dart';
+enum StellarMusicIconType {
+  play,
+  pause,
+  next,
+  previous,
+  repeat,
+}
 
-class StellarFullscreenPlayer extends StatefulWidget {
-  final List<StellarMusicTrack> tracks;
+class StellarMusicIcon extends StatelessWidget {
+  final StellarMusicIconType type;
+  final double size;
+  final Color color;
 
-  const StellarFullscreenPlayer({
+  const StellarMusicIcon({
     super.key,
-    required this.tracks,
+    required this.type,
+    this.size = 28,
+    this.color = Colors.white,
   });
 
   @override
-  State<StellarFullscreenPlayer> createState() =>
-      _StellarFullscreenPlayerState();
-}
-
-class _StellarFullscreenPlayerState
-    extends State<StellarFullscreenPlayer> {
-  final service = StellarMusicService.instance;
-
-  StreamSubscription? _trackSub;
-  StreamSubscription? _positionSub;
-  StreamSubscription? _durationSub;
-  StreamSubscription? _playingSub;
-  StreamSubscription? _repeatSub;
-
-  StellarMusicTrack? _track;
-  Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
-  bool _playing = false;
-  StellarRepeatMode _repeatMode =
-      StellarRepeatMode.playlistOnce;
-
-  @override
-  void initState() {
-    super.initState();
-
-    service.setTracks(widget.tracks);
-
-    _track = service.currentTrack;
-    _repeatMode = service.repeatMode;
-
-    _trackSub = service.currentTrackStream.listen((track) {
-      if (mounted) setState(() => _track = track);
-    });
-
-    _positionSub = service.positionStream.listen((value) {
-      if (mounted) setState(() => _position = value);
-    });
-
-    _durationSub = service.durationStream.listen((value) {
-      if (mounted) setState(() => _duration = value);
-    });
-
-    _playingSub = service.playingStream.listen((value) {
-      if (mounted) setState(() => _playing = value);
-    });
-
-    _repeatSub = service.repeatModeStream.listen((value) {
-      if (mounted) setState(() => _repeatMode = value);
-    });
-  }
-
-  @override
-  void dispose() {
-    _trackSub?.cancel();
-    _positionSub?.cancel();
-    _durationSub?.cancel();
-    _playingSub?.cancel();
-    _repeatSub?.cancel();
-
-    // AudioPlayer burada KESİNLİKLE dispose edilmiyor.
-    return super.dispose();
-  }
-
-  String _time(Duration value) {
-    final minutes = value.inMinutes;
-    final seconds =
-        value.inSeconds.remainder(60).toString().padLeft(2, '0');
-
-    return '$minutes:$seconds';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final track = _track;
-
-    if (track == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Müzik')),
-        body: const Center(
-          child: Text('Henüz şarkı seçilmedi.'),
-        ),
-      );
-    }
-
-    final maxSeconds =
-        _duration.inMilliseconds <= 0
-            ? 1.0
-            : _duration.inMilliseconds.toDouble();
-
-    final currentSeconds =
-        _position.inMilliseconds
-            .clamp(0, _duration.inMilliseconds)
-            .toDouble();
-
-    return Scaffold(
-      body: StellarMusicBackground(
-        colors: const [
-          Color(0xFF1769FF),
-          Color(0xFF8A2BE2),
-          Color(0xFFFF2D8D),
-          Color(0xFF00C8FF),
-        ],
-        child: SafeArea(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'ŞİMDİ ÇALIYOR',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-
-              const Spacer(),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: StellarMusicCover(
-                  artwork: track.artwork,
-                  size: 360,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            track.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            track.artist,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          if (track.album.isNotEmpty)
-                            Text(
-                              track.album,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white54,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    IconButton(
-                      onPressed: service.cycleRepeatMode,
-                      icon: Icon(
-                        _repeatMode == StellarRepeatMode.songForever
-                            ? Icons.repeat_one
-                            : Icons.repeat,
-                        size: 27,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Slider(
-                  value: currentSeconds,
-                  max: maxSeconds,
-                  onChanged: (value) {
-                    service.seek(
-                      Duration(
-                        milliseconds: value.toInt(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(_time(_position)),
-                    Text(_time(_duration)),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    iconSize: 34,
-                    onPressed: service.previous,
-                    icon: const Icon(Icons.skip_previous),
-                  ),
-                  const SizedBox(width: 15),
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(.18),
-                    ),
-                    child: IconButton(
-                      iconSize: 40,
-                      onPressed: service.toggle,
-                      icon: Icon(
-                        _playing
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  IconButton(
-                    iconSize: 34,
-                    onPressed: service.next,
-                    icon: const Icon(Icons.skip_next),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                _repeatMode.label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: .8,
-                ),
-              ),
-
-              const Spacer(),
-            ],
-          ),
-        ),
+    return CustomPaint(
+      size: Size.square(size),
+      painter: _StellarMusicIconPainter(
+        type: type,
+        color: color,
       ),
     );
+  }
+}
+
+class _StellarMusicIconPainter extends CustomPainter {
+  final StellarMusicIconType type;
+  final Color color;
+
+  _StellarMusicIconPainter({
+    required this.type,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.085
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final center = Offset(
+      size.width / 2,
+      size.height / 2,
+    );
+
+    switch (type) {
+      case StellarMusicIconType.play:
+        _play(canvas, size, paint);
+        break;
+
+      case StellarMusicIconType.pause:
+        _pause(canvas, size, paint);
+        break;
+
+      case StellarMusicIconType.next:
+        _next(canvas, size, paint);
+        break;
+
+      case StellarMusicIconType.previous:
+        _previous(canvas, size, paint);
+        break;
+
+      case StellarMusicIconType.repeat:
+        _repeat(canvas, size, paint);
+        break;
+    }
+  }
+
+  void _play(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+  ) {
+    final path = Path()
+      ..moveTo(size.width * 0.35, size.height * 0.22)
+      ..quadraticBezierTo(
+        size.width * 0.30,
+        size.height * 0.20,
+        size.width * 0.30,
+        size.height * 0.28,
+      )
+      ..lineTo(
+        size.width * 0.30,
+        size.height * 0.72,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.30,
+        size.height * 0.80,
+        size.width * 0.37,
+        size.height * 0.76,
+      )
+      ..lineTo(
+        size.width * 0.73,
+        size.height * 0.54,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.80,
+        size.height * 0.50,
+        size.width * 0.73,
+        size.height * 0.46,
+      )
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  void _pause(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+  ) {
+    final left = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.28,
+        size.height * 0.23,
+        size.width * 0.14,
+        size.height * 0.54,
+      ),
+      Radius.circular(size.width * 0.07),
+    );
+
+    final right = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.58,
+        size.height * 0.23,
+        size.width * 0.14,
+        size.height * 0.54,
+      ),
+      Radius.circular(size.width * 0.07),
+    );
+
+    canvas.drawRRect(left, paint);
+    canvas.drawRRect(right, paint);
+  }
+
+  void _next(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+  ) {
+    final path = Path()
+      ..moveTo(size.width * 0.25, size.height * 0.28)
+      ..quadraticBezierTo(
+        size.width * 0.21,
+        size.height * 0.24,
+        size.width * 0.21,
+        size.height * 0.31,
+      )
+      ..lineTo(size.width * 0.21, size.height * 0.69)
+      ..quadraticBezierTo(
+        size.width * 0.21,
+        size.height * 0.76,
+        size.width * 0.27,
+        size.height * 0.72,
+      )
+      ..lineTo(size.width * 0.60, size.height * 0.52)
+      ..quadraticBezierTo(
+        size.width * 0.66,
+        size.height * 0.50,
+        size.width * 0.60,
+        size.height * 0.47,
+      )
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    canvas.drawLine(
+      Offset(size.width * 0.75, size.height * 0.25),
+      Offset(size.width * 0.75, size.height * 0.75),
+      paint,
+    );
+  }
+
+  void _previous(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+  ) {
+    final path = Path()
+      ..moveTo(size.width * 0.75, size.height * 0.28)
+      ..quadraticBezierTo(
+        size.width * 0.79,
+        size.height * 0.24,
+        size.width * 0.79,
+        size.height * 0.31,
+      )
+      ..lineTo(size.width * 0.79, size.height * 0.69)
+      ..quadraticBezierTo(
+        size.width * 0.79,
+        size.height * 0.76,
+        size.width * 0.73,
+        size.height * 0.72,
+      )
+      ..lineTo(size.width * 0.40, size.height * 0.52)
+      ..quadraticBezierTo(
+        size.width * 0.34,
+        size.height * 0.50,
+        size.width * 0.40,
+        size.height * 0.47,
+      )
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    canvas.drawLine(
+      Offset(size.width * 0.25, size.height * 0.25),
+      Offset(size.width * 0.25, size.height * 0.75),
+      paint,
+    );
+  }
+
+  void _repeat(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+  ) {
+    final path = Path();
+
+    path.moveTo(
+      size.width * 0.28,
+      size.height * 0.38,
+    );
+
+    path.cubicTo(
+      size.width * 0.34,
+      size.height * 0.25,
+      size.width * 0.57,
+      size.height * 0.25,
+      size.width * 0.68,
+      size.height * 0.39,
+    );
+
+    path.lineTo(
+      size.width * 0.78,
+      size.height * 0.39,
+    );
+
+    canvas.drawPath(path, paint);
+
+    path.reset();
+
+    path.moveTo(
+      size.width * 0.72,
+      size.height * 0.62,
+    );
+
+    path.cubicTo(
+      size.width * 0.66,
+      size.height * 0.75,
+      size.width * 0.43,
+      size.height * 0.75,
+      size.width * 0.32,
+      size.height * 0.61,
+    );
+
+    path.lineTo(
+      size.width * 0.22,
+      size.height * 0.61,
+    );
+
+    canvas.drawPath(path, paint);
+
+    final topArrow = Path()
+      ..moveTo(
+        size.width * 0.78,
+        size.height * 0.39,
+      )
+      ..lineTo(
+        size.width * 0.68,
+        size.height * 0.31,
+      )
+      ..moveTo(
+        size.width * 0.78,
+        size.height * 0.39,
+      )
+      ..lineTo(
+        size.width * 0.68,
+        size.height * 0.47,
+      );
+
+    canvas.drawPath(topArrow, paint);
+
+    final bottomArrow = Path()
+      ..moveTo(
+        size.width * 0.22,
+        size.height * 0.61,
+      )
+      ..lineTo(
+        size.width * 0.32,
+        size.height * 0.53,
+      )
+      ..moveTo(
+        size.width * 0.22,
+        size.height * 0.61,
+      )
+      ..lineTo(
+        size.width * 0.32,
+        size.height * 0.69,
+      );
+
+    canvas.drawPath(bottomArrow, paint);
+  }
+
+  @override
+  bool shouldRepaint(
+    covariant _StellarMusicIconPainter oldDelegate,
+  ) {
+    return oldDelegate.type != type ||
+        oldDelegate.color != color;
   }
 }
