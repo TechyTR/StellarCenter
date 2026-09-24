@@ -26,27 +26,27 @@ class BottomNavBar extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: 'Home',
+            label: 'Menü',
           ),
           NavigationDestination(
             icon: Icon(Icons.memory_outlined),
             selectedIcon: Icon(Icons.memory),
-            label: 'System',
+            label: 'Sistem',
           ),
           NavigationDestination(
             icon: Icon(Icons.monitor_heart_outlined),
             selectedIcon: Icon(Icons.monitor_heart),
-            label: 'Monitor',
+            label: 'Monitör',
           ),
           NavigationDestination(
             icon: Icon(Icons.note_outlined),
             selectedIcon: Icon(Icons.note),
-            label: 'Notes',
+            label: 'Notlar',
           ),
           NavigationDestination(
             icon: Icon(Icons.info_outline),
             selectedIcon: Icon(Icons.info),
-            label: 'App',
+            label: 'Hakkında',
           ),
         ],
       );
