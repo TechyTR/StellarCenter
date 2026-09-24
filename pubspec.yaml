@@ -13,6 +13,8 @@ dependencies:
 
   audioplayers: ^5.2.1
   audio_metadata_reader: ^1.8.0
+  firebase_core: ^4.2.0
+  firebase_auth: ^6.1.1
 
   cupertino_icons: ^1.0.8
   device_info_plus: ^10.1.0
