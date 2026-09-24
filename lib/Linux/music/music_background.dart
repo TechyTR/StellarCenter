@@ -26,8 +26,7 @@ class _StellarMusicBackgroundState
 
     _controller = AnimationController(
       vsync: this,
-      duration:
-          const Duration(seconds: 14),
+      duration: const Duration(seconds: 18),
     )..repeat();
   }
 
@@ -39,41 +38,98 @@ class _StellarMusicBackgroundState
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final angle =
-            _controller.value *
-            math.pi *
-            2;
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        child: widget.child,
+        builder: (context, child) {
+          final t = _controller.value * math.pi * 2;
 
-        final begin = Alignment(
-          math.sin(angle) * 0.7,
-          math.cos(angle * 0.8) * 0.7,
-        );
+          final x1 = math.sin(t) * 0.7;
+          final y1 = math.cos(t * 0.83) * 0.7;
+          final x2 = math.cos(t * 0.71) * 0.8;
+          final y2 = math.sin(t * 0.91) * 0.8;
 
-        final end = Alignment(
-          math.cos(angle * 0.7) * 0.7,
-          math.sin(angle) * 0.7,
-        );
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment(x1, y1),
+                end: Alignment(x2, y2),
+                colors: const [
+                  Color(0xFF050B20),
+                  Color(0xFF10265F),
+                  Color(0xFF35105D),
+                  Color(0xFF5A104C),
+                  Color(0xFF071A3A),
+                ],
+              ),
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _Glow(
+                  alignment: Alignment(x1, y1),
+                  radius: 0.42,
+                  color: const Color(0xFF087BFF),
+                  opacity: 0.22,
+                ),
+                _Glow(
+                  alignment: Alignment(x2, y2),
+                  radius: 0.36,
+                  color: const Color(0xFFE02BFF),
+                  opacity: 0.18,
+                ),
+                _Glow(
+                  alignment: Alignment(
+                    -x2 * 0.7,
+                    -y1 * 0.7,
+                  ),
+                  radius: 0.30,
+                  color: const Color(0xFF00C8FF),
+                  opacity: 0.13,
+                ),
+                child!,
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
 
-        return DecoratedBox(
+class _Glow extends StatelessWidget {
+  final Alignment alignment;
+  final double radius;
+  final Color color;
+  final double opacity;
+
+  const _Glow({
+    required this.alignment,
+    required this.radius,
+    required this.color,
+    required this.opacity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: alignment,
+      child: FractionallySizedBox(
+        widthFactor: radius,
+        heightFactor: radius,
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: begin,
-              end: end,
-              colors: const [
-                Color(0xFF081B4B),
-                Color(0xFF24105C),
-                Color(0xFF4B0E52),
-                Color(0xFF071B35),
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                color.withOpacity(opacity),
+                color.withOpacity(0),
               ],
             ),
           ),
-          child: child,
-        );
-      },
-      child: widget.child,
+        ),
+      ),
     );
   }
 }
