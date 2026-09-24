@@ -28,7 +28,7 @@ class SystemMonitorPage extends StatefulWidget {
 
 class _SystemMonitorPageState extends State<SystemMonitorPage> {
   static const MethodChannel _channel =
-      MethodChannel('org.test.thislinux/native');
+      MethodChannel('com.nevruz.stellarcenter/native');
 
   Timer? _timer;
 
