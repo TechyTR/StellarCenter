@@ -218,27 +218,27 @@ class _NavigationItems extends StatelessWidget {
     (
       Icons.dashboard_outlined,
       Icons.dashboard,
-      'Home',
+      'Menü',
     ),
     (
       Icons.memory_outlined,
       Icons.memory,
-      'System',
+      'Sistem',
     ),
     (
       Icons.monitor_heart_outlined,
       Icons.monitor_heart,
-      'Monitor',
+      'Monitör',
     ),
     (
       Icons.music_note_outlined,
       Icons.music_note,
-      'Music',
+      'Müzik',
     ),
     (
       Icons.info_outline,
       Icons.info,
-      'App',
+      'Hakkında',
     ),
   ];
 
