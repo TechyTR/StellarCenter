@@ -26,7 +26,7 @@ class _StellarLyricsOverlayState
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadLyrics();
   }
 
   @override
@@ -37,16 +37,19 @@ class _StellarLyricsOverlayState
 
     if (oldWidget.track.lyricsPath !=
         widget.track.lyricsPath) {
-      _load();
+      _loadLyrics();
     }
   }
 
-  Future<void> _load() async {
-    final lines = await StellarLyricsLoader.load(
+  Future<void> _loadLyrics() async {
+    final lines =
+        await StellarLyricsLoader.load(
       widget.track.lyricsPath,
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _lines = lines;
@@ -59,30 +62,40 @@ class _StellarLyricsOverlayState
       return const SizedBox.shrink();
     }
 
-    final activeIndex = StellarLrcParser.activeIndex(
+    final activeIndex =
+        StellarLrcParser.activeIndex(
       _lines,
       widget.position,
     );
 
-    final start = (activeIndex - 2).clamp(
-      0,
-      _lines.length - 1,
-    );
+    final safeIndex =
+        activeIndex < 0 ? 0 : activeIndex;
 
-    final end = (activeIndex + 3).clamp(
+    final start =
+        (safeIndex - 2).clamp(
       0,
       _lines.length,
     );
 
-    final visible = _lines.sublist(start, end);
+    final end =
+        (safeIndex + 3).clamp(
+      start,
+      _lines.length,
+    );
+
+    final visible =
+        _lines.sublist(start, end);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (int i = 0; i < visible.length; i++)
+        for (var i = 0;
+            i < visible.length;
+            i++)
           _LyricLine(
             text: visible[i].text,
-            active: start + i == activeIndex,
+            active:
+                start + i == activeIndex,
           ),
       ],
     );
@@ -100,24 +113,25 @@ class _LyricLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 280),
+    return AnimatedDefaultTextStyle(
+      duration:
+          const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 7,
+      style: TextStyle(
+        fontSize: active ? 22 : 15,
+        height: 1.25,
+        fontWeight: active
+            ? FontWeight.w700
+            : FontWeight.w500,
+        color: active
+            ? Colors.white
+            : Colors.white.withOpacity(0.38),
       ),
-      child: AnimatedDefaultTextStyle(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-        style: TextStyle(
-          fontSize: active ? 22 : 15,
-          height: 1.25,
-          fontWeight:
-              active ? FontWeight.w700 : FontWeight.w500,
-          color: active
-              ? Colors.white
-              : Colors.white.withOpacity(0.38),
+      child: Padding(
+        padding:
+            const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 7,
         ),
         child: Text(
           text,
