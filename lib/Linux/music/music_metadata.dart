@@ -30,11 +30,10 @@ class StellarMusicMetadataReader {
       Uint8List? artwork;
 
       try {
-        final image = metadata.pictures;
+        final pictures = metadata.pictures;
 
-        if (image != null &&
-            image.isNotEmpty) {
-          artwork = image.first.bytes;
+        if (pictures.isNotEmpty) {
+          artwork = pictures.first.bytes;
         }
       } catch (_) {
         artwork = null;
@@ -58,12 +57,12 @@ class StellarMusicMetadataReader {
       return null;
     }
 
-    final cleaned = value.trim();
+    final result = value.trim();
 
-    if (cleaned.isEmpty) {
+    if (result.isEmpty) {
       return null;
     }
 
-    return cleaned;
+    return result;
   }
 }
