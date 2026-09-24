@@ -22,22 +22,24 @@ class StellarMusicIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _StellarMusicIconPainter(
-        type: type,
-        color: color,
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _MusicIconPainter(
+          type: type,
+          color: color,
+        ),
       ),
     );
   }
 }
 
-class _StellarMusicIconPainter
-    extends CustomPainter {
+class _MusicIconPainter extends CustomPainter {
   final StellarMusicIconType type;
   final Color color;
 
-  const _StellarMusicIconPainter({
+  const _MusicIconPainter({
     required this.type,
     required this.color,
   });
@@ -50,8 +52,7 @@ class _StellarMusicIconPainter
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth =
-          size.width * 0.085
+      ..strokeWidth = size.width * 0.085
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
@@ -59,19 +60,15 @@ class _StellarMusicIconPainter
       case StellarMusicIconType.play:
         _play(canvas, size, paint);
         break;
-
       case StellarMusicIconType.pause:
         _pause(canvas, size, paint);
         break;
-
       case StellarMusicIconType.next:
         _next(canvas, size, paint);
         break;
-
       case StellarMusicIconType.previous:
         _previous(canvas, size, paint);
         break;
-
       case StellarMusicIconType.repeat:
         _repeat(canvas, size, paint);
         break;
@@ -80,247 +77,145 @@ class _StellarMusicIconPainter
 
   void _play(
     Canvas canvas,
-    Size size,
-    Paint paint,
+    Size s,
+    Paint p,
   ) {
     final path = Path()
-      ..moveTo(
-        size.width * 0.34,
-        size.height * 0.22,
-      )
-      ..lineTo(
-        size.width * 0.74,
-        size.height * 0.46,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.82,
-        size.height * 0.50,
-        size.width * 0.74,
-        size.height * 0.54,
-      )
-      ..lineTo(
-        size.width * 0.34,
-        size.height * 0.78,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.27,
-        size.height * 0.81,
-        size.width * 0.27,
-        size.height * 0.73,
-      )
-      ..lineTo(
-        size.width * 0.27,
-        size.height * 0.27,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.27,
-        size.height * 0.19,
-        size.width * 0.34,
-        size.height * 0.22,
-      )
+      ..moveTo(s.width * .30, s.height * .20)
+      ..lineTo(s.width * .76, s.height * .50)
+      ..lineTo(s.width * .30, s.height * .80)
       ..close();
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, p);
   }
 
   void _pause(
     Canvas canvas,
-    Size size,
-    Paint paint,
+    Size s,
+    Paint p,
   ) {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(
-          size.width * 0.27,
-          size.height * 0.22,
-          size.width * 0.16,
-          size.height * 0.56,
+          s.width * .25,
+          s.height * .20,
+          s.width * .17,
+          s.height * .60,
         ),
-        Radius.circular(
-          size.width * 0.07,
-        ),
+        Radius.circular(s.width * .06),
       ),
-      paint,
+      p,
     );
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(
-          size.width * 0.57,
-          size.height * 0.22,
-          size.width * 0.16,
-          size.height * 0.56,
+          s.width * .58,
+          s.height * .20,
+          s.width * .17,
+          s.height * .60,
         ),
-        Radius.circular(
-          size.width * 0.07,
-        ),
+        Radius.circular(s.width * .06),
       ),
-      paint,
+      p,
     );
   }
 
   void _next(
     Canvas canvas,
-    Size size,
-    Paint paint,
+    Size s,
+    Paint p,
   ) {
     final path = Path()
-      ..moveTo(
-        size.width * 0.20,
-        size.height * 0.28,
-      )
-      ..lineTo(
-        size.width * 0.58,
-        size.height * 0.50,
-      )
-      ..lineTo(
-        size.width * 0.20,
-        size.height * 0.72,
-      )
+      ..moveTo(s.width * .18, s.height * .25)
+      ..lineTo(s.width * .57, s.height * .50)
+      ..lineTo(s.width * .18, s.height * .75)
       ..close();
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, p);
 
     canvas.drawLine(
-      Offset(
-        size.width * 0.76,
-        size.height * 0.24,
-      ),
-      Offset(
-        size.width * 0.76,
-        size.height * 0.76,
-      ),
-      paint,
+      Offset(s.width * .78, s.height * .22),
+      Offset(s.width * .78, s.height * .78),
+      p,
     );
   }
 
   void _previous(
     Canvas canvas,
-    Size size,
-    Paint paint,
+    Size s,
+    Paint p,
   ) {
     final path = Path()
-      ..moveTo(
-        size.width * 0.80,
-        size.height * 0.28,
-      )
-      ..lineTo(
-        size.width * 0.42,
-        size.height * 0.50,
-      )
-      ..lineTo(
-        size.width * 0.80,
-        size.height * 0.72,
-      )
+      ..moveTo(s.width * .82, s.height * .25)
+      ..lineTo(s.width * .43, s.height * .50)
+      ..lineTo(s.width * .82, s.height * .75)
       ..close();
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, p);
 
     canvas.drawLine(
-      Offset(
-        size.width * 0.24,
-        size.height * 0.24,
-      ),
-      Offset(
-        size.width * 0.24,
-        size.height * 0.76,
-      ),
-      paint,
+      Offset(s.width * .22, s.height * .22),
+      Offset(s.width * .22, s.height * .78),
+      p,
     );
   }
 
   void _repeat(
     Canvas canvas,
-    Size size,
-    Paint paint,
+    Size s,
+    Paint p,
   ) {
-    final top = Path()
-      ..moveTo(
-        size.width * 0.23,
-        size.height * 0.40,
-      )
+    final path = Path()
+      ..moveTo(s.width * .22, s.height * .40)
       ..cubicTo(
-        size.width * 0.31,
-        size.height * 0.24,
-        size.width * 0.61,
-        size.height * 0.24,
-        size.width * 0.73,
-        size.height * 0.40,
+        s.width * .34,
+        s.height * .20,
+        s.width * .66,
+        s.height * .20,
+        s.width * .78,
+        s.height * .40,
       )
-      ..lineTo(
-        size.width * 0.78,
-        size.height * 0.40,
-      );
-
-    canvas.drawPath(top, paint);
-
-    final bottom = Path()
-      ..moveTo(
-        size.width * 0.77,
-        size.height * 0.60,
-      )
+      ..moveTo(s.width * .78, s.height * .60)
       ..cubicTo(
-        size.width * 0.69,
-        size.height * 0.76,
-        size.width * 0.39,
-        size.height * 0.76,
-        size.width * 0.27,
-        size.height * 0.60,
-      )
-      ..lineTo(
-        size.width * 0.22,
-        size.height * 0.60,
+        s.width * .66,
+        s.height * .80,
+        s.width * .34,
+        s.height * .80,
+        s.width * .22,
+        s.height * .60,
       );
 
-    canvas.drawPath(bottom, paint);
+    canvas.drawPath(path, p);
 
-    final topArrow = Path()
-      ..moveTo(
-        size.width * 0.78,
-        size.height * 0.40,
-      )
-      ..lineTo(
-        size.width * 0.68,
-        size.height * 0.32,
-      )
-      ..moveTo(
-        size.width * 0.78,
-        size.height * 0.40,
-      )
-      ..lineTo(
-        size.width * 0.68,
-        size.height * 0.48,
-      );
+    canvas.drawLine(
+      Offset(s.width * .78, s.height * .40),
+      Offset(s.width * .67, s.height * .33),
+      p,
+    );
 
-    canvas.drawPath(topArrow, paint);
+    canvas.drawLine(
+      Offset(s.width * .78, s.height * .40),
+      Offset(s.width * .68, s.height * .49),
+      p,
+    );
 
-    final bottomArrow = Path()
-      ..moveTo(
-        size.width * 0.22,
-        size.height * 0.60,
-      )
-      ..lineTo(
-        size.width * 0.32,
-        size.height * 0.52,
-      )
-      ..moveTo(
-        size.width * 0.22,
-        size.height * 0.60,
-      )
-      ..lineTo(
-        size.width * 0.32,
-        size.height * 0.68,
-      );
+    canvas.drawLine(
+      Offset(s.width * .22, s.height * .60),
+      Offset(s.width * .32, s.height * .51),
+      p,
+    );
 
-    canvas.drawPath(
-      bottomArrow,
-      paint,
+    canvas.drawLine(
+      Offset(s.width * .22, s.height * .60),
+      Offset(s.width * .33, s.height * .68),
+      p,
     );
   }
 
   @override
   bool shouldRepaint(
-    covariant _StellarMusicIconPainter oldDelegate,
+    covariant _MusicIconPainter oldDelegate,
   ) {
     return oldDelegate.type != type ||
         oldDelegate.color != color;
