@@ -30,7 +30,7 @@ class SystemInfoPage extends StatefulWidget {
 
 class _SystemInfoPageState extends State<SystemInfoPage> {
   static const MethodChannel _channel =
-      MethodChannel('org.test.thislinux/native');
+      MethodChannel('com.nevruz.stellarcenter/native');
 
   AndroidDeviceInfo? _androidInfo;
   Map<String, String> _linuxInfo = <String, String>{};
