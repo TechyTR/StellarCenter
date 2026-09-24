@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'music_track.dart';
 import 'fullscreen_player.dart';
-import 'stellar_music_service.dart';
-import 'stellar_music_cover.dart';
+import 'music_service.dart';
+import 'music_cover.dart';
 
 class StellarEdgePlayer extends StatefulWidget {
   final List<StellarMusicTrack> tracks;
