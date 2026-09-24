@@ -7,13 +7,7 @@ class StellarArtistVerification {
   final Set<String> _verifiedArtists = <String>{};
 
   bool isVerified(String artist) {
-    final normalized = _normalize(artist);
-
-    if (normalized.isEmpty) {
-      return false;
-    }
-
-    return _verifiedArtists.contains(normalized);
+    return _verifiedArtists.contains(_normalize(artist));
   }
 
   void setVerified(
@@ -22,9 +16,7 @@ class StellarArtistVerification {
   ) {
     final normalized = _normalize(artist);
 
-    if (normalized.isEmpty) {
-      return;
-    }
+    if (normalized.isEmpty) return;
 
     if (verified) {
       _verifiedArtists.add(normalized);
@@ -36,19 +28,14 @@ class StellarArtistVerification {
   void setVerifiedArtists(
     Iterable<String> artists,
   ) {
-    _verifiedArtists.clear();
-
-    for (final artist in artists) {
-      final normalized = _normalize(artist);
-
-      if (normalized.isNotEmpty) {
-        _verifiedArtists.add(normalized);
-      }
-    }
+    _verifiedArtists
+      ..clear()
+      ..addAll(
+        artists
+            .map(_normalize)
+            .where((artist) => artist.isNotEmpty),
+      );
   }
-
-  Set<String> get verifiedArtists =>
-      Set.unmodifiable(_verifiedArtists);
 
   String _normalize(String value) {
     return value.trim().toLowerCase();
