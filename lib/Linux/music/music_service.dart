@@ -27,11 +27,6 @@ class StellarMusicService {
   final StreamController<StellarRepeatMode> _repeatController =
       StreamController<StellarRepeatMode>.broadcast();
 
-  List<StellarMusicTrack> _tracks = [];
-  int _currentIndex = -1;
-
-  StellarRepeatMode _repeatMode = StellarRepeatMode.playlistOnce;
-
   Stream<StellarMusicTrack?> get currentTrackStream =>
       _trackController.stream;
 
@@ -41,35 +36,53 @@ class StellarMusicService {
 
   Stream<bool> get playingStream => _playingController.stream;
 
-  Stream<StellarRepeatMode> get repeatModeStream =>
-      _repeatController.stream;
+  Stream<StellarRepeatMode> get repeatModeStream => _repeatController.stream;
 
-  StellarMusicTrack? get currentTrack {
-    if (_currentIndex < 0 || _currentIndex >= _tracks.length) {
-      return null;
-    }
+  final List<StellarMusicTrack> _tracks = [];
 
-    return _tracks[_currentIndex];
-  }
+  int _currentIndex = -1;
 
-  int get currentIndex => _currentIndex;
+  StellarMusicTrack? _currentTrack;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  bool _playing = false;
+
+  StellarRepeatMode _repeatMode = StellarRepeatMode.playlistOnce;
+
+  bool _initialized = false;
+
+  StellarMusicTrack? get currentTrack => _currentTrack;
+
+  Duration get position => _position;
+
+  Duration get duration => _duration;
+
+  bool get isPlaying => _playing;
 
   StellarRepeatMode get repeatMode => _repeatMode;
 
-  List<StellarMusicTrack> get tracks =>
-      List.unmodifiable(_tracks);
+  List<StellarMusicTrack> get tracks => List.unmodifiable(_tracks);
 
-  void initialize() {
+  int get currentIndex => _currentIndex;
+
+  Future<void> initialize() async {
+    if (_initialized) return;
+
+    _initialized = true;
+
     player.onPositionChanged.listen((position) {
+      _position = position;
       _positionController.add(position);
     });
 
     player.onDurationChanged.listen((duration) {
+      _duration = duration;
       _durationController.add(duration);
     });
 
     player.onPlayerStateChanged.listen((state) {
-      _playingController.add(state == PlayerState.playing);
+      _playing = state == PlayerState.playing;
+      _playingController.add(_playing);
     });
 
     player.onPlayerComplete.listen((_) {
@@ -78,28 +91,37 @@ class StellarMusicService {
   }
 
   void setTracks(List<StellarMusicTrack> tracks) {
-    _tracks = List.from(tracks);
+    _tracks
+      ..clear()
+      ..addAll(tracks);
 
-    if (_currentIndex >= _tracks.length) {
-      _currentIndex = -1;
+    if (_currentTrack != null) {
+      final index = _tracks.indexWhere(
+        (track) => track.path == _currentTrack!.path,
+      );
+
+      if (index >= 0) {
+        _currentIndex = index;
+      }
     }
   }
 
   Future<void> playIndex(int index) async {
-    if (_tracks.isEmpty) return;
     if (index < 0 || index >= _tracks.length) return;
-
-    _currentIndex = index;
 
     final track = _tracks[index];
 
+    _currentIndex = index;
+    _currentTrack = track;
+    _position = Duration.zero;
+    _duration = Duration.zero;
+
     _trackController.add(track);
+    _positionController.add(Duration.zero);
+    _durationController.add(Duration.zero);
 
     await player.stop();
-
-    await player.play(
-      DeviceFileSource(track.path),
-    );
+    await player.play(DeviceFileSource(track.path));
   }
 
   Future<void> play(StellarMusicTrack track) async {
@@ -109,7 +131,16 @@ class StellarMusicService {
 
     if (index >= 0) {
       await playIndex(index);
+      return;
     }
+
+    _currentTrack = track;
+    _currentIndex = -1;
+
+    _trackController.add(track);
+
+    await player.stop();
+    await player.play(DeviceFileSource(track.path));
   }
 
   Future<void> pause() async {
@@ -120,10 +151,11 @@ class StellarMusicService {
     await player.resume();
   }
 
-  Future<void> toggle() async {
-    if (player.state == PlayerState.playing) {
+  Future<void> togglePlayPause() async {
+    if (_playing) {
       await pause();
     } else {
+      if (_currentTrack == null) return;
       await resume();
     }
   }
@@ -132,64 +164,100 @@ class StellarMusicService {
     await player.seek(position);
   }
 
+  Future<void> stop() async {
+    await player.stop();
+
+    _playing = false;
+    _position = Duration.zero;
+
+    _playingController.add(false);
+    _positionController.add(Duration.zero);
+  }
+
   Future<void> next() async {
-    if (_tracks.isEmpty) return;
+    if (_tracks.isEmpty || _currentIndex < 0) return;
 
-    if (_repeatMode == StellarRepeatMode.songForever) {
-      await playIndex(_currentIndex);
-      return;
-    }
+    switch (_repeatMode) {
+      case StellarRepeatMode.playlistOnce:
+      case StellarRepeatMode.songForever:
+        final nextIndex = _currentIndex + 1;
 
-    final nextIndex = _currentIndex + 1;
-
-    if (nextIndex < _tracks.length) {
-      await playIndex(nextIndex);
-      return;
-    }
-
-    // Albüm modlarında albümün sonuna gelince
-    // albümün ilk şarkısına dön.
-    if (_repeatMode == StellarRepeatMode.albumForever) {
-      final album = currentTrack?.album;
-
-      if (album != null && album.isNotEmpty) {
-        final albumTracks = _albumIndexes(album);
-
-        if (albumTracks.isNotEmpty) {
-          await playIndex(albumTracks.first);
+        if (nextIndex >= _tracks.length) {
+          if (_repeatMode == StellarRepeatMode.songForever) {
+            await playIndex(_currentIndex);
+          }
           return;
         }
-      }
-    }
 
-    // Playlist sonsuz modu yok:
-    // 1× modunda listenin sonunda dur.
-    await player.stop();
-    _playingController.add(false);
+        await playIndex(nextIndex);
+        return;
+
+      case StellarRepeatMode.albumOnce:
+      case StellarRepeatMode.albumForever:
+        final indexes = _albumIndexes();
+
+        if (indexes.isEmpty) return;
+
+        final currentPosition = indexes.indexOf(_currentIndex);
+
+        if (currentPosition == -1) {
+          await playIndex(indexes.first);
+          return;
+        }
+
+        final nextPosition = currentPosition + 1;
+
+        if (nextPosition >= indexes.length) {
+          if (_repeatMode == StellarRepeatMode.albumForever) {
+            await playIndex(indexes.first);
+          }
+          return;
+        }
+
+        await playIndex(indexes[nextPosition]);
+        return;
+    }
   }
 
   Future<void> previous() async {
-    if (_tracks.isEmpty) return;
+    if (_tracks.isEmpty || _currentIndex < 0) return;
 
-    final position = await player.getCurrentPosition();
-
-    // Şarkının başındaysak önceki şarkıya geç.
-    // Ortasındaysak önce şarkının başına dön.
-    if (position != null &&
-        position > const Duration(seconds: 3)) {
-      await player.seek(Duration.zero);
+    if (_position > const Duration(seconds: 3)) {
+      await seek(Duration.zero);
       return;
     }
 
-    if (_repeatMode == StellarRepeatMode.songForever) {
-      await playIndex(_currentIndex);
-      return;
-    }
+    switch (_repeatMode) {
+      case StellarRepeatMode.playlistOnce:
+        if (_currentIndex > 0) {
+          await playIndex(_currentIndex - 1);
+        }
+        return;
 
-    final previousIndex = _currentIndex - 1;
+      case StellarRepeatMode.songForever:
+        await playIndex(_currentIndex);
+        return;
 
-    if (previousIndex >= 0) {
-      await playIndex(previousIndex);
+      case StellarRepeatMode.albumOnce:
+      case StellarRepeatMode.albumForever:
+        final indexes = _albumIndexes();
+
+        if (indexes.isEmpty) return;
+
+        final currentPosition = indexes.indexOf(_currentIndex);
+
+        if (currentPosition == -1) {
+          await playIndex(indexes.first);
+          return;
+        }
+
+        if (currentPosition > 0) {
+          await playIndex(indexes[currentPosition - 1]);
+        } else if (_repeatMode == StellarRepeatMode.albumForever) {
+          await playIndex(indexes.last);
+        }
+
+        return;
     }
   }
 
@@ -215,73 +283,72 @@ class StellarMusicService {
     _repeatController.add(_repeatMode);
   }
 
-  List<int> _albumIndexes(String album) {
-    final indexes = <int>[];
-
-    for (int i = 0; i < _tracks.length; i++) {
-      if (_tracks[i].album == album) {
-        indexes.add(i);
-      }
+  List<int> _albumIndexes() {
+    if (_currentIndex < 0 || _currentIndex >= _tracks.length) {
+      return [];
     }
 
-    return indexes;
+    final album = _tracks[_currentIndex].album;
+
+    return [
+      for (int i = 0; i < _tracks.length; i++)
+        if (_tracks[i].album == album) i,
+    ];
   }
 
   Future<void> _handleSongComplete() async {
     if (_tracks.isEmpty || _currentIndex < 0) return;
 
-    final current = currentTrack;
+    switch (_repeatMode) {
+      case StellarRepeatMode.playlistOnce:
+        final nextIndex = _currentIndex + 1;
 
-    // Aynı şarkı sonsuz
-    if (_repeatMode == StellarRepeatMode.songForever) {
-      await playIndex(_currentIndex);
-      return;
-    }
+        if (nextIndex < _tracks.length) {
+          await playIndex(nextIndex);
+        } else {
+          await stop();
+        }
+        break;
 
-    // Albüm modları
-    if ((_repeatMode == StellarRepeatMode.albumOnce ||
-            _repeatMode == StellarRepeatMode.albumForever) &&
-        current != null) {
-      final album = current.album;
+      case StellarRepeatMode.songForever:
+        await playIndex(_currentIndex);
+        break;
 
-      if (album.isNotEmpty) {
-        final albumIndexes = _albumIndexes(album);
-        final albumPosition =
-            albumIndexes.indexOf(_currentIndex);
+      case StellarRepeatMode.albumOnce:
+        final indexes = _albumIndexes();
 
-        if (albumPosition >= 0 &&
-            albumPosition < albumIndexes.length - 1) {
-          await playIndex(
-            albumIndexes[albumPosition + 1],
-          );
+        if (indexes.isEmpty) {
+          await stop();
           return;
         }
 
-        // Albüm bitti.
-        if (_repeatMode == StellarRepeatMode.albumForever) {
-          await playIndex(albumIndexes.first);
+        final currentPosition = indexes.indexOf(_currentIndex);
+
+        if (currentPosition >= 0 &&
+            currentPosition + 1 < indexes.length) {
+          await playIndex(indexes[currentPosition + 1]);
+        } else {
+          await stop();
+        }
+        break;
+
+      case StellarRepeatMode.albumForever:
+        final indexes = _albumIndexes();
+
+        if (indexes.isEmpty) {
+          await stop();
           return;
         }
 
-        await player.stop();
-        _playingController.add(false);
-        return;
-      }
+        final currentPosition = indexes.indexOf(_currentIndex);
+
+        if (currentPosition >= 0 &&
+            currentPosition + 1 < indexes.length) {
+          await playIndex(indexes[currentPosition + 1]);
+        } else {
+          await playIndex(indexes.first);
+        }
+        break;
     }
-
-    // Normal playlist 1×
-    final nextIndex = _currentIndex + 1;
-
-    if (nextIndex < _tracks.length) {
-      await playIndex(nextIndex);
-    } else {
-      await player.stop();
-      _playingController.add(false);
-    }
-  }
-
-  Future<void> stop() async {
-    await player.stop();
-    _playingController.add(false);
   }
 }
