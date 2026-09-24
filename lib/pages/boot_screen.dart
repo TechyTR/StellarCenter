@@ -20,11 +20,11 @@ class BootScreen extends StatefulWidget {
   ) onStyleChanged;
 
   final Widget Function({
-  required AppThemeColor selectedTheme,
-  required AppThemeStyle selectedStyle,
-  required Future<void> Function(AppThemeColor) onThemeChanged,
-  required Future<void> Function(AppThemeStyle) onStyleChanged,
-}) homeShellBuilder;
+    required AppThemeColor selectedTheme,
+    required AppThemeStyle selectedStyle,
+    required Future<void> Function(AppThemeColor) onThemeChanged,
+    required Future<void> Function(AppThemeStyle) onStyleChanged,
+  }) homeShellBuilder;
 
   const BootScreen({
     super.key,
@@ -36,12 +36,10 @@ class BootScreen extends StatefulWidget {
   });
 
   @override
-  State<BootScreen> createState() =>
-      _BootScreenState();
+  State<BootScreen> createState() => _BootScreenState();
 }
 
-class _BootScreenState
-    extends State<BootScreen> {
+class _BootScreenState extends State<BootScreen> {
   final List<String> _bootLines = [
     '[  OK  ] Starting Stellar Center...',
     '[  OK  ] Initializing system...',
@@ -59,8 +57,7 @@ class _BootScreenState
   bool _finished = false;
   bool _updateAvailable = false;
 
-  String get _currentVersion =>
-      AppVersion.current;
+  String get _currentVersion => AppVersion.current;
 
   int _currentLine = 0;
 
@@ -73,8 +70,7 @@ class _BootScreenState
   }
 
   Future<void> _checkUpdate() async {
-    final update =
-        await UpdateService.checkForUpdate();
+    final update = await UpdateService.checkForUpdate();
 
     if (!mounted || update == null) {
       return;
@@ -90,25 +86,21 @@ class _BootScreenState
   }
 
   void _startBootAnimation() {
-    const totalBootTime =
-        Duration(seconds: 2);
+    const totalBootTime = Duration(seconds: 2);
 
     final lineDuration =
         totalBootTime.inMilliseconds ~/
             _bootLines.length;
 
     _timer = Timer.periodic(
-      Duration(
-        milliseconds: lineDuration,
-      ),
+      Duration(milliseconds: lineDuration),
       (timer) {
         if (!mounted) {
           timer.cancel();
           return;
         }
 
-        if (_currentLine <
-            _bootLines.length) {
+        if (_currentLine < _bootLines.length) {
           setState(() {
             _visibleLines.add(
               _bootLines[_currentLine],
@@ -118,8 +110,7 @@ class _BootScreenState
           });
         }
 
-        if (_currentLine >=
-            _bootLines.length) {
+        if (_currentLine >= _bootLines.length) {
           timer.cancel();
           _showLinuxLogo();
         }
@@ -135,9 +126,7 @@ class _BootScreenState
     });
 
     await Future.delayed(
-      const Duration(
-        milliseconds: 500,
-      ),
+      const Duration(milliseconds: 500),
     );
 
     if (!mounted) return;
@@ -166,9 +155,7 @@ class _BootScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
               },
               child: const Text(
                 'Daha sonra',
@@ -176,9 +163,7 @@ class _BootScreenState
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.of(dialogContext).pop();
 
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -189,10 +174,7 @@ class _BootScreenState
                         ),
                       ),
                       body: ListView(
-                        padding:
-                            const EdgeInsets.all(
-                          20,
-                        ),
+                        padding: const EdgeInsets.all(20),
                         children: [
                           const UpdateButton(
                             currentVersion:
@@ -204,9 +186,7 @@ class _BootScreenState
                   ),
                 );
               },
-              child: const Text(
-                'Aç',
-              ),
+              child: const Text('Aç'),
             ),
           ],
         );
@@ -221,19 +201,13 @@ class _BootScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     if (_finished) {
-      return HomeShell(
-        selectedTheme:
-            widget.selectedTheme,
-        selectedStyle:
-            widget.selectedStyle,
-        onThemeChanged:
-            widget.onThemeChanged,
-        onStyleChanged:
-            widget.onStyleChanged,
+      return widget.homeShellBuilder(
+        selectedTheme: widget.selectedTheme,
+        selectedStyle: widget.selectedStyle,
+        onThemeChanged: widget.onThemeChanged,
+        onStyleChanged: widget.onStyleChanged,
       );
     }
 
@@ -244,8 +218,7 @@ class _BootScreenState
           children: [
             if (!_showLogo)
               Padding(
-                padding:
-                    const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
@@ -255,13 +228,10 @@ class _BootScreenState
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(
-                      height: 24,
-                    ),
+                    const SizedBox(height: 24),
                     ..._visibleLines.map(
                       (line) => Padding(
                         padding:
@@ -270,11 +240,9 @@ class _BootScreenState
                         ),
                         child: Text(
                           line,
-                          style:
-                              const TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
-                            fontFamily:
-                                'monospace',
+                            fontFamily: 'monospace',
                             fontSize: 13,
                           ),
                         ),
@@ -295,8 +263,7 @@ class _BootScreenState
                     stackTrace,
                   ) {
                     return const Icon(
-                      Icons
-                          .auto_awesome_rounded,
+                      Icons.auto_awesome_rounded,
                       color: Colors.white,
                       size: 90,
                     );
@@ -308,14 +275,11 @@ class _BootScreenState
                 right: 18,
                 bottom: 18,
                 child: FilledButton.icon(
-                  onPressed:
-                      _showUpdateDialog,
+                  onPressed: _showUpdateDialog,
                   icon: const Icon(
                     Icons.system_update,
                   ),
-                  label: const Text(
-                    'UPDATE',
-                  ),
+                  label: const Text('UPDATE'),
                 ),
               ),
             Positioned(
@@ -323,11 +287,9 @@ class _BootScreenState
               bottom: 4,
               child: Text(
                 'v$_currentVersion',
-                style:
-                    const TextStyle(
+                style: const TextStyle(
                   color: Colors.white54,
-                  fontFamily:
-                      'monospace',
+                  fontFamily: 'monospace',
                   fontSize: 11,
                 ),
               ),
