@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "911196193515",
+    "project_id": "project-stellar-474c6",
+    "storage_bucket": "project-stellar-474c6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911196193515:android:a1583390c4685bc22e74ae",
+        "android_client_info": {
+          "package_name": "com.nevruz.stellarcenter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlpygIlpSCzq8Is2Xm4K5Zs57Knv78ESI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
