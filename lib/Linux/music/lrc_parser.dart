@@ -1,56 +1,35 @@
-import 'dart:io';
-
-class StellarLyricLine {
+class StellarLrcLine {
   final Duration timestamp;
   final String text;
 
-  const StellarLyricLine({
+  const StellarLrcLine({
     required this.timestamp,
     required this.text,
   });
 }
 
 class StellarLrcParser {
-  static final RegExp _timestampRegex = RegExp(
-    r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]',
-  );
+  static final RegExp _timestampPattern =
+      RegExp(r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]');
 
-  static Future<List<StellarLyricLine>> parseFile(
-    File file,
-  ) async {
-    if (!await file.exists()) {
-      return const [];
-    }
+  static List<StellarLrcLine> parse(String content) {
+    final result = <StellarLrcLine>[];
 
-    String content;
+    for (final rawLine in content.split('\n')) {
+      final line = rawLine.trim();
 
-    try {
-      content = await file.readAsString();
-    } catch (_) {
-      return const [];
-    }
+      if (line.isEmpty) continue;
 
-    return parse(content);
-  }
-
-  static List<StellarLyricLine> parse(
-    String content,
-  ) {
-    final result = <StellarLyricLine>[];
-
-    final lines = content.split(RegExp(r'\r?\n'));
-
-    for (final rawLine in lines) {
       final matches =
-          _timestampRegex.allMatches(rawLine).toList();
+          _timestampPattern.allMatches(line).toList();
 
-      if (matches.isEmpty) {
-        continue;
-      }
+      if (matches.isEmpty) continue;
 
-      final text = rawLine
-          .replaceAll(_timestampRegex, '')
+      final text = line
+          .replaceAll(_timestampPattern, '')
           .trim();
+
+      if (text.isEmpty) continue;
 
       for (final match in matches) {
         final minutes =
@@ -59,28 +38,20 @@ class StellarLrcParser {
         final seconds =
             int.tryParse(match.group(2) ?? '') ?? 0;
 
-        final fractionText =
-            match.group(3);
+        final fraction =
+            int.tryParse(match.group(3) ?? '0') ?? 0;
 
-        int milliseconds = 0;
-
-        if (fractionText != null) {
-          if (fractionText.length == 1) {
-            milliseconds =
-                int.parse(fractionText) * 100;
-          } else if (fractionText.length == 2) {
-            milliseconds =
-                int.parse(fractionText) * 10;
-          } else {
-            milliseconds =
-                int.parse(
-                  fractionText.substring(0, 3),
-                );
-          }
-        }
+        final milliseconds =
+            match.group(3) == null
+                ? 0
+                : match.group(3)!.length == 1
+                    ? fraction * 100
+                    : match.group(3)!.length == 2
+                        ? fraction * 10
+                        : fraction;
 
         result.add(
-          StellarLyricLine(
+          StellarLrcLine(
             timestamp: Duration(
               minutes: minutes,
               seconds: seconds,
@@ -93,22 +64,19 @@ class StellarLrcParser {
     }
 
     result.sort(
-      (a, b) =>
-          a.timestamp.compareTo(b.timestamp),
+      (a, b) => a.timestamp.compareTo(b.timestamp),
     );
 
     return result;
   }
 
   static int activeIndex(
-    List<StellarLyricLine> lines,
+    List<StellarLrcLine> lines,
     Duration position,
   ) {
-    if (lines.isEmpty) {
-      return -1;
-    }
+    if (lines.isEmpty) return -1;
 
-    int index = -1;
+    var index = -1;
 
     for (var i = 0; i < lines.length; i++) {
       if (lines[i].timestamp <= position) {
