@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'lrc_parser.dart';
 
 class StellarLyricsView extends StatefulWidget {
-  final List<StellarLyricLine> lines;
+  final List<StellarLrcLine> lines;
   final Duration position;
 
   const StellarLyricsView({
@@ -30,21 +30,19 @@ class _StellarLyricsViewState
   ) {
     super.didUpdateWidget(oldWidget);
 
-    _scrollToActiveLine();
+    _updateScroll();
   }
 
-  void _scrollToActiveLine() {
-    if (widget.lines.isEmpty) {
-      return;
-    }
+  void _updateScroll() {
+    if (widget.lines.isEmpty) return;
 
-    final index = StellarLrcParser.activeIndex(
+    final index =
+        StellarLrcParser.activeIndex(
       widget.lines,
       widget.position,
     );
 
-    if (index < 0 ||
-        index == _lastIndex) {
+    if (index < 0 || index == _lastIndex) {
       return;
     }
 
@@ -52,22 +50,21 @@ class _StellarLyricsViewState
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) {
-        if (!_controller.hasClients) {
+        if (!mounted ||
+            !_controller.hasClients) {
           return;
         }
 
         final target =
-            (index * 64.0)
-                .clamp(
-                  0.0,
-                  _controller.position.maxScrollExtent,
-                )
-                .toDouble();
+            (index * 62.0).clamp(
+          0.0,
+          _controller.position.maxScrollExtent,
+        );
 
         _controller.animateTo(
-          target,
+          target.toDouble(),
           duration: const Duration(
-            milliseconds: 350,
+            milliseconds: 420,
           ),
           curve: Curves.easeOutCubic,
         );
@@ -76,51 +73,63 @@ class _StellarLyricsViewState
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.lines.isEmpty) {
+      return const Center(
+        child: Text(
+          'Bu şarkı için söz bulunamadı.',
+          style: TextStyle(
+            color: Colors.white54,
+          ),
+        ),
+      );
+    }
+
     final activeIndex =
         StellarLrcParser.activeIndex(
       widget.lines,
       widget.position,
     );
 
-    if (widget.lines.isEmpty) {
-      return const Center(
-        child: Text(
-          'Bu şarkı için söz bulunamadı.',
-        ),
-      );
-    }
-
     return ListView.builder(
       controller: _controller,
       padding: const EdgeInsets.symmetric(
         horizontal: 24,
-        vertical: 80,
+        vertical: 100,
       ),
       itemCount: widget.lines.length,
       itemBuilder: (context, index) {
         final active =
             index == activeIndex;
 
-        return AnimatedDefaultTextStyle(
+        return AnimatedContainer(
           duration: const Duration(
-            milliseconds: 220,
+            milliseconds: 280,
           ),
-          style: TextStyle(
-            fontSize: active ? 24 : 17,
-            height: 1.45,
-            fontWeight: active
-                ? FontWeight.w800
-                : FontWeight.w500,
-            color: active
-                ? Colors.white
-                : Colors.white.withOpacity(
-                    0.48,
-                  ),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(
+            vertical: 9,
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(
+              milliseconds: 280,
+            ),
+            curve: Curves.easeOutCubic,
+            style: TextStyle(
+              color: active
+                  ? Colors.white
+                  : Colors.white.withOpacity(0.38),
+              fontSize: active ? 24 : 17,
+              fontWeight: active
+                  ? FontWeight.w800
+                  : FontWeight.w500,
+              height: 1.4,
             ),
             child: Text(
               widget.lines[index].text.isEmpty
