@@ -2,44 +2,62 @@ import 'dart:io';
 import 'dart:typed_data';
 
 class StellarLocalArtwork {
-  static Future<Uint8List?> find(String audioPath) async {
-    final audioFile = File(audioPath);
-    final directory = audioFile.parent;
+  static Future<Uint8List?> find(
+    String audioPath,
+  ) async {
+    final dot =
+        audioPath.lastIndexOf('.');
 
-    final baseName = audioFile.uri.pathSegments.last;
-    final dotIndex = baseName.lastIndexOf('.');
+    if (dot <= 0) {
+      return null;
+    }
 
-    final nameWithoutExtension =
-        dotIndex > 0 ? baseName.substring(0, dotIndex) : baseName;
+    final base =
+        audioPath.substring(0, dot);
+
+    final directory =
+        File(audioPath).parent;
+
+    final audioName =
+        audioPath
+            .split(Platform.pathSeparator)
+            .last
+            .substring(
+              0,
+              audioPath
+                  .split(Platform.pathSeparator)
+                  .last
+                  .lastIndexOf('.'),
+            );
 
     final candidates = <String>[
-      '$nameWithoutExtension.png',
-      '$nameWithoutExtension.jpg',
-      '$nameWithoutExtension.jpeg',
-      'cover.png',
-      'cover.jpg',
-      'cover.jpeg',
-      'folder.png',
-      'folder.jpg',
-      'folder.jpeg',
-      'album.png',
-      'album.jpg',
-      'album.jpeg',
+      '$base.png',
+      '$base.PNG',
+      '$base.jpg',
+      '$base.JPG',
+      '$base.jpeg',
+      '$base.JPEG',
+      '${directory.path}/$audioName.png',
+      '${directory.path}/$audioName.PNG',
+      '${directory.path}/cover.png',
+      '${directory.path}/cover.PNG',
+      '${directory.path}/folder.png',
+      '${directory.path}/folder.PNG',
+      '${directory.path}/album.png',
+      '${directory.path}/album.PNG',
     ];
 
-    for (final name in candidates) {
+    for (final path in candidates) {
+      final file = File(path);
+
+      if (!await file.exists()) {
+        continue;
+      }
+
       try {
-        final file = File('${directory.path}/$name');
-
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-
-          if (bytes.isNotEmpty) {
-            return bytes;
-          }
-        }
+        return await file.readAsBytes();
       } catch (_) {
-        // Bir kapak okunamazsa diğer adaylara devam et.
+        // Sonraki artwork adayına geç.
       }
     }
 
