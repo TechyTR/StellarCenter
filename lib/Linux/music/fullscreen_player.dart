@@ -5,8 +5,8 @@ import 'music_background.dart';
 import 'music_icon.dart';
 import 'music_track.dart';
 import 'repeat_mode.dart';
-import 'stellar_music_cover.dart';
-import 'stellar_music_service.dart';
+import 'music_cover.dart';
+import 'music_service.dart';
 
 class StellarFullscreenPlayer
     extends StatefulWidget {
