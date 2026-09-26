@@ -1,8 +1,9 @@
+
 import 'package:flutter/material.dart';
 
-import 'pages/boot_screen.dart';
-import 'services/preferences_service.dart';
-import 'theme/app_theme.dart';
+import '../pages/boot_screen.dart';
+import '../services/preferences_service.dart';
+import '../theme/app_theme.dart';
 
 typedef HomeShellBuilder = Widget Function({
   required AppThemeColor selectedTheme,
@@ -24,9 +25,13 @@ class StellarCenterApp extends StatefulWidget {
       _StellarCenterAppState();
 }
 
-class _StellarCenterAppState extends State<StellarCenterApp> {
-  AppThemeColor _selectedTheme = AppThemeColor.purple;
-  AppThemeStyle _selectedStyle = AppThemeStyle.normal;
+class _StellarCenterAppState
+    extends State<StellarCenterApp> {
+  AppThemeColor _selectedTheme =
+      AppThemeColor.purple;
+
+  AppThemeStyle _selectedStyle =
+      AppThemeStyle.normal;
 
   bool _preferencesLoaded = false;
 
