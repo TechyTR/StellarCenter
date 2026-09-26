@@ -5,46 +5,39 @@ import 'lrc_parser.dart';
 class StellarLyricsLoader {
   StellarLyricsLoader._();
 
-  static final Map<
-      String,
-      List<StellarLrcLine>> _cache =
-      <String, List<StellarLrcLine>>{};
+  static final Map<String, List<StellarLrcLine>>
+      _cache = <String, List<StellarLrcLine>>{};
 
   static final Map<
-      String,
-      Future<List<StellarLrcLine>>> _pending =
-      <String,
-      Future<List<StellarLrcLine>>>{};
+          String,
+          Future<List<StellarLrcLine>>>
+      _pending =
+      <String, Future<List<StellarLrcLine>>>{};
 
   static Future<List<StellarLrcLine>> load(
     String? path,
   ) {
-    if (path == null ||
-        path.trim().isEmpty) {
+    if (path == null || path.trim().isEmpty) {
       return Future.value(
         const <StellarLrcLine>[],
       );
     }
 
-    final normalized =
-        path.trim();
+    final normalized = path.trim();
 
-    final cached =
-        _cache[normalized];
+    final cached = _cache[normalized];
 
     if (cached != null) {
       return Future.value(cached);
     }
 
-    final existing =
-        _pending[normalized];
+    final existing = _pending[normalized];
 
     if (existing != null) {
       return existing;
     }
 
-    final future =
-        _loadInternal(normalized);
+    final future = _loadInternal(normalized);
 
     _pending[normalized] = future;
 
@@ -64,11 +57,13 @@ class StellarLyricsLoader {
         return const [];
       }
 
-      final content =
-          await file.readAsString();
+      final content = await file.readAsString();
 
-      final lines =
-          StellarLrcParser.parse(
+      if (content.trim().isEmpty) {
+        return const [];
+      }
+
+      final lines = StellarLrcParser.parse(
         content,
       );
 
@@ -91,5 +86,13 @@ class StellarLyricsLoader {
 
   static void remove(String path) {
     _cache.remove(path);
+  }
+
+  static void removeAll(
+    Iterable<String> paths,
+  ) {
+    for (final path in paths) {
+      _cache.remove(path);
+    }
   }
 }
