@@ -9,7 +9,8 @@ import 'music_track.dart';
 class StellarMusicScanner {
   StellarMusicScanner._();
 
-  static Future<List<StellarMusicTrack>> scan() async {
+  static Future<List<StellarMusicTrack>>
+      scan() async {
     final home =
         Platform.environment['HOME'];
 
@@ -18,7 +19,8 @@ class StellarMusicScanner {
       return const [];
     }
 
-    final musicDirectory = Directory(
+    final musicDirectory =
+        Directory(
       '$home/StellarCenter/Music',
     );
 
@@ -35,13 +37,10 @@ class StellarMusicScanner {
         recursive: true,
         followLinks: false,
       )) {
-        if (entity is! File) {
-          continue;
-        }
-
-        if (!_isSupportedAudio(
-          entity.path,
-        )) {
+        if (entity is! File ||
+            !_isSupportedAudio(
+              entity.path,
+            )) {
           continue;
         }
 
@@ -53,63 +52,47 @@ class StellarMusicScanner {
             tracks.add(track);
           }
         } catch (_) {
-          // Tek dosya hatası tüm taramayı bozmaz.
+          continue;
         }
       }
     } catch (_) {
       return tracks;
     }
 
-    tracks.sort(
-      _compareTracks,
-    );
+    tracks.sort(_compareTracks);
 
-    return tracks;
+    return List.unmodifiable(tracks);
   }
 
-  static Future<StellarMusicTrack?> _readTrack(
+  static Future<StellarMusicTrack?>
+      _readTrack(
     File file,
   ) async {
     final metadata =
-        StellarMusicMetadataReader.read(file);
+        StellarMusicMetadataReader.read(
+      file,
+    );
 
     final directory = file.parent;
 
     final fileName =
-        _withoutExtension(
-      file.uri.pathSegments.isNotEmpty
-          ? file.uri.pathSegments.last
-          : file.path,
-    );
-
-    final directoryParts = directory.path
-        .split(Platform.pathSeparator)
-        .where(
-          (value) => value.isNotEmpty,
-        )
-        .toList();
-
-    final parentParts =
-        directory.parent.path
-            .split(Platform.pathSeparator)
-            .where(
-              (value) => value.isNotEmpty,
-            )
-            .toList();
+        file.uri.pathSegments.isNotEmpty
+            ? _withoutExtension(
+                file.uri.pathSegments.last,
+              )
+            : _withoutExtension(
+                file.path,
+              );
 
     final directoryName =
-        directoryParts.isEmpty
-            ? null
-            : directoryParts.last;
+        _lastPart(directory.path);
 
-    final parentDirectoryName =
-        parentParts.isEmpty
-            ? null
-            : parentParts.last;
+    final parentName =
+        _lastPart(directory.parent.path);
 
     final artist =
         _clean(metadata.artist) ??
-        _clean(parentDirectoryName) ??
+        _clean(parentName) ??
         'Bilinmeyen Sanatçı';
 
     final album =
@@ -136,7 +119,7 @@ class StellarMusicScanner {
     final lyricsPath =
         await _findLyrics(file);
 
-    final verifiedArtist =
+    final verified =
         StellarArtistVerification
             .instance
             .isVerified(artist);
@@ -148,7 +131,7 @@ class StellarMusicScanner {
       album: album,
       artwork: artwork,
       lyricsPath: lyricsPath,
-      verifiedArtist: verifiedArtist,
+      verifiedArtist: verified,
     );
   }
 
@@ -156,14 +139,13 @@ class StellarMusicScanner {
     File audioFile,
   ) async {
     final path = audioFile.path;
-
     final dot = path.lastIndexOf('.');
 
     final base = dot > 0
         ? path.substring(0, dot)
         : path;
 
-    final candidates = <String>[
+    final candidates = [
       '$base.lrc',
       '$base.LRC',
     ];
@@ -175,7 +157,9 @@ class StellarMusicScanner {
         if (await file.exists()) {
           return file.path;
         }
-      } catch (_) {}
+      } catch (_) {
+        continue;
+      }
     }
 
     return null;
@@ -191,9 +175,7 @@ class StellarMusicScanner {
       b.artist,
     );
 
-    if (artist != 0) {
-      return artist;
-    }
+    if (artist != 0) return artist;
 
     final album =
         _compareText(
@@ -201,9 +183,7 @@ class StellarMusicScanner {
       b.album,
     );
 
-    if (album != 0) {
-      return album;
-    }
+    if (album != 0) return album;
 
     final title =
         _compareText(
@@ -211,9 +191,7 @@ class StellarMusicScanner {
       b.title,
     );
 
-    if (title != 0) {
-      return title;
-    }
+    if (title != 0) return title;
 
     return _compareText(
       a.path,
@@ -249,9 +227,7 @@ class StellarMusicScanner {
   static String? _clean(
     String? value,
   ) {
-    if (value == null) {
-      return null;
-    }
+    if (value == null) return null;
 
     final result =
         value.trim();
@@ -275,5 +251,20 @@ class StellarMusicScanner {
       0,
       dot,
     );
+  }
+
+  static String? _lastPart(
+    String path,
+  ) {
+    final parts = path
+        .split(Platform.pathSeparator)
+        .where(
+          (value) => value.isNotEmpty,
+        )
+        .toList();
+
+    return parts.isEmpty
+        ? null
+        : parts.last;
   }
 }
