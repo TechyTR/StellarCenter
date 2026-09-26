@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'lyrics_overlay.dart';
 import 'music_background.dart';
+import 'music_cover.dart';
 import 'music_icon.dart';
+import 'music_service.dart';
 import 'music_track.dart';
 import 'repeat_mode.dart';
-import 'music_cover.dart';
-import 'music_service.dart';
 
 class StellarFullscreenPlayer
     extends StatefulWidget {
@@ -94,7 +94,8 @@ class _StellarFullscreenPlayerState
 
                 return StreamBuilder<bool>(
                   stream: service.playingStream,
-                  initialData: service.isPlaying,
+                  initialData:
+                      service.isPlaying,
                   builder:
                       (context, playingSnapshot) {
                     final playing =
@@ -120,6 +121,8 @@ class _StellarFullscreenPlayerState
                               Colors.transparent,
                           body:
                               StellarMusicBackground(
+                            artwork:
+                                track.artwork,
                             child: SafeArea(
                               child: Column(
                                 children: [
@@ -135,8 +138,7 @@ class _StellarFullscreenPlayerState
                                         IconButton(
                                           tooltip:
                                               'Edge Player',
-                                          onPressed:
-                                              () {
+                                          onPressed: () {
                                             Navigator.of(
                                               context,
                                             ).pop();
@@ -151,20 +153,17 @@ class _StellarFullscreenPlayerState
                                           ),
                                         ),
                                         const Spacer(),
-                                        Text(
+                                        const Text(
                                           'STELLAR MUSIC',
                                           style:
                                               TextStyle(
-                                            color: Colors
-                                                .white
-                                                .withOpacity(
-                                                    .65),
+                                            color:
+                                                Colors.white70,
                                             fontSize: 11,
                                             letterSpacing:
                                                 2.2,
                                             fontWeight:
-                                                FontWeight
-                                                    .w700,
+                                                FontWeight.w700,
                                           ),
                                         ),
                                         const Spacer(),
@@ -193,12 +192,6 @@ class _StellarFullscreenPlayerState
                                               milliseconds:
                                                   450,
                                             ),
-                                            switchInCurve:
-                                                Curves
-                                                    .easeOutCubic,
-                                            switchOutCurve:
-                                                Curves
-                                                    .easeInCubic,
                                             child:
                                                 KeyedSubtree(
                                               key: ValueKey(
@@ -252,12 +245,9 @@ class _StellarFullscreenPlayerState
                                                     .min,
                                             children: [
                                               Flexible(
-                                                child:
-                                                    Text(
-                                                  track
-                                                      .artist,
-                                                  maxLines:
-                                                      1,
+                                                child: Text(
+                                                  track.artist,
+                                                  maxLines: 1,
                                                   overflow:
                                                       TextOverflow
                                                           .ellipsis,
@@ -279,9 +269,10 @@ class _StellarFullscreenPlayerState
                                                   Icons
                                                       .verified_rounded,
                                                   color:
-                                                      Color(0xFF2196F3),
-                                                  size:
-                                                      18,
+                                                      Color(
+                                                    0xFF2196F3,
+                                                  ),
+                                                  size: 18,
                                                 ),
                                               ],
                                             ],
@@ -289,7 +280,8 @@ class _StellarFullscreenPlayerState
                                           const SizedBox(
                                             height: 30,
                                           ),
-                                          if (track.lyricsPath !=
+                                          if (track
+                                                  .lyricsPath !=
                                               null)
                                             StellarLyricsOverlay(
                                               track: track,
@@ -299,52 +291,39 @@ class _StellarFullscreenPlayerState
                                           const SizedBox(
                                             height: 24,
                                           ),
-                                          SliderTheme(
-                                            data:
-                                                SliderTheme.of(
-                                              context,
-                                            ).copyWith(
-                                              trackHeight:
-                                                  4,
-                                              thumbShape:
-                                                  const RoundSliderThumbShape(
-                                                enabledThumbRadius:
-                                                    6,
-                                              ),
-                                              overlayShape:
-                                                  const RoundSliderOverlayShape(
-                                                overlayRadius:
-                                                    16,
-                                              ),
-                                            ),
-                                            child:
-                                                Slider(
-                                              value:
-                                                  duration.inMilliseconds >
-                                                          0
-                                                      ? position.inMilliseconds.clamp(
-                                                          0,
-                                                          duration.inMilliseconds,
-                                                        ).toDouble()
-                                                      : 0,
-                                              max:
-                                                  duration.inMilliseconds >
-                                                          0
-                                                      ? duration.inMilliseconds.toDouble()
-                                                      : 1,
-                                              onChanged:
-                                                  duration.inMilliseconds >
-                                                          0
-                                                      ? (value) {
-                                                          service.seek(
-                                                            Duration(
-                                                              milliseconds:
-                                                                  value.round(),
-                                                            ),
-                                                          );
-                                                        }
-                                                      : null,
-                                            ),
+                                          Slider(
+                                            value: duration
+                                                        .inMilliseconds >
+                                                    0
+                                                ? position
+                                                    .inMilliseconds
+                                                    .clamp(
+                                                      0,
+                                                      duration
+                                                          .inMilliseconds,
+                                                    )
+                                                    .toDouble()
+                                                : 0,
+                                            max: duration
+                                                        .inMilliseconds >
+                                                    0
+                                                ? duration
+                                                    .inMilliseconds
+                                                    .toDouble()
+                                                : 1,
+                                            onChanged:
+                                                duration
+                                                            .inMilliseconds >
+                                                        0
+                                                    ? (value) {
+                                                        service.seek(
+                                                          Duration(
+                                                            milliseconds:
+                                                                value.round(),
+                                                          ),
+                                                        );
+                                                      }
+                                                    : null,
                                           ),
                                           Row(
                                             children: [
@@ -418,7 +397,8 @@ class _StellarFullscreenPlayerState
   }
 }
 
-class _Controls extends StatelessWidget {
+class _Controls
+    extends StatelessWidget {
   final bool playing;
   final StellarRepeatMode repeat;
   final VoidCallback onPrevious;
@@ -455,7 +435,8 @@ class _Controls extends StatelessWidget {
               ),
               Text(
                 repeat.label,
-                style: const TextStyle(
+                style:
+                    const TextStyle(
                   color: Colors.white70,
                   fontSize: 8,
                 ),
@@ -467,7 +448,8 @@ class _Controls extends StatelessWidget {
         _Button(
           onTap: onPrevious,
           size: 54,
-          child: const StellarMusicIcon(
+          child:
+              const StellarMusicIcon(
             type:
                 StellarMusicIconType.previous,
             size: 26,
@@ -478,9 +460,12 @@ class _Controls extends StatelessWidget {
           onTap: onPlayPause,
           size: 72,
           filled: true,
-          child: AnimatedSwitcher(
+          child:
+              AnimatedSwitcher(
             duration:
-                const Duration(milliseconds: 220),
+                const Duration(
+              milliseconds: 220,
+            ),
             child: StellarMusicIcon(
               key: ValueKey(playing),
               type: playing
@@ -495,7 +480,8 @@ class _Controls extends StatelessWidget {
         _Button(
           onTap: onNext,
           size: 54,
-          child: const StellarMusicIcon(
+          child:
+              const StellarMusicIcon(
             type:
                 StellarMusicIconType.next,
             size: 26,
@@ -506,7 +492,8 @@ class _Controls extends StatelessWidget {
   }
 }
 
-class _Button extends StatelessWidget {
+class _Button
+    extends StatelessWidget {
   final VoidCallback onTap;
   final Widget child;
   final double size;
@@ -527,12 +514,11 @@ class _Button extends StatelessWidget {
         borderRadius:
             BorderRadius.circular(100),
         onTap: onTap,
-        child: AnimatedContainer(
-          duration:
-              const Duration(milliseconds: 180),
+        child: Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
+          decoration:
+              BoxDecoration(
             shape: BoxShape.circle,
             color: filled
                 ? Colors.white
