@@ -27,28 +27,28 @@ class AppInfoPage extends StatelessWidget {
     required this.onStyleChanged,
   });
 
-  bool _isGlass(BuildContext context) {
+  bool _isGlass() {
     return selectedStyle != AppThemeStyle.normal;
   }
 
-  bool _isLightGlass(BuildContext context) {
+  bool _isLightGlass() {
     return selectedStyle == AppThemeStyle.liquidGlassLight;
   }
 
-  Color _borderColor(BuildContext context) {
-    return _isLightGlass(context)
+  Color _borderColor() {
+    return _isLightGlass()
         ? Colors.white.withOpacity(0.62)
         : Colors.white.withOpacity(0.18);
   }
 
-  Color _fillColor(BuildContext context) {
-    return _isLightGlass(context)
+  Color _fillColor() {
+    return _isLightGlass()
         ? Colors.white.withOpacity(0.32)
         : Colors.white.withOpacity(0.065);
   }
 
-  Color _highlightColor(BuildContext context) {
-    return _isLightGlass(context)
+  Color _highlightColor() {
+    return _isLightGlass()
         ? Colors.white.withOpacity(0.76)
         : Colors.white.withOpacity(0.13);
   }
@@ -57,11 +57,14 @@ class AppInfoPage extends StatelessWidget {
     BuildContext context, {
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(18),
-    EdgeInsetsGeometry margin = const EdgeInsets.only(bottom: 12),
+    EdgeInsetsGeometry margin =
+        const EdgeInsets.only(bottom: 12),
     BorderRadiusGeometry radius =
-        const BorderRadius.all(Radius.circular(24)),
+        const BorderRadius.all(
+      Radius.circular(24),
+    ),
   }) {
-    if (!_isGlass(context)) {
+    if (!_isGlass()) {
       return Card(
         margin: margin,
         child: Padding(
@@ -78,7 +81,7 @@ class AppInfoPage extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(
-              _isLightGlass(context) ? 0.07 : 0.28,
+              _isLightGlass() ? 0.07 : 0.28,
             ),
             blurRadius: 25,
             offset: const Offset(0, 10),
@@ -95,58 +98,32 @@ class AppInfoPage extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: _fillColor(context),
+              color: _fillColor(),
               borderRadius: radius,
               border: Border.all(
-                color: _borderColor(context),
-                width: 1,
+                color: _borderColor(),
               ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  _highlightColor(context),
+                  _highlightColor(),
                   Colors.transparent,
-                  _isLightGlass(context)
+                  _isLightGlass()
                       ? Colors.white.withOpacity(0.12)
                       : Colors.white.withOpacity(0.025),
                 ],
-                stops: const [
-                  0.0,
-                  0.42,
-                  1.0,
-                ],
               ),
             ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        color: _isLightGlass(context)
-                            ? Colors.white.withOpacity(0.92)
-                            : Colors.white.withOpacity(0.22),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                    ),
-                  ),
-                ),
-                child,
-              ],
-            ),
+            child: child,
           ),
         ),
       ),
     );
   }
 
-  Widget _backgroundGlow(BuildContext context) {
-    if (!_isGlass(context)) {
+  Widget _backgroundGlow() {
+    if (!_isGlass()) {
       return const SizedBox.shrink();
     }
 
@@ -169,7 +146,7 @@ class AppInfoPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: color.withOpacity(
-                    _isLightGlass(context) ? 0.14 : 0.11,
+                    _isLightGlass() ? 0.14 : 0.11,
                   ),
                 ),
               ),
@@ -189,7 +166,7 @@ class AppInfoPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: color.withOpacity(
-                    _isLightGlass(context) ? 0.07 : 0.065,
+                    _isLightGlass() ? 0.07 : 0.065,
                   ),
                 ),
               ),
@@ -207,61 +184,10 @@ class AppInfoPage extends StatelessWidget {
     final selected = selectedTheme == theme;
     final color = AppTheme.colorOf(theme);
 
-    if (!_isGlass(context)) {
-      final textColor =
-          ThemeData.estimateBrightnessForColor(color) ==
-                  Brightness.dark
-              ? Colors.white
-              : Colors.black;
-
-      return GestureDetector(
-        onTap: () {
-          onThemeChanged(theme);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          margin: const EdgeInsets.only(
-            right: 10,
-            bottom: 10,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 17,
-            vertical: 11,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? color : Colors.transparent,
-            border: Border.all(
-              color: color,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.30),
-                      blurRadius: 16,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            AppTheme.labelOf(theme),
-            style: TextStyle(
-              color: selected ? textColor : color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
-    }
-
     return GestureDetector(
-      onTap: () {
-        onThemeChanged(theme);
-      },
+      onTap: () => onThemeChanged(theme),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 220),
         margin: const EdgeInsets.only(
           right: 10,
           bottom: 10,
@@ -273,22 +199,18 @@ class AppInfoPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? color.withOpacity(
-                  _isLightGlass(context) ? 0.20 : 0.14,
+                  _isGlass() ? 0.18 : 0.22,
                 )
-              : Colors.white.withOpacity(
-                  _isLightGlass(context) ? 0.10 : 0.035,
-                ),
-          borderRadius: BorderRadius.circular(30),
+              : Colors.transparent,
           border: Border.all(
-            color: selected
-                ? color.withOpacity(0.65)
-                : _borderColor(context),
-            width: selected ? 1.3 : 1,
+            color: color,
+            width: selected ? 2 : 1.4,
           ),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.22),
+                    color: color.withOpacity(0.25),
                     blurRadius: 16,
                   ),
                 ]
@@ -303,12 +225,6 @@ class AppInfoPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.45),
-                    blurRadius: 7,
-                  ),
-                ],
               ),
             ),
             const SizedBox(width: 9),
@@ -320,8 +236,7 @@ class AppInfoPage extends StatelessWidget {
                     : Theme.of(context)
                         .colorScheme
                         .onSurface,
-                fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -346,9 +261,7 @@ class AppInfoPage extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {
-            onStyleChanged(style);
-          },
+          onTap: () => onStyleChanged(style),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 17,
@@ -362,23 +275,10 @@ class AppInfoPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: selected
-                        ? scheme.primary.withOpacity(
-                            _isGlass(context) ? 0.16 : 0.12,
-                          )
+                        ? scheme.primary.withOpacity(0.16)
                         : Colors.white.withOpacity(
-                            _isGlass(context)
-                                ? (_isLightGlass(context)
-                                    ? 0.14
-                                    : 0.045)
-                                : 0.06,
+                            _isGlass() ? 0.06 : 0.08,
                           ),
-                    border: _isGlass(context)
-                        ? Border.all(
-                            color: selected
-                                ? scheme.primary.withOpacity(0.42)
-                                : _borderColor(context),
-                          )
-                        : null,
                   ),
                   child: Icon(
                     icon,
@@ -399,19 +299,13 @@ class AppInfoPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: selected
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          key: const ValueKey('selected'),
-                          color: scheme.primary,
-                        )
-                      : Icon(
-                          Icons.chevron_right_rounded,
-                          key: const ValueKey('not-selected'),
-                          color: scheme.onSurfaceVariant,
-                        ),
+                Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.chevron_right_rounded,
+                  color: selected
+                      ? scheme.primary
+                      : scheme.onSurfaceVariant,
                 ),
               ],
             ),
@@ -447,13 +341,7 @@ class AppInfoPage extends StatelessWidget {
                   height: 46,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: scheme.primary.withOpacity(
-                      _isGlass(context)
-                          ? (_isLightGlass(context)
-                              ? 0.12
-                              : 0.08)
-                          : 0.10,
-                    ),
+                    color: scheme.primary.withOpacity(0.10),
                   ),
                   child: Icon(
                     icon,
@@ -497,7 +385,8 @@ class AppInfoPage extends StatelessWidget {
   }
 
   Widget _hero(BuildContext context) {
-    final themeColor = AppTheme.colorOf(selectedTheme);
+    final themeColor =
+        AppTheme.colorOf(selectedTheme);
 
     final heroAsset = Platform.isLinux
         ? 'assets/StellarVerseSchool.png'
@@ -512,12 +401,7 @@ class AppInfoPage extends StatelessWidget {
         constraints: const BoxConstraints(
           minHeight: 225,
         ),
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          18,
-          20,
-          18,
-        ),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           gradient: LinearGradient(
@@ -525,110 +409,35 @@ class AppInfoPage extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               themeColor.withOpacity(
-                _isLightGlass(context) ? 0.20 : 0.16,
+                _isLightGlass() ? 0.20 : 0.16,
               ),
               Colors.white.withOpacity(
-                _isLightGlass(context) ? 0.13 : 0.025,
+                _isLightGlass() ? 0.13 : 0.025,
               ),
               Colors.transparent,
             ],
           ),
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 8,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Center(
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: 28,
-                      sigmaY: 28,
-                    ),
-                    child: Container(
-                      width: 245,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(60),
-                        gradient: RadialGradient(
-                          colors: [
-                            themeColor.withOpacity(
-                              _isLightGlass(context)
-                                  ? 0.32
-                                  : 0.24,
-                            ),
-                            themeColor.withOpacity(0.08),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: 991 / 644,
+            child: Image.asset(
+              heroAsset,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (
+                context,
+                error,
+                stackTrace,
+              ) {
+                return Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 72,
+                  color: themeColor,
+                );
+              },
             ),
-
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  top: 4,
-                  bottom: 8,
-                ),
-                child: AspectRatio(
-                  aspectRatio: 991 / 644,
-                  child: Image.asset(
-                    heroAsset,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (
-                      context,
-                      error,
-                      stackTrace,
-                    ) {
-                      return Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 72,
-                        color: themeColor,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: themeColor.withOpacity(
-                      _isLightGlass(context) ? 0.14 : 0.10,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: themeColor.withOpacity(0.30),
-                    ),
-                  ),
-                  child: Text(
-                    'v${AppVersion.current}',
-                    style: TextStyle(
-                      color: themeColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -647,26 +456,35 @@ class AppInfoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return Scaffold(
-      extendBodyBehindAppBar: _isGlass(context),
-      appBar: AppBar(
-        title: const Text(
-          'Stellar Center',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor:
-            _isGlass(context) ? Colors.transparent : null,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-      ),
+      extendBodyBehindAppBar: _isGlass(),
+
+      // Android'deki üst "Stellar Center" yazısını
+      // özellikle kaldırıyoruz.
+      appBar: Platform.isAndroid
+          ? null
+          : AppBar(
+              title: const Text(
+                'Stellar Center',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              centerTitle: true,
+              backgroundColor: _isGlass()
+                  ? Colors.transparent
+                  : null,
+              surfaceTintColor:
+                  Colors.transparent,
+              elevation: 0,
+            ),
+
       body: Stack(
         children: [
-          _backgroundGlow(context),
+          _backgroundGlow(),
           ListView(
             padding: const EdgeInsets.fromLTRB(
               16,
@@ -731,6 +549,13 @@ class AppInfoPage extends StatelessWidget {
                 'Liquid Glass Dark',
               ),
 
+              _styleButton(
+                context,
+                AppThemeStyle.stellarAurora,
+                Icons.auto_awesome_rounded,
+                'Stellar Aurora',
+              ),
+
               const SizedBox(height: 8),
 
               Text(
@@ -775,7 +600,8 @@ class AppInfoPage extends StatelessWidget {
                 context,
                 icon: Icons.sensors_rounded,
                 title: 'SensorLab',
-                subtitle: 'Sensörleri incele',
+                subtitle:
+                    'Sensörleri incele',
                 onTap: () {
                   _openPage(
                     context,
@@ -841,14 +667,16 @@ class AppInfoPage extends StatelessWidget {
                       'Stellar Center',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: scheme.onSurfaceVariant,
+                        color:
+                            scheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Linux • v${AppVersion.current}',
                       style: TextStyle(
-                        color: scheme.onSurfaceVariant,
+                        color:
+                            scheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -862,4 +690,3 @@ class AppInfoPage extends StatelessWidget {
     );
   }
 }
-
