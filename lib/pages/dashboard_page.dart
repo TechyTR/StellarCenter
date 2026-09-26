@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../services/app_version.dart';
 import 'account_page.dart';
-import '../theme/app_theme.dart';
+import '../both/theme/app_theme.dart';
 
 class DashboardPage extends StatefulWidget {
   final AppThemeColor selectedTheme;
