@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
-import '../widgets/bottom_nav_bar.dart';
+import '../both/theme/app_theme.dart';
+import '../both/widgets/bottom_nav_bar.dart';
 import '../Linux/widgets/linux_navigation_bar.dart';
 import '../Linux/pages/music_page.dart';
 
