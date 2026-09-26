@@ -10,52 +10,72 @@ class StellarLrcLine {
 
 class StellarLrcParser {
   static final RegExp _timestampPattern =
-      RegExp(r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]');
+      RegExp(
+    r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]',
+  );
 
-  static List<StellarLrcLine> parse(String content) {
-    final result = <StellarLrcLine>[];
+  static List<StellarLrcLine> parse(
+    String content,
+  ) {
+    final result =
+        <StellarLrcLine>[];
 
-    for (final rawLine in content.split('\n')) {
+    for (final rawLine
+        in content.split(RegExp(r'\r?\n'))) {
       final line = rawLine.trim();
 
-      if (line.isEmpty) continue;
+      if (line.isEmpty) {
+        continue;
+      }
 
       final matches =
-          _timestampPattern.allMatches(line).toList();
+          _timestampPattern
+              .allMatches(line)
+              .toList();
 
-      if (matches.isEmpty) continue;
+      if (matches.isEmpty) {
+        continue;
+      }
 
       final text = line
-          .replaceAll(_timestampPattern, '')
+          .replaceAll(
+            _timestampPattern,
+            '',
+          )
           .trim();
 
-      if (text.isEmpty) continue;
+      if (text.isEmpty) {
+        continue;
+      }
 
       for (final match in matches) {
         final minutes =
-            int.tryParse(match.group(1) ?? '') ?? 0;
+            int.tryParse(
+                  match.group(1) ?? '',
+                ) ??
+                0;
 
         final seconds =
-            int.tryParse(match.group(2) ?? '') ?? 0;
+            int.tryParse(
+                  match.group(2) ?? '',
+                ) ??
+                0;
 
-        final fraction =
-            int.tryParse(match.group(3) ?? '0') ?? 0;
+        final fractionText =
+            match.group(3);
 
         final milliseconds =
-            match.group(3) == null
-                ? 0
-                : match.group(3)!.length == 1
-                    ? fraction * 100
-                    : match.group(3)!.length == 2
-                        ? fraction * 10
-                        : fraction;
+            _fractionToMilliseconds(
+          fractionText,
+        );
 
         result.add(
           StellarLrcLine(
             timestamp: Duration(
               minutes: minutes,
               seconds: seconds,
-              milliseconds: milliseconds,
+              milliseconds:
+                  milliseconds,
             ),
             text: text,
           ),
@@ -64,28 +84,62 @@ class StellarLrcParser {
     }
 
     result.sort(
-      (a, b) => a.timestamp.compareTo(b.timestamp),
+      (a, b) => a.timestamp
+          .compareTo(b.timestamp),
     );
 
-    return result;
+    return List.unmodifiable(
+      result,
+    );
   }
 
   static int activeIndex(
     List<StellarLrcLine> lines,
     Duration position,
   ) {
-    if (lines.isEmpty) return -1;
+    if (lines.isEmpty) {
+      return -1;
+    }
 
-    var index = -1;
+    var low = 0;
+    var high = lines.length - 1;
+    var result = -1;
 
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].timestamp <= position) {
-        index = i;
+    while (low <= high) {
+      final middle =
+          low + ((high - low) ~/ 2);
+
+      if (lines[middle].timestamp <=
+          position) {
+        result = middle;
+        low = middle + 1;
       } else {
-        break;
+        high = middle - 1;
       }
     }
 
-    return index;
+    return result;
+  }
+
+  static int _fractionToMilliseconds(
+    String? value,
+  ) {
+    if (value == null ||
+        value.isEmpty) {
+      return 0;
+    }
+
+    final normalized =
+        value.padRight(3, '0');
+
+    final limited =
+        normalized.substring(
+      0,
+      normalized.length > 3
+          ? 3
+          : normalized.length,
+    );
+
+    return int.tryParse(limited) ?? 0;
   }
 }
