@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../services/app_version.dart';
-import '../services/update_service.dart';
-export '../both/widgets/update_button.dart';
+
+import '../../services/app_version.dart';
+import '../../services/update_service.dart';
 
 class UpdateButton extends StatefulWidget {
   final String currentVersion;
@@ -13,12 +13,10 @@ class UpdateButton extends StatefulWidget {
   });
 
   @override
-  State<UpdateButton> createState() =>
-      _UpdateButtonState();
+  State<UpdateButton> createState() => _UpdateButtonState();
 }
 
-class _UpdateButtonState
-    extends State<UpdateButton> {
+class _UpdateButtonState extends State<UpdateButton> {
   bool _checking = false;
   bool _installing = false;
 
@@ -31,8 +29,7 @@ class _UpdateButtonState
       _checking = true;
     });
 
-    final update =
-        await UpdateService.checkForUpdate();
+    final update = await UpdateService.checkForUpdate();
 
     if (!mounted) {
       return;
@@ -43,8 +40,7 @@ class _UpdateButtonState
     });
 
     if (update == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Güncelleme kontrolü başarısız.',
@@ -55,15 +51,11 @@ class _UpdateButtonState
       return;
     }
 
-    final newer =
-        UpdateService.isNewerVersion(
+    if (!UpdateService.isNewerVersion(
       AppVersion.current,
       update.latestVersion,
-    );
-
-    if (!newer) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Stellar Center v${AppVersion.current} güncel.',
@@ -82,42 +74,30 @@ class _UpdateButtonState
   ) async {
     await showDialog<void>(
       context: context,
-      barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text(
             'Yeni Stellar sürümü',
           ),
           content: Text(
-            'Yeni sürüm: '
-            'v${update.latestVersion}\n\n'
-            'Mevcut sürüm: '
-            'v${AppVersion.current}\n\n'
-            'Yeni APK indirilecek ve '
-            'Android kurulum ekranı açılacak.',
+            'Yeni sürüm: v${update.latestVersion}\n\n'
+            'Mevcut sürüm: v${AppVersion.current}\n\n'
+            'Yeni APK indirilecek ve Android '
+            'kurulum ekranı açılacak.',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                Navigator.pop(dialogContext);
               },
-              child: const Text(
-                'İptal',
-              ),
+              child: const Text('İptal'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop();
-
+                Navigator.pop(dialogContext);
                 _installUpdate(update);
               },
-              child: const Text(
-                'Güncelle',
-              ),
+              child: const Text('Güncelle'),
             ),
           ],
         );
@@ -145,8 +125,7 @@ class _UpdateButtonState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             error.message ??
@@ -159,8 +138,7 @@ class _UpdateButtonState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Güncelleme başlatılamadı: $error',
@@ -177,14 +155,8 @@ class _UpdateButtonState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final scheme =
-        Theme.of(context).colorScheme;
-
-    final busy =
-        _checking || _installing;
+  Widget build(BuildContext context) {
+    final busy = _checking || _installing;
 
     return Card(
       margin: const EdgeInsets.only(
@@ -193,7 +165,9 @@ class _UpdateButtonState
       child: ListTile(
         leading: Icon(
           Icons.system_update_outlined,
-          color: scheme.primary,
+          color: Theme.of(context)
+              .colorScheme
+              .primary,
         ),
         title: const Text(
           'Güncellemeleri kontrol et',
@@ -209,18 +183,16 @@ class _UpdateButtonState
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child:
-                    CircularProgressIndicator(
+                child: CircularProgressIndicator(
                   strokeWidth: 2,
                 ),
               )
             : const Icon(
                 Icons.chevron_right,
               ),
-        onTap:
-            busy
-                ? null
-                : _checkForUpdate,
+        onTap: busy
+            ? null
+            : _checkForUpdate,
       ),
     );
   }
