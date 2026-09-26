@@ -10,23 +10,28 @@ class StellarMusicScanner {
   StellarMusicScanner._();
 
   static Future<List<StellarMusicTrack>> scan() async {
-    final home = Platform.environment['HOME'];
+    final home =
+        Platform.environment['HOME'];
 
-    if (home == null || home.trim().isEmpty) {
-      return const <StellarMusicTrack>[];
+    if (home == null ||
+        home.trim().isEmpty) {
+      return const [];
     }
 
-    final musicDirectory =
-        Directory('$home/StellarCenter/Music');
+    final musicDirectory = Directory(
+      '$home/StellarCenter/Music',
+    );
 
     if (!await musicDirectory.exists()) {
-      return const <StellarMusicTrack>[];
+      return const [];
     }
 
-    final tracks = <StellarMusicTrack>[];
+    final tracks =
+        <StellarMusicTrack>[];
 
     try {
-      await for (final entity in musicDirectory.list(
+      await for (final entity
+          in musicDirectory.list(
         recursive: true,
         followLinks: false,
       )) {
@@ -34,27 +39,30 @@ class StellarMusicScanner {
           continue;
         }
 
-        final path = entity.path;
-
-        if (!_isSupportedAudio(path)) {
+        if (!_isSupportedAudio(
+          entity.path,
+        )) {
           continue;
         }
 
         try {
-          final track = await _readTrack(entity);
+          final track =
+              await _readTrack(entity);
 
           if (track != null) {
             tracks.add(track);
           }
         } catch (_) {
-          // Hatalı tek dosya bütün taramayı bozmasın.
+          // Tek dosya hatası tüm taramayı bozmaz.
         }
       }
     } catch (_) {
       return tracks;
     }
 
-    tracks.sort(_compareTracks);
+    tracks.sort(
+      _compareTracks,
+    );
 
     return tracks;
   }
@@ -67,23 +75,37 @@ class StellarMusicScanner {
 
     final directory = file.parent;
 
-    final fileName = _withoutExtension(
+    final fileName =
+        _withoutExtension(
       file.uri.pathSegments.isNotEmpty
           ? file.uri.pathSegments.last
           : file.path,
     );
 
-    final directoryName =
-        directory.path
-            .split(Platform.pathSeparator)
-            .where((value) => value.isNotEmpty)
-            .lastOrNull;
+    final directoryParts = directory.path
+        .split(Platform.pathSeparator)
+        .where(
+          (value) => value.isNotEmpty,
+        )
+        .toList();
 
-    final parentDirectoryName =
+    final parentParts =
         directory.parent.path
             .split(Platform.pathSeparator)
-            .where((value) => value.isNotEmpty)
-            .lastOrNull;
+            .where(
+              (value) => value.isNotEmpty,
+            )
+            .toList();
+
+    final directoryName =
+        directoryParts.isEmpty
+            ? null
+            : directoryParts.last;
+
+    final parentDirectoryName =
+        parentParts.isEmpty
+            ? null
+            : parentParts.last;
 
     final artist =
         _clean(metadata.artist) ??
@@ -100,18 +122,23 @@ class StellarMusicScanner {
         _clean(fileName) ??
         'Bilinmeyen Şarkı';
 
-    Uint8List? artwork = metadata.artwork;
+    Uint8List? artwork =
+        metadata.artwork;
 
-    if (artwork == null || artwork.isEmpty) {
+    if (artwork == null ||
+        artwork.isEmpty) {
       artwork =
-          await StellarLocalArtwork.find(file.path);
+          await StellarLocalArtwork.find(
+        file.path,
+      );
     }
 
     final lyricsPath =
         await _findLyrics(file);
 
     final verifiedArtist =
-        StellarArtistVerification.instance
+        StellarArtistVerification
+            .instance
             .isVerified(artist);
 
     return StellarMusicTrack(
@@ -142,9 +169,9 @@ class StellarMusicScanner {
     ];
 
     for (final candidate in candidates) {
-      final file = File(candidate);
-
       try {
+        final file = File(candidate);
+
         if (await file.exists()) {
           return file.path;
         }
@@ -158,28 +185,40 @@ class StellarMusicScanner {
     StellarMusicTrack a,
     StellarMusicTrack b,
   ) {
-    final artistCompare =
-        _compareText(a.artist, b.artist);
+    final artist =
+        _compareText(
+      a.artist,
+      b.artist,
+    );
 
-    if (artistCompare != 0) {
-      return artistCompare;
+    if (artist != 0) {
+      return artist;
     }
 
-    final albumCompare =
-        _compareText(a.album, b.album);
+    final album =
+        _compareText(
+      a.album,
+      b.album,
+    );
 
-    if (albumCompare != 0) {
-      return albumCompare;
+    if (album != 0) {
+      return album;
     }
 
-    final titleCompare =
-        _compareText(a.title, b.title);
+    final title =
+        _compareText(
+      a.title,
+      b.title,
+    );
 
-    if (titleCompare != 0) {
-      return titleCompare;
+    if (title != 0) {
+      return title;
     }
 
-    return _compareText(a.path, b.path);
+    return _compareText(
+      a.path,
+      b.path,
+    );
   }
 
   static int _compareText(
@@ -197,13 +236,14 @@ class StellarMusicScanner {
   static bool _isSupportedAudio(
     String path,
   ) {
-    final lower = path.toLowerCase();
+    final value =
+        path.toLowerCase();
 
-    return lower.endsWith('.mp3') ||
-        lower.endsWith('.flac') ||
-        lower.endsWith('.wav') ||
-        lower.endsWith('.ogg') ||
-        lower.endsWith('.m4a');
+    return value.endsWith('.mp3') ||
+        value.endsWith('.flac') ||
+        value.endsWith('.wav') ||
+        value.endsWith('.ogg') ||
+        value.endsWith('.m4a');
   }
 
   static String? _clean(
@@ -213,34 +253,27 @@ class StellarMusicScanner {
       return null;
     }
 
-    final result = value.trim();
+    final result =
+        value.trim();
 
-    if (result.isEmpty) {
-      return null;
-    }
-
-    return result;
+    return result.isEmpty
+        ? null
+        : result;
   }
 
   static String _withoutExtension(
     String fileName,
   ) {
-    final dot = fileName.lastIndexOf('.');
+    final dot =
+        fileName.lastIndexOf('.');
 
     if (dot <= 0) {
       return fileName;
     }
 
-    return fileName.substring(0, dot);
-  }
-}
-
-extension on Iterable<String> {
-  String? get lastOrNull {
-    if (isEmpty) {
-      return null;
-    }
-
-    return last;
+    return fileName.substring(
+      0,
+      dot,
+    );
   }
 }
