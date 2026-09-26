@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/app_version.dart';
-import '../theme/app_theme.dart';
+import '../both/theme/app_theme.dart';
 
 class SystemInfoPage extends StatefulWidget {
   final AppThemeColor selectedTheme;
