@@ -98,9 +98,6 @@ jobs:
     name: Linux x64
     runs-on: ubuntu-latest
 
-    # Debian 12 uses GLib 2.74.x.
-    # This prevents binaries from requiring
-    # g_once_init_enter_pointer (introduced in GLib 2.80).
     container:
       image: debian:12
 
@@ -172,13 +169,16 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build Linux
+        env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
         run: |
           flutter clean
           flutter pub get
 
           flutter build linux \
             --release \
-            -t lib/main/main_linux.dart
+            -t lib/main/main_linux.dart \
+            --dart-define=FIREBASE_WEB_API_KEY="$FIREBASE_WEB_API_KEY"
 
       - name: Check Linux binary dependencies
         run: |
@@ -304,4 +304,3 @@ jobs:
             --title "Stellar Center ${TAG#v}" \
             --generate-notes \
             --latest
-
