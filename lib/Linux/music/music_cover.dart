@@ -19,10 +19,16 @@ class StellarMusicCover
   Widget build(BuildContext context) {
     final image = artwork;
 
-    if (image == null ||
-        image.isEmpty) {
+    if (image == null || image.isEmpty) {
       return _fallback();
     }
+
+    final cacheSize =
+        (size * MediaQuery.devicePixelRatioOf(
+          context,
+        ))
+            .round()
+            .clamp(64, 900);
 
     return SizedBox(
       width: size,
@@ -33,8 +39,8 @@ class StellarMusicCover
               BorderRadius.circular(radius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black
-                  .withOpacity(0.35),
+              color:
+                  Colors.black.withOpacity(.35),
               blurRadius: 28,
               offset:
                   const Offset(0, 14),
@@ -46,10 +52,16 @@ class StellarMusicCover
               BorderRadius.circular(radius),
           child: Image.memory(
             image,
+            width: size,
+            height: size,
+            cacheWidth: cacheSize,
+            cacheHeight: cacheSize,
             fit: BoxFit.cover,
             gaplessPlayback: true,
             filterQuality:
-                FilterQuality.high,
+                size >= 250
+                    ? FilterQuality.medium
+                    : FilterQuality.low,
             errorBuilder: (
               context,
               error,
@@ -83,7 +95,7 @@ class StellarMusicCover
       ),
       child: Icon(
         Icons.music_note_rounded,
-        size: size * 0.25,
+        size: size * .25,
         color: Colors.white,
       ),
     );
