@@ -5,12 +5,17 @@ enum AppThemeColor {
   blue,
   green,
   orange,
+  red,
+  pink,
+  yellow,
+  brown,
 }
 
 enum AppThemeStyle {
   normal,
   liquidGlassLight,
   liquidGlassDark,
+  stellarAurora,
 }
 
 extension AppThemeColorExtension on AppThemeColor {
@@ -24,6 +29,14 @@ extension AppThemeColorExtension on AppThemeColor {
         return const Color(0xFF6FAE7A);
       case AppThemeColor.orange:
         return const Color(0xFFE0A972);
+      case AppThemeColor.red:
+        return const Color(0xFFE05252);
+      case AppThemeColor.pink:
+        return const Color(0xFFE56BA8);
+      case AppThemeColor.yellow:
+        return const Color(0xFFE0B84F);
+      case AppThemeColor.brown:
+        return const Color(0xFF9A6B4A);
     }
   }
 
@@ -37,6 +50,14 @@ extension AppThemeColorExtension on AppThemeColor {
         return 'Yeşil';
       case AppThemeColor.orange:
         return 'Turuncu';
+      case AppThemeColor.red:
+        return 'Kırmızı';
+      case AppThemeColor.pink:
+        return 'Pembe';
+      case AppThemeColor.yellow:
+        return 'Sarı';
+      case AppThemeColor.brown:
+        return 'Kahverengi';
     }
   }
 }
@@ -55,12 +76,13 @@ class AppTheme {
 
       case AppThemeStyle.liquidGlassDark:
         return _liquidGlassDark(color);
+
+      case AppThemeStyle.stellarAurora:
+        return _stellarAurora(color);
     }
   }
 
-  static ThemeData _normal(
-    AppThemeColor color,
-  ) {
+  static ThemeData _normal(AppThemeColor color) {
     final scheme = ColorScheme.fromSeed(
       seedColor: color.seed,
       brightness: Brightness.dark,
@@ -95,17 +117,12 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme,
-
-      // Düz beyaz yerine hafif renkli ve katmanlı
-      // bir arka plan kullanıyoruz.
       scaffoldBackgroundColor: const Color(0xFFF4F3F8),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-
       cardTheme: CardTheme(
         color: Colors.white.withOpacity(0.38),
         surfaceTintColor: Colors.white.withOpacity(0.08),
@@ -118,12 +135,10 @@ class AppTheme {
           ),
         ),
       ),
-
       dividerTheme: DividerThemeData(
         color: Colors.white.withOpacity(0.32),
         thickness: 0.7,
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withOpacity(0.30),
@@ -162,36 +177,28 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-
-      // Saf siyah yerine hafif katmanlı koyu zemin.
       scaffoldBackgroundColor: const Color(0xFF08090D),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-
       cardTheme: CardTheme(
-        // Çok saydam cam.
         color: Colors.white.withOpacity(0.065),
         surfaceTintColor: Colors.white.withOpacity(0.025),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            // Kenar merkezden belirgin.
             color: Colors.white.withOpacity(0.17),
             width: 1,
           ),
         ),
       ),
-
       dividerTheme: DividerThemeData(
         color: Colors.white.withOpacity(0.12),
         thickness: 0.7,
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withOpacity(0.055),
@@ -218,61 +225,105 @@ class AppTheme {
     );
   }
 
-  static AppThemeColor colorFromString(
-    String value,
+  static ThemeData _stellarAurora(
+    AppThemeColor color,
   ) {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: color.seed,
+      brightness: Brightness.dark,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: const Color(0xFF050711),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      cardTheme: CardTheme(
+        color: Colors.white.withOpacity(0.055),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(26),
+          side: BorderSide(
+            color: color.seed.withOpacity(0.20),
+            width: 1,
+          ),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: color.seed.withOpacity(0.14),
+        thickness: 0.7,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.045),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: color.seed.withOpacity(0.18),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: color.seed.withOpacity(0.14),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: color.seed.withOpacity(0.70),
+            width: 1.4,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static AppThemeColor colorFromString(String value) {
     return AppThemeColor.values.firstWhere(
       (item) => item.name == value,
       orElse: () => AppThemeColor.purple,
     );
   }
 
-  static String colorToString(
-    AppThemeColor color,
-  ) {
+  static String colorToString(AppThemeColor color) {
     return color.name;
   }
 
-  static AppThemeStyle styleFromString(
-    String value,
-  ) {
+  static AppThemeStyle styleFromString(String value) {
     return AppThemeStyle.values.firstWhere(
       (item) => item.name == value,
       orElse: () => AppThemeStyle.normal,
     );
   }
 
-  static String styleToString(
-    AppThemeStyle style,
-  ) {
+  static String styleToString(AppThemeStyle style) {
     return style.name;
   }
 
-  static Color colorOf(
-    AppThemeColor color,
-  ) {
+  static Color colorOf(AppThemeColor color) {
     return color.seed;
   }
 
-  static String labelOf(
-    AppThemeColor color,
-  ) {
+  static String labelOf(AppThemeColor color) {
     return color.label;
   }
 
-  static String styleLabelOf(
-    AppThemeStyle style,
-  ) {
+  static String styleLabelOf(AppThemeStyle style) {
     switch (style) {
       case AppThemeStyle.normal:
         return 'Material Design';
-
       case AppThemeStyle.liquidGlassLight:
         return 'Liquid Glass Light';
-
       case AppThemeStyle.liquidGlassDark:
         return 'Liquid Glass Dark';
+      case AppThemeStyle.stellarAurora:
+        return 'Stellar Aurora';
     }
   }
 }
-
