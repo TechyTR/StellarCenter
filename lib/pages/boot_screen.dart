@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../services/app_version.dart';
 import '../services/update_service.dart';
-import '../theme/app_theme.dart';
-import '../widgets/update_button.dart';
+import '../both/theme/app_theme.dart';
+import '../both/widgets/update_button.dart';
 
 class BootScreen extends StatefulWidget {
   final AppThemeColor selectedTheme;
