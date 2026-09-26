@@ -4,7 +4,8 @@ import 'lrc_parser.dart';
 import 'lyrics_loader.dart';
 import 'music_track.dart';
 
-class StellarLyricsOverlay extends StatefulWidget {
+class StellarLyricsOverlay
+    extends StatefulWidget {
   final StellarMusicTrack track;
   final Duration position;
 
@@ -46,8 +47,11 @@ class _StellarLyricsOverlayState
   Future<void> _load() async {
     final path = widget.track.lyricsPath;
 
-    if (path == null || path.trim().isEmpty) {
-      if (!mounted) return;
+    if (path == null ||
+        path.trim().isEmpty) {
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _lines = const [];
@@ -60,7 +64,9 @@ class _StellarLyricsOverlayState
     final lines =
         await StellarLyricsLoader.load(path);
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _lines = lines;
@@ -141,7 +147,8 @@ class _StellarLyricsOverlayState
   }
 }
 
-class _LyricLine extends StatelessWidget {
+class _LyricLine
+    extends StatelessWidget {
   final String text;
   final bool active;
 
@@ -179,7 +186,8 @@ class _LyricLine extends StatelessWidget {
           shadows: active
               ? [
                   Shadow(
-                    color: Colors.black.withOpacity(
+                    color:
+                        Colors.black.withOpacity(
                       0.35,
                     ),
                     blurRadius: 8,
@@ -191,7 +199,8 @@ class _LyricLine extends StatelessWidget {
           text,
           textAlign: TextAlign.center,
           maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+          overflow:
+              TextOverflow.ellipsis,
         ),
       ),
     );
