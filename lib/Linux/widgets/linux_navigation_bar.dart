@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
+import '../../both/theme/app_theme.dart';
 
 class LinuxNavigationBar extends StatelessWidget {
   final int currentIndex;
