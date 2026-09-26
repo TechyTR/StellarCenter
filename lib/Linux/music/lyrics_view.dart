@@ -23,6 +23,9 @@ class _StellarLyricsViewState
   final ScrollController _controller =
       ScrollController();
 
+  final Map<int, GlobalKey> _keys =
+      <int, GlobalKey>{};
+
   int _lastIndex = -1;
 
   @override
@@ -31,7 +34,19 @@ class _StellarLyricsViewState
   ) {
     super.didUpdateWidget(oldWidget);
 
+    if (oldWidget.lines != widget.lines) {
+      _keys.clear();
+      _lastIndex = -1;
+    }
+
     _updateScroll();
+  }
+
+  GlobalKey _keyFor(int index) {
+    return _keys.putIfAbsent(
+      index,
+      () => GlobalKey(),
+    );
   }
 
   void _updateScroll() {
@@ -59,28 +74,21 @@ class _StellarLyricsViewState
         return;
       }
 
-      const itemHeight = 58.0;
+      final key = _keys[index];
 
-      final viewportHeight =
-          _controller
-              .position
-              .viewportDimension;
+      if (key == null) {
+        return;
+      }
 
-      final target =
-          index * itemHeight -
-          viewportHeight / 2 +
-          itemHeight / 2;
+      final context = key.currentContext;
 
-      final safeTarget =
-          target.clamp(
-        0.0,
-        _controller
-            .position
-            .maxScrollExtent,
-      );
+      if (context == null) {
+        return;
+      }
 
-      _controller.animateTo(
-        safeTarget.toDouble(),
+      Scrollable.ensureVisible(
+        context,
+        alignment: .5,
         duration: const Duration(
           milliseconds: 420,
         ),
@@ -122,7 +130,7 @@ class _StellarLyricsViewState
       padding:
           const EdgeInsets.symmetric(
         horizontal: 24,
-        vertical: 100,
+        vertical: 120,
       ),
       itemCount: widget.lines.length,
       itemBuilder: (
@@ -132,41 +140,40 @@ class _StellarLyricsViewState
         final active =
             index == activeIndex;
 
-        return AnimatedContainer(
-          duration: const Duration(
-            milliseconds: 280,
-          ),
-          curve: Curves.easeOutCubic,
-          padding:
-              const EdgeInsets.symmetric(
-            vertical: 9,
-          ),
-          child:
-              AnimatedDefaultTextStyle(
+        return KeyedSubtree(
+          key: _keyFor(index),
+          child: AnimatedContainer(
             duration: const Duration(
               milliseconds: 280,
             ),
             curve: Curves.easeOutCubic,
-            style: TextStyle(
-              color: active
-                  ? Colors.white
-                  : Colors.white
-                      .withOpacity(0.34),
-              fontSize:
-                  active ? 24 : 17,
-              fontWeight: active
-                  ? FontWeight.w800
-                  : FontWeight.w500,
-              height: 1.4,
+            padding:
+                const EdgeInsets.symmetric(
+              vertical: 9,
             ),
-            child: Text(
-              widget.lines[index]
-                      .text
-                      .isEmpty
-                  ? '♪'
-                  : widget.lines[index].text,
-              textAlign:
-                  TextAlign.center,
+            child:
+                AnimatedDefaultTextStyle(
+              duration: const Duration(
+                milliseconds: 280,
+              ),
+              curve: Curves.easeOutCubic,
+              style: TextStyle(
+                color: active
+                    ? Colors.white
+                    : Colors.white
+                        .withOpacity(.30),
+                fontSize:
+                    active ? 25 : 16,
+                fontWeight: active
+                    ? FontWeight.w800
+                    : FontWeight.w500,
+                height: 1.35,
+              ),
+              child: Text(
+                widget.lines[index].text,
+                textAlign:
+                    TextAlign.center,
+              ),
             ),
           ),
         );
