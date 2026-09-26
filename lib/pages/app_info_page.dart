@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../services/app_version.dart';
-import '../theme/app_theme.dart';
-import '../widgets/update_button.dart';
+import '../both/theme/app_theme.dart';
+import '../both/widgets/update_button.dart';
 import 'battery_lab_page.dart';
 import 'benchmark_page.dart';
 import 'network_lab_page.dart';
