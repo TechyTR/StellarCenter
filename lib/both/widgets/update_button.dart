@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_version.dart';
 import '../services/update_service.dart';
+export '../both/widgets/update_button.dart';
 
 class UpdateButton extends StatefulWidget {
   final String currentVersion;
