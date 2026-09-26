@@ -804,7 +804,7 @@ class AppInfoPage extends StatelessWidget {
 
       body: Stack(
         children: [
-          _auroraAtmosphere(),
+          _auroraAtmosphere(context),
 
           ListView(
             padding:
