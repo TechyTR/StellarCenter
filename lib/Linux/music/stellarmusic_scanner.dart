@@ -16,9 +16,8 @@ class StellarMusicScanner {
       return const <StellarMusicTrack>[];
     }
 
-    final musicDirectory = Directory(
-      '$home/StellarCenter/Music',
-    );
+    final musicDirectory =
+        Directory('$home/StellarCenter/Music');
 
     if (!await musicDirectory.exists()) {
       return const <StellarMusicTrack>[];
@@ -27,15 +26,17 @@ class StellarMusicScanner {
     final tracks = <StellarMusicTrack>[];
 
     try {
-      await for (final entity
-          in musicDirectory.list(recursive: true, followLinks: false)) {
+      await for (final entity in musicDirectory.list(
+        recursive: true,
+        followLinks: false,
+      )) {
         if (entity is! File) {
           continue;
         }
 
         final path = entity.path;
 
-        if (!_isMp3(path)) {
+        if (!_isSupportedAudio(path)) {
           continue;
         }
 
@@ -46,7 +47,7 @@ class StellarMusicScanner {
             tracks.add(track);
           }
         } catch (_) {
-          // Tek bir dosyadaki hata tüm taramayı durdurmasın.
+          // Hatalı tek dosya bütün taramayı bozmasın.
         }
       }
     } catch (_) {
@@ -61,7 +62,8 @@ class StellarMusicScanner {
   static Future<StellarMusicTrack?> _readTrack(
     File file,
   ) async {
-    final metadata = StellarMusicMetadataReader.read(file);
+    final metadata =
+        StellarMusicMetadataReader.read(file);
 
     final directory = file.parent;
 
@@ -71,44 +73,46 @@ class StellarMusicScanner {
           : file.path,
     );
 
-    final artist = _clean(
-          metadata.artist,
-        ) ??
-        _clean(
-          directory.parent.path.split(Platform.pathSeparator).last,
-        ) ??
+    final directoryName =
+        directory.path
+            .split(Platform.pathSeparator)
+            .where((value) => value.isNotEmpty)
+            .lastOrNull;
+
+    final parentDirectoryName =
+        directory.parent.path
+            .split(Platform.pathSeparator)
+            .where((value) => value.isNotEmpty)
+            .lastOrNull;
+
+    final artist =
+        _clean(metadata.artist) ??
+        _clean(parentDirectoryName) ??
         'Bilinmeyen Sanatçı';
 
-    final album = _clean(
-          metadata.album,
-        ) ??
-        _clean(
-          directory.path.split(Platform.pathSeparator).last,
-        ) ??
+    final album =
+        _clean(metadata.album) ??
+        _clean(directoryName) ??
         'Bilinmeyen Albüm';
 
-    final title = _clean(
-          metadata.title,
-        ) ??
+    final title =
+        _clean(metadata.title) ??
         _clean(fileName) ??
         'Bilinmeyen Şarkı';
 
     Uint8List? artwork = metadata.artwork;
 
     if (artwork == null || artwork.isEmpty) {
-      artwork = await StellarLocalArtwork.find(
-        file.path,
-      );
+      artwork =
+          await StellarLocalArtwork.find(file.path);
     }
 
-    final lyricsPath = await _findLyrics(
-      file,
-    );
+    final lyricsPath =
+        await _findLyrics(file);
 
     final verifiedArtist =
-        StellarArtistVerification.instance.isVerified(
-      artist,
-    );
+        StellarArtistVerification.instance
+            .isVerified(artist);
 
     return StellarMusicTrack(
       path: file.path,
@@ -144,9 +148,7 @@ class StellarMusicScanner {
         if (await file.exists()) {
           return file.path;
         }
-      } catch (_) {
-        // Bir LRC dosyasına erişilemezse diğer adayı dene.
-      }
+      } catch (_) {}
     }
 
     return null;
@@ -156,37 +158,28 @@ class StellarMusicScanner {
     StellarMusicTrack a,
     StellarMusicTrack b,
   ) {
-    final artistCompare = _compareText(
-      a.artist,
-      b.artist,
-    );
+    final artistCompare =
+        _compareText(a.artist, b.artist);
 
     if (artistCompare != 0) {
       return artistCompare;
     }
 
-    final albumCompare = _compareText(
-      a.album,
-      b.album,
-    );
+    final albumCompare =
+        _compareText(a.album, b.album);
 
     if (albumCompare != 0) {
       return albumCompare;
     }
 
-    final titleCompare = _compareText(
-      a.title,
-      b.title,
-    );
+    final titleCompare =
+        _compareText(a.title, b.title);
 
     if (titleCompare != 0) {
       return titleCompare;
     }
 
-    return _compareText(
-      a.path,
-      b.path,
-    );
+    return _compareText(a.path, b.path);
   }
 
   static int _compareText(
@@ -201,10 +194,16 @@ class StellarMusicScanner {
         );
   }
 
-  static bool _isMp3(
+  static bool _isSupportedAudio(
     String path,
   ) {
-    return path.toLowerCase().endsWith('.mp3');
+    final lower = path.toLowerCase();
+
+    return lower.endsWith('.mp3') ||
+        lower.endsWith('.flac') ||
+        lower.endsWith('.wav') ||
+        lower.endsWith('.ogg') ||
+        lower.endsWith('.m4a');
   }
 
   static String? _clean(
@@ -232,9 +231,16 @@ class StellarMusicScanner {
       return fileName;
     }
 
-    return fileName.substring(
-      0,
-      dot,
-    );
+    return fileName.substring(0, dot);
+  }
+}
+
+extension on Iterable<String> {
+  String? get lastOrNull {
+    if (isEmpty) {
+      return null;
+    }
+
+    return last;
   }
 }
