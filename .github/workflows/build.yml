@@ -77,7 +77,7 @@ jobs:
 
           flutter build apk \
             --release \
-            -t lib/main_android.dart
+            -t lib/main/main_android.dart
 
           cp \
             build/app/outputs/flutter-apk/app-release.apk \
@@ -178,7 +178,7 @@ jobs:
 
           flutter build linux \
             --release \
-            -t lib/main_linux.dart
+            -t lib/main/main_linux.dart
 
       - name: Check Linux binary dependencies
         run: |
