@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-export '../both/theme/app_theme.dart' :
 enum AppThemeColor {
   purple,
   blue,
