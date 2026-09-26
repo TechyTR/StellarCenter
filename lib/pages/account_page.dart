@@ -1,54 +1,106 @@
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
-import 'register_page.dart';
 
 import '../services/auth_service.dart';
 import 'login_page.dart';
+import 'register_page.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
 
   @override
-  State<AccountPage> createState() => _AccountPageState();
+  State<AccountPage> createState() =>
+      _AccountPageState();
 }
 
 class _AccountPageState extends State<AccountPage> {
-  User? get _user => AuthService.currentUser;
+  AuthService get _auth => AuthService.instance;
 
   Future<void> _logout() async {
-    await AuthService.logout();
+    try {
+      await _auth.logout();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {});
+      setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Çıkış yapıldı.'),
+        ),
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    }
   }
 
   Future<void> _verifyEmail() async {
-    await AuthService.sendEmailVerification();
+    try {
+      await _auth.sendEmailVerification();
 
+      if (!mounted) return;
+
+      _showMessage(
+        'Doğrulama e-postası gönderildi.',
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (_) {
+      _showMessage(
+        'Doğrulama e-postası gönderilemedi.',
+      );
+    }
+  }
+
+  void _showMessage(String message) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Doğrulama e-postası gönderildi.',
-        ),
+      SnackBar(
+        content: Text(message),
       ),
     );
   }
 
+  Future<void> _openLogin() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(),
+      ),
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _openRegister() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const RegisterPage(),
+      ),
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = _user;
+    final loggedIn = _auth.isLoggedIn;
+    final email = _auth.currentEmail;
+    final verified = _auth.isEmailVerified;
+
     final scheme = Theme.of(context).colorScheme;
 
-    if (user == null) {
+    if (!loggedIn) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Hesap'),
         ),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -65,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 18),
                   const Text(
                     'Stellar Center Hesabı',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 25,
                       fontWeight: FontWeight.w800,
@@ -72,26 +125,15 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Hesap oluşturarak Stellar Center '
-                    'hizmetlerine bağlanabilirsin.',
+                    'Hesabına giriş yap veya yeni '
+                    'bir hesap oluştur.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 26),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const LoginPage(),
-                          ),
-                        );
-
-                        if (mounted) {
-                          setState(() {});
-                        }
-                      },
+                      onPressed: _openLogin,
                       child: const Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: 13,
@@ -104,18 +146,7 @@ class _AccountPageState extends State<AccountPage> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const RegisterPage(),
-                          ),
-                        );
-
-                        if (mounted) {
-                          setState(() {});
-                        }
-                      },
+                      onPressed: _openRegister,
                       child: const Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: 12,
@@ -164,7 +195,7 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                   const SizedBox(height: 7),
                   Text(
-                    user.email ?? 'E-posta yok',
+                    email ?? 'E-posta yok',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -175,25 +206,25 @@ class _AccountPageState extends State<AccountPage> {
           Card(
             child: ListTile(
               leading: Icon(
-                user.emailVerified
+                verified
                     ? Icons.verified_rounded
                     : Icons.warning_amber_rounded,
-                color: user.emailVerified
+                color: verified
                     ? Colors.green
                     : Colors.orange,
               ),
               title: Text(
-                user.emailVerified
+                verified
                     ? 'E-posta doğrulandı'
                     : 'E-posta doğrulanmadı',
               ),
-              subtitle: user.emailVerified
+              subtitle: verified
                   ? null
                   : const Text(
                       'Hesabını doğrulamak için '
                       'e-postanı kontrol et.',
                     ),
-              trailing: user.emailVerified
+              trailing: verified
                   ? null
                   : TextButton(
                       onPressed: _verifyEmail,
