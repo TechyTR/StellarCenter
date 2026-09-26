@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../pages/boot_screen.dart';
 import '../services/preferences_service.dart';
-import '../theme/app_theme.dart';
+import '../both/theme/app_theme.dart';
 
 typedef HomeShellBuilder = Widget Function({
   required AppThemeColor selectedTheme,
