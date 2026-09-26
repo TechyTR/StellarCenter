@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../music/music_track.dart';
 import '../music/edge_player.dart';
-import '../music/stellarmusic_scanner.dart';
-import '../music/music_service.dart';
 import '../music/music_cover.dart';
+import '../music/music_service.dart';
+import '../music/music_track.dart';
+import '../music/stellarmusic_scanner.dart';
 
-class LinuxMusicPage extends StatefulWidget {
+class LinuxMusicPage
+    extends StatefulWidget {
   const LinuxMusicPage({
     super.key,
   });
@@ -21,7 +22,9 @@ class _LinuxMusicPageState
   final StellarMusicService service =
       StellarMusicService.instance;
 
-  List<StellarMusicTrack> _tracks = const [];
+  List<StellarMusicTrack> _tracks =
+      const [];
+
   bool _loading = true;
 
   @override
@@ -45,9 +48,7 @@ class _LinuxMusicPageState
     final tracks =
         await StellarMusicScanner.scan();
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     service.setTracks(tracks);
 
@@ -63,8 +64,6 @@ class _LinuxMusicPageState
       return;
     }
 
-    service.setTracks(_tracks);
-
     await service.playIndex(index);
   }
 
@@ -78,14 +77,23 @@ class _LinuxMusicPageState
         i++) {
       final track = _tracks[i];
 
-      groups.putIfAbsent(
-        track.artist,
-        () => <String, List<int>>{},
-      );
+      final artist =
+          track.artist.trim().isEmpty
+              ? 'Bilinmeyen Sanatçı'
+              : track.artist.trim();
 
-      groups[track.artist]!
+      final album =
+          track.album.trim().isEmpty
+              ? 'Bilinmeyen Albüm'
+              : track.album.trim();
+
+      groups
           .putIfAbsent(
-            track.album,
+            artist,
+            () => <String, List<int>>{},
+          )
+          .putIfAbsent(
+            album,
             () => <int>[],
           )
           .add(i);
@@ -156,7 +164,7 @@ class _LinuxMusicPageState
                       )
                     : _tracks.isEmpty
                         ? const _EmptyMusic()
-                        : ListView(
+                        : ListView.builder(
                             padding:
                                 const EdgeInsets
                                     .fromLTRB(
@@ -165,19 +173,23 @@ class _LinuxMusicPageState
                               18,
                               150,
                             ),
-                            children: [
-                              for (final artistEntry
-                                  in groups.entries)
-                                _ArtistSection(
-                                  artist:
-                                      artistEntry.key,
-                                  albums:
-                                      artistEntry.value,
-                                  tracks:
-                                      _tracks,
-                                  onPlay: _play,
-                                ),
-                            ],
+                            itemCount:
+                                groups.length,
+                            itemBuilder:
+                                (context, index) {
+                              final entry =
+                                  groups.entries
+                                      .elementAt(
+                                index,
+                              );
+
+                              return _ArtistSection(
+                                artist: entry.key,
+                                albums: entry.value,
+                                tracks: _tracks,
+                                onPlay: _play,
+                              );
+                            },
                           ),
               ),
             ],
@@ -216,16 +228,15 @@ class _ArtistSection
     final firstIndex =
         albums.values.first.first;
 
-    final artistArtwork =
-        tracks[firstIndex].artwork;
-
     return Card(
       margin:
           const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
+        data:
+            Theme.of(context).copyWith(
+          dividerColor:
+              Colors.transparent,
         ),
         child: ExpansionTile(
           initiallyExpanded: true,
@@ -241,7 +252,8 @@ class _ArtistSection
             10,
           ),
           leading: StellarMusicCover(
-            artwork: artistArtwork,
+            artwork:
+                tracks[firstIndex].artwork,
             size: 52,
             radius: 12,
           ),
@@ -263,12 +275,11 @@ class _ArtistSection
             ),
           ),
           children: [
-            for (final albumEntry
+            for (final entry
                 in albums.entries)
               _AlbumSection(
-                album: albumEntry.key,
-                indexes:
-                    albumEntry.value,
+                album: entry.key,
+                indexes: entry.value,
                 tracks: tracks,
                 onPlay: onPlay,
               ),
@@ -307,8 +318,10 @@ class _AlbumSection
             BorderRadius.circular(16),
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
+        data:
+            Theme.of(context).copyWith(
+          dividerColor:
+              Colors.transparent,
         ),
         child: ExpansionTile(
           initiallyExpanded: true,
@@ -345,7 +358,8 @@ class _AlbumSection
             for (final index in indexes)
               _SongTile(
                 track: tracks[index],
-                onTap: () => onPlay(index),
+                onTap: () =>
+                    onPlay(index),
               ),
           ],
         ),
