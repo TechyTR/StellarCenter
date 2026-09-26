@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../music/music_track.dart';
 import '../music/edge_player.dart';
-import '../music/fullscreen_player.dart';
 import '../music/stellarmusic_scanner.dart';
 import '../music/music_service.dart';
 
@@ -10,10 +9,12 @@ class LinuxMusicPage extends StatefulWidget {
   const LinuxMusicPage({super.key});
 
   @override
-  State<LinuxMusicPage> createState() => _LinuxMusicPageState();
+  State<LinuxMusicPage> createState() =>
+      _LinuxMusicPageState();
 }
 
-class _LinuxMusicPageState extends State<LinuxMusicPage> {
+class _LinuxMusicPageState
+    extends State<LinuxMusicPage> {
   final StellarMusicService service =
       StellarMusicService.instance;
 
@@ -51,21 +52,15 @@ class _LinuxMusicPageState extends State<LinuxMusicPage> {
     });
   }
 
-  void _play(int index) {
-    if (index < 0 || index >= _tracks.length) {
+  Future<void> _play(int index) async {
+    if (index < 0 ||
+        index >= _tracks.length) {
       return;
     }
 
     service.setTracks(_tracks);
-    service.playIndex(index);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => StellarFullscreenPlayer(
-          tracks: _tracks,
-        ),
-      ),
-    );
+    await service.playIndex(index);
   }
 
   @override
