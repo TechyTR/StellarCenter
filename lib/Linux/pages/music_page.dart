@@ -4,9 +4,12 @@ import '../music/music_track.dart';
 import '../music/edge_player.dart';
 import '../music/stellarmusic_scanner.dart';
 import '../music/music_service.dart';
+import '../music/music_cover.dart';
 
 class LinuxMusicPage extends StatefulWidget {
-  const LinuxMusicPage({super.key});
+  const LinuxMusicPage({
+    super.key,
+  });
 
   @override
   State<LinuxMusicPage> createState() =>
@@ -42,7 +45,9 @@ class _LinuxMusicPageState
     final tracks =
         await StellarMusicScanner.scan();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     service.setTracks(tracks);
 
@@ -63,15 +68,44 @@ class _LinuxMusicPageState
     await service.playIndex(index);
   }
 
+  Map<String, Map<String, List<int>>>
+      _buildGroups() {
+    final groups =
+        <String, Map<String, List<int>>>{};
+
+    for (var i = 0;
+        i < _tracks.length;
+        i++) {
+      final track = _tracks[i];
+
+      groups.putIfAbsent(
+        track.artist,
+        () => <String, List<int>>{},
+      );
+
+      groups[track.artist]!
+          .putIfAbsent(
+            track.album,
+            () => <int>[],
+          )
+          .add(i);
+    }
+
+    return groups;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final groups = _buildGroups();
+
     return Scaffold(
       body: Stack(
         children: [
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(
+                padding:
+                    const EdgeInsets.fromLTRB(
                   24,
                   24,
                   24,
@@ -96,7 +130,8 @@ class _LinuxMusicPageState
                           Text(
                             'Stellar Music',
                             style: TextStyle(
-                              color: Colors.white54,
+                              color:
+                                  Colors.white54,
                             ),
                           ),
                         ],
@@ -121,27 +156,28 @@ class _LinuxMusicPageState
                       )
                     : _tracks.isEmpty
                         ? const _EmptyMusic()
-                        : ListView.builder(
+                        : ListView(
                             padding:
-                                const EdgeInsets.fromLTRB(
+                                const EdgeInsets
+                                    .fromLTRB(
                               18,
                               8,
                               18,
-                              130,
+                              150,
                             ),
-                            itemCount:
-                                _tracks.length,
-                            itemBuilder:
-                                (context, index) {
-                              final track =
-                                  _tracks[index];
-
-                              return _SongTile(
-                                track: track,
-                                onTap: () =>
-                                    _play(index),
-                              );
-                            },
+                            children: [
+                              for (final artistEntry
+                                  in groups.entries)
+                                _ArtistSection(
+                                  artist:
+                                      artistEntry.key,
+                                  albums:
+                                      artistEntry.value,
+                                  tracks:
+                                      _tracks,
+                                  onPlay: _play,
+                                ),
+                            ],
                           ),
               ),
             ],
@@ -161,39 +197,165 @@ class _LinuxMusicPageState
   }
 }
 
-class _EmptyMusic extends StatelessWidget {
-  const _EmptyMusic();
+class _ArtistSection
+    extends StatelessWidget {
+  final String artist;
+  final Map<String, List<int>> albums;
+  final List<StellarMusicTrack> tracks;
+  final Future<void> Function(int) onPlay;
+
+  const _ArtistSection({
+    required this.artist,
+    required this.albums,
+    required this.tracks,
+    required this.onPlay,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.music_note_rounded,
-            size: 64,
-            color: Colors.white38,
+    final firstIndex =
+        albums.values.first.first;
+
+    final artistArtwork =
+        tracks[firstIndex].artwork;
+
+    return Card(
+      margin:
+          const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding:
+              const EdgeInsets.symmetric(
+            horizontal: 14,
           ),
-          SizedBox(height: 15),
-          Text(
-            'Henüz müzik bulunamadı',
-            style: TextStyle(fontSize: 18),
+          childrenPadding:
+              const EdgeInsets.fromLTRB(
+            10,
+            0,
+            10,
+            10,
           ),
-          SizedBox(height: 6),
-          Text(
-            '~/StellarCenter/Music',
-            style: TextStyle(
-              color: Colors.white38,
+          leading: StellarMusicCover(
+            artwork: artistArtwork,
+            size: 52,
+            radius: 12,
+          ),
+          title: Text(
+            artist,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
             ),
           ),
-        ],
+          subtitle: Text(
+            '${albums.length} albüm',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+            ),
+          ),
+          children: [
+            for (final albumEntry
+                in albums.entries)
+              _AlbumSection(
+                album: albumEntry.key,
+                indexes:
+                    albumEntry.value,
+                tracks: tracks,
+                onPlay: onPlay,
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _SongTile extends StatelessWidget {
+class _AlbumSection
+    extends StatelessWidget {
+  final String album;
+  final List<int> indexes;
+  final List<StellarMusicTrack> tracks;
+  final Future<void> Function(int) onPlay;
+
+  const _AlbumSection({
+    required this.album,
+    required this.indexes,
+    required this.tracks,
+    required this.onPlay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final artwork =
+        tracks[indexes.first].artwork;
+
+    return Container(
+      margin:
+          const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.045),
+        borderRadius:
+            BorderRadius.circular(16),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding:
+              const EdgeInsets.symmetric(
+            horizontal: 10,
+          ),
+          childrenPadding:
+              const EdgeInsets.only(
+            bottom: 6,
+          ),
+          leading: StellarMusicCover(
+            artwork: artwork,
+            size: 44,
+            radius: 10,
+          ),
+          title: Text(
+            album,
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Text(
+            '${indexes.length} şarkı',
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 11,
+            ),
+          ),
+          children: [
+            for (final index in indexes)
+              _SongTile(
+                track: tracks[index],
+                onTap: () => onPlay(index),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SongTile
+    extends StatelessWidget {
   final StellarMusicTrack track;
   final VoidCallback onTap;
 
@@ -204,94 +366,82 @@ class _SongTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
+    return ListTile(
+      dense: true,
+      contentPadding:
+          const EdgeInsets.symmetric(
+        horizontal: 10,
+      ),
+      leading: const SizedBox(
+        width: 28,
+        child: Icon(
+          Icons.music_note_rounded,
+          size: 19,
+          color: Colors.white54,
         ),
-        leading: _Artwork(
-          artwork: track.artwork,
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                track.title,
-                maxLines: 1,
-                overflow:
-                    TextOverflow.ellipsis,
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              track.title,
+              maxLines: 1,
+              overflow:
+                  TextOverflow.ellipsis,
+            ),
+          ),
+          if (track.verifiedArtist)
+            const Padding(
+              padding:
+                  EdgeInsets.only(left: 6),
+              child: Icon(
+                Icons.verified_rounded,
+                size: 16,
+                color: Colors.blue,
               ),
             ),
-            if (track.verifiedArtist)
-              const Padding(
-                padding:
-                    EdgeInsets.only(left: 6),
-                child: Icon(
-                  Icons.verified_rounded,
-                  size: 17,
-                  color: Colors.blue,
-                ),
-              ),
-          ],
-        ),
-        subtitle: Text(
-          track.artist,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(
-          Icons.play_circle_outline_rounded,
-          size: 30,
-        ),
-        onTap: onTap,
+        ],
       ),
+      trailing: const Icon(
+        Icons.play_circle_outline_rounded,
+        size: 26,
+      ),
+      onTap: onTap,
     );
   }
 }
 
-class _Artwork extends StatelessWidget {
-  final dynamic artwork;
-
-  const _Artwork({
-    required this.artwork,
-  });
+class _EmptyMusic
+    extends StatelessWidget {
+  const _EmptyMusic();
 
   @override
   Widget build(BuildContext context) {
-    if (artwork == null) {
-      return Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          borderRadius:
-              BorderRadius.circular(10),
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF1769FF),
-              Color(0xFF9C27B0),
-            ],
+    return const Center(
+      child: Column(
+        mainAxisSize:
+            MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.music_note_rounded,
+            size: 64,
+            color: Colors.white38,
           ),
-        ),
-        child: const Icon(
-          Icons.music_note_rounded,
-          color: Colors.white,
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius:
-          BorderRadius.circular(10),
-      child: Image.memory(
-        artwork,
-        width: 58,
-        height: 58,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.low,
+          SizedBox(height: 15),
+          Text(
+            'Henüz müzik bulunamadı',
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            '~/StellarCenter/Music',
+            style: TextStyle(
+              color: Colors.white38,
+            ),
+          ),
+        ],
       ),
     );
   }
