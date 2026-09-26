@@ -32,13 +32,18 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_lints: ^4.0.0
 
- flutter:
+flutter:
   uses-material-design: true
 
   assets:
     - assets/StellarVerse.png
     - assets/StellarVerseSchool.png
     - assets/icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
 
 flutter_launcher_icons:
   android: true
