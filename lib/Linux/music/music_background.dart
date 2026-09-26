@@ -1,13 +1,19 @@
-import 'dart:math' as math;
+import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-class StellarMusicBackground extends StatefulWidget {
+import 'music_colors.dart';
+
+class StellarMusicBackground
+    extends StatefulWidget {
   final Widget child;
+  final Uint8List? artwork;
 
   const StellarMusicBackground({
     super.key,
     required this.child,
+    this.artwork,
   });
 
   @override
@@ -20,6 +26,11 @@ class _StellarMusicBackgroundState
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
+  List<Color> _colors =
+      StellarMusicColors.defaultColors;
+
+  Uint8List? _loadedArtwork;
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +41,66 @@ class _StellarMusicBackgroundState
         seconds: 18,
       ),
     )..repeat();
+
+    _loadColors();
+  }
+
+  @override
+  void didUpdateWidget(
+    covariant StellarMusicBackground oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (!_sameArtwork(
+      oldWidget.artwork,
+      widget.artwork,
+    )) {
+      _loadColors();
+    }
+  }
+
+  bool _sameArtwork(
+    Uint8List? a,
+    Uint8List? b,
+  ) {
+    if (identical(a, b)) {
+      return true;
+    }
+
+    if (a == null || b == null) {
+      return false;
+    }
+
+    if (a.length != b.length) {
+      return false;
+    }
+
+    if (a.isEmpty) {
+      return true;
+    }
+
+    return a.first == b.first &&
+        a[a.length ~/ 2] ==
+            b[b.length ~/ 2] &&
+        a.last == b.last;
+  }
+
+  Future<void> _loadColors() async {
+    final artwork = widget.artwork;
+
+    final colors =
+        await StellarMusicColors.fromArtworkAsync(
+      artwork,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _colors = colors;
+      _loadedArtwork = artwork;
+    });
   }
 
   @override
@@ -43,33 +114,27 @@ class _StellarMusicBackgroundState
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _controller,
-        child: widget.child,
-        builder: (
-          context,
-          child,
-        ) {
-          final t =
-              _controller.value *
-              math.pi *
-              2;
+        builder: (context, child) {
+          final t = _controller.value;
 
           final x1 =
-              math.sin(t) * 0.72;
-
+              -1.0 + (t * 2.0);
           final y1 =
-              math.cos(t * 0.83) * 0.72;
+              -0.8 + (t * 1.6);
 
           final x2 =
-              math.cos(t * 0.71) * 0.82;
-
+              1.0 - (t * 2.0);
           final y2 =
-              math.sin(t * 0.91) * 0.82;
+              0.8 - (t * 1.6);
 
-          final x3 =
-              math.sin(t * 0.43) * 0.9;
-
-          final y3 =
-              math.cos(t * 0.57) * 0.9;
+          final color1 =
+              _colors[0 % _colors.length];
+          final color2 =
+              _colors[1 % _colors.length];
+          final color3 =
+              _colors[2 % _colors.length];
+          final color4 =
+              _colors[3 % _colors.length];
 
           return DecoratedBox(
             decoration: BoxDecoration(
@@ -82,12 +147,23 @@ class _StellarMusicBackgroundState
                   x2,
                   y2,
                 ),
-                colors: const [
-                  Color(0xFF030713),
-                  Color(0xFF0C1D4B),
-                  Color(0xFF24105B),
-                  Color(0xFF561046),
-                  Color(0xFF06182F),
+                colors: [
+                  Color.lerp(
+                    color1,
+                    color3,
+                    t,
+                  )!,
+                  Color.lerp(
+                    color2,
+                    color4,
+                    t,
+                  )!,
+                  Colors.black,
+                ],
+                stops: const [
+                  0.0,
+                  0.55,
+                  1.0,
                 ],
               ),
             ),
@@ -96,53 +172,46 @@ class _StellarMusicBackgroundState
               children: [
                 _Glow(
                   alignment: Alignment(
-                    x1,
-                    y1,
+                    -0.75 + t * 1.5,
+                    -0.65,
                   ),
-                  radius: 0.52,
-                  color: const Color(
-                    0xFF087BFF,
-                  ),
-                  opacity: 0.24,
+                  radius: 0.72,
+                  color: color1,
+                  opacity: 0.18,
                 ),
                 _Glow(
                   alignment: Alignment(
-                    x2,
-                    y2,
+                    0.75 - t * 1.5,
+                    0.55,
                   ),
-                  radius: 0.45,
-                  color: const Color(
-                    0xFFE02BFF,
-                  ),
-                  opacity: 0.20,
-                ),
-                _Glow(
-                  alignment: Alignment(
-                    x3,
-                    y3,
-                  ),
-                  radius: 0.38,
-                  color: const Color(
-                    0xFF00C8FF,
-                  ),
+                  radius: 0.62,
+                  color: color2,
                   opacity: 0.14,
                 ),
                 _Glow(
                   alignment: Alignment(
-                    -x2,
-                    -y1,
+                    -0.15,
+                    0.85 - t * 1.7,
                   ),
-                  radius: 0.30,
-                  color: const Color(
-                    0xFF5DFFCB,
+                  radius: 0.52,
+                  color: color3,
+                  opacity: 0.11,
+                ),
+                _Glow(
+                  alignment: Alignment(
+                    0.35,
+                    -0.85 + t * 1.7,
                   ),
-                  opacity: 0.08,
+                  radius: 0.45,
+                  color: color4,
+                  opacity: 0.09,
                 ),
                 child!,
               ],
             ),
           );
         },
+        child: widget.child,
       ),
     );
   }
