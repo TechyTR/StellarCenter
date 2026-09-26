@@ -10,7 +10,7 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   static const String _firebaseApiKey =
-      'BURAYA_FIREBASE_WEB_API_KEY';
+      'FIREBASE_APIKEY';
 
   static const String _baseUrl =
       'https://identitytoolkit.googleapis.com/v1/accounts';
