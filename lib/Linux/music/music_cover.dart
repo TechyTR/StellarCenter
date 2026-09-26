@@ -2,7 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-class StellarMusicCover extends StatelessWidget {
+class StellarMusicCover
+    extends StatelessWidget {
   final Uint8List? artwork;
   final double size;
   final double radius;
@@ -18,39 +19,45 @@ class StellarMusicCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = artwork;
 
-    if (image == null || image.isEmpty) {
+    if (image == null ||
+        image.isEmpty) {
       return _fallback();
     }
 
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.35),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius:
+              BorderRadius.circular(radius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black
+                  .withOpacity(0.35),
+              blurRadius: 28,
+              offset:
+                  const Offset(0, 14),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius:
+              BorderRadius.circular(radius),
+          child: Image.memory(
+            image,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            filterQuality:
+                FilterQuality.high,
+            errorBuilder: (
+              context,
+              error,
+              stackTrace,
+            ) {
+              return _fallback();
+            },
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: Image.memory(
-          image,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (
-            context,
-            error,
-            stackTrace,
-          ) {
-            return _fallback();
-          },
         ),
       ),
     );
@@ -61,8 +68,10 @@ class StellarMusicCover extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        gradient: const LinearGradient(
+        borderRadius:
+            BorderRadius.circular(radius),
+        gradient:
+            const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
