@@ -23,6 +23,8 @@ class _StellarLyricsOverlayState
     extends State<StellarLyricsOverlay> {
   List<StellarLrcLine> _lines = const [];
 
+  String? _loadedPath;
+
   @override
   void initState() {
     super.initState();
@@ -42,14 +44,27 @@ class _StellarLyricsOverlayState
   }
 
   Future<void> _load() async {
-    final lines = await StellarLyricsLoader.load(
-      widget.track.lyricsPath,
-    );
+    final path = widget.track.lyricsPath;
+
+    if (path == null || path.trim().isEmpty) {
+      if (!mounted) return;
+
+      setState(() {
+        _lines = const [];
+        _loadedPath = null;
+      });
+
+      return;
+    }
+
+    final lines =
+        await StellarLyricsLoader.load(path);
 
     if (!mounted) return;
 
     setState(() {
       _lines = lines;
+      _loadedPath = path;
     });
   }
 
@@ -72,34 +87,56 @@ class _StellarLyricsOverlayState
       );
     }
 
-    final start =
-        mathClamp(activeIndex - 2, 0, _lines.length);
+    final start = _clamp(
+      activeIndex - 2,
+      0,
+      _lines.length,
+    );
 
-    final end =
-        mathClamp(activeIndex + 3, start, _lines.length);
+    final end = _clamp(
+      activeIndex + 3,
+      start,
+      _lines.length,
+    );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = start; i < end; i++)
-          _LyricLine(
-            key: ValueKey(
-              '${widget.track.path}-$i',
+    return AnimatedSize(
+      duration: const Duration(
+        milliseconds: 250,
+      ),
+      curve: Curves.easeOutCubic,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (
+            var i = start;
+            i < end;
+            i++
+          )
+            _LyricLine(
+              key: ValueKey(
+                '${_loadedPath ?? widget.track.path}-$i',
+              ),
+              text: _lines[i].text,
+              active: i == activeIndex,
             ),
-            text: _lines[i].text,
-            active: i == activeIndex,
-          ),
-      ],
+        ],
+      ),
     );
   }
 
-  int mathClamp(
+  int _clamp(
     int value,
     int min,
     int max,
   ) {
-    if (value < min) return min;
-    if (value > max) return max;
+    if (value < min) {
+      return min;
+    }
+
+    if (value > max) {
+      return max;
+    }
+
     return value;
   }
 }
@@ -117,24 +154,38 @@ class _LyricLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(
+        milliseconds: 260,
+      ),
       curve: Curves.easeOutCubic,
       padding: EdgeInsets.symmetric(
         horizontal: 20,
-        vertical: active ? 8 : 5,
+        vertical: active ? 8 : 4,
       ),
       child: AnimatedDefaultTextStyle(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(
+          milliseconds: 260,
+        ),
         curve: Curves.easeOutCubic,
         style: TextStyle(
           color: active
               ? Colors.white
-              : Colors.white.withOpacity(0.35),
-          fontSize: active ? 22 : 15,
+              : Colors.white.withOpacity(0.34),
+          fontSize: active ? 21 : 14,
           fontWeight: active
               ? FontWeight.w800
               : FontWeight.w500,
-          height: 1.25,
+          height: 1.3,
+          shadows: active
+              ? [
+                  Shadow(
+                    color: Colors.black.withOpacity(
+                      0.35,
+                    ),
+                    blurRadius: 8,
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           text,
