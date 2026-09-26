@@ -2,45 +2,69 @@ import 'dart:io';
 import 'dart:typed_data';
 
 class StellarLocalArtwork {
+  StellarLocalArtwork._();
+
   static Future<Uint8List?> find(
     String audioPath,
   ) async {
-    final dot = audioPath.lastIndexOf('.');
+    final audioFile = File(audioPath);
+    final directory = audioFile.parent;
+
+    final dot =
+        audioPath.lastIndexOf('.');
 
     final base = dot > 0
         ? audioPath.substring(0, dot)
         : audioPath;
 
-    final directory =
-        File(audioPath).parent.path;
-
     final candidates = <String>[
       '$base.jpg',
       '$base.jpeg',
       '$base.png',
+      '$base.webp',
 
-      '$directory/cover.jpg',
-      '$directory/cover.jpeg',
-      '$directory/cover.png',
+      '${directory.path}/cover.jpg',
+      '${directory.path}/cover.jpeg',
+      '${directory.path}/cover.png',
+      '${directory.path}/cover.webp',
 
-      '$directory/folder.jpg',
-      '$directory/folder.png',
+      '${directory.path}/Cover.jpg',
+      '${directory.path}/Cover.png',
 
-      '$directory/album.jpg',
-      '$directory/album.png',
+      '${directory.path}/folder.jpg',
+      '${directory.path}/folder.png',
+
+      '${directory.path}/album.jpg',
+      '${directory.path}/album.png',
+
+      '${directory.path}/front.jpg',
+      '${directory.path}/front.png',
     ];
 
-    for (final path in candidates) {
-      final file = File(path);
+    final seen = <String>{};
 
-      if (!await file.exists()) {
+    for (final path in candidates) {
+      if (!seen.add(path)) {
         continue;
       }
 
+      final file = File(path);
+
       try {
-        return await file.readAsBytes();
+        if (!await file.exists()) {
+          continue;
+        }
+
+        final bytes =
+            await file.readAsBytes();
+
+        if (bytes.isEmpty) {
+          continue;
+        }
+
+        return bytes;
       } catch (_) {
-        // Bir artwork okunamazsa diğerlerini dene.
+        continue;
       }
     }
 
