@@ -2,11 +2,10 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'pages/boot_screen.dart';
-import 'services/preferences_service.dart';
-import 'theme/app_theme.dart';
-import 'main_android.dart' as
-android;
+
+import '../pages/boot_screen.dart';
+import '../services/preferences_service.dart';
+import '../both/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
