@@ -22,16 +22,33 @@ class StellarMusicCover extends StatelessWidget {
       return _fallback();
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: SizedBox(
-        width: size,
-        height: size,
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
         child: Image.memory(
           image,
+          width: size,
+          height: size,
           fit: BoxFit.cover,
           gaplessPlayback: true,
-          errorBuilder: (_, __, ___) {
+          filterQuality: FilterQuality.high,
+          errorBuilder: (
+            context,
+            error,
+            stackTrace,
+          ) {
             return _fallback();
           },
         ),
@@ -57,8 +74,8 @@ class StellarMusicCover extends StatelessWidget {
       ),
       child: Icon(
         Icons.music_note_rounded,
-        size: size * .25,
-        color: Colors.white.withOpacity(.9),
+        size: size * 0.25,
+        color: Colors.white,
       ),
     );
   }
