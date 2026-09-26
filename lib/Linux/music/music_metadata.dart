@@ -18,9 +18,7 @@ class StellarMusicMetadata {
 }
 
 class StellarMusicMetadataReader {
-  static StellarMusicMetadata read(
-    File file,
-  ) {
+  static StellarMusicMetadata read(File file) {
     try {
       final metadata = readMetadata(
         file,
@@ -33,7 +31,11 @@ class StellarMusicMetadataReader {
         final pictures = metadata.pictures;
 
         if (pictures.isNotEmpty) {
-          artwork = pictures.first.bytes;
+          final bytes = pictures.first.bytes;
+
+          if (bytes.isNotEmpty) {
+            artwork = Uint8List.fromList(bytes);
+          }
         }
       } catch (_) {
         artwork = null;
@@ -50,14 +52,14 @@ class StellarMusicMetadataReader {
     }
   }
 
-  static String? _clean(
-    String? value,
-  ) {
+  static String? _clean(String? value) {
     if (value == null) {
       return null;
     }
 
-    final result = value.trim();
+    final result = value
+        .replaceAll('\u0000', '')
+        .trim();
 
     if (result.isEmpty) {
       return null;
