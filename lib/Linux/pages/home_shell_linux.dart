@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
+import '../../both/theme/app_theme.dart';
 
 import '../../Linux/widgets/linux_navigation_bar.dart';
 import '../../Linux/pages/music_page.dart';
