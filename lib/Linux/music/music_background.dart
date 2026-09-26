@@ -26,7 +26,9 @@ class _StellarMusicBackgroundState
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 18),
+      duration: const Duration(
+        seconds: 18,
+      ),
     )..repeat();
   }
 
@@ -42,25 +44,44 @@ class _StellarMusicBackgroundState
       child: AnimatedBuilder(
         animation: _controller,
         child: widget.child,
-        builder: (context, child) {
-          final t = _controller.value * math.pi * 2;
+        builder: (
+          context,
+          child,
+        ) {
+          final t =
+              _controller.value *
+              math.pi *
+              2;
 
-          final x1 = math.sin(t) * 0.7;
-          final y1 = math.cos(t * 0.83) * 0.7;
-          final x2 = math.cos(t * 0.71) * 0.8;
-          final y2 = math.sin(t * 0.91) * 0.8;
+          final x1 =
+              math.sin(t) * 0.72;
 
-          return Container(
+          final y1 =
+              math.cos(t * 0.83) * 0.72;
+
+          final x2 =
+              math.cos(t * 0.71) * 0.82;
+
+          final y2 =
+              math.sin(t * 0.91) * 0.82;
+
+          final x3 =
+              math.sin(t * 0.43) * 0.9;
+
+          final y3 =
+              math.cos(t * 0.57) * 0.9;
+
+          return DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment(x1, y1),
                 end: Alignment(x2, y2),
                 colors: const [
-                  Color(0xFF050B20),
-                  Color(0xFF10265F),
-                  Color(0xFF35105D),
-                  Color(0xFF5A104C),
-                  Color(0xFF071A3A),
+                  Color(0xFF030713),
+                  Color(0xFF0C1D4B),
+                  Color(0xFF24105B),
+                  Color(0xFF561046),
+                  Color(0xFF06182F),
                 ],
               ),
             ),
@@ -68,25 +89,48 @@ class _StellarMusicBackgroundState
               fit: StackFit.expand,
               children: [
                 _Glow(
-                  alignment: Alignment(x1, y1),
-                  radius: 0.42,
-                  color: const Color(0xFF087BFF),
-                  opacity: 0.22,
-                ),
-                _Glow(
-                  alignment: Alignment(x2, y2),
-                  radius: 0.36,
-                  color: const Color(0xFFE02BFF),
-                  opacity: 0.18,
+                  alignment: Alignment(
+                    x1,
+                    y1,
+                  ),
+                  radius: 0.52,
+                  color: const Color(
+                    0xFF087BFF,
+                  ),
+                  opacity: 0.24,
                 ),
                 _Glow(
                   alignment: Alignment(
-                    -x2 * 0.7,
-                    -y1 * 0.7,
+                    x2,
+                    y2,
+                  ),
+                  radius: 0.45,
+                  color: const Color(
+                    0xFFE02BFF,
+                  ),
+                  opacity: 0.20,
+                ),
+                _Glow(
+                  alignment: Alignment(
+                    x3,
+                    y3,
+                  ),
+                  radius: 0.38,
+                  color: const Color(
+                    0xFF00C8FF,
+                  ),
+                  opacity: 0.14,
+                ),
+                _Glow(
+                  alignment: Alignment(
+                    -x2,
+                    -y1,
                   ),
                   radius: 0.30,
-                  color: const Color(0xFF00C8FF),
-                  opacity: 0.13,
+                  color: const Color(
+                    0xFF5DFFCB,
+                  ),
+                  opacity: 0.08,
                 ),
                 child!,
               ],
