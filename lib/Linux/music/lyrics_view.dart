@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'lrc_parser.dart';
 
-class StellarLyricsView extends StatefulWidget {
+class StellarLyricsView
+    extends StatefulWidget {
   final List<StellarLrcLine> lines;
   final Duration position;
 
@@ -44,7 +45,8 @@ class _StellarLyricsViewState
       widget.position,
     );
 
-    if (index < 0 || index == _lastIndex) {
+    if (index < 0 ||
+        index == _lastIndex) {
       return;
     }
 
@@ -60,16 +62,21 @@ class _StellarLyricsViewState
       const itemHeight = 58.0;
 
       final viewportHeight =
-          _controller.position.viewportDimension;
+          _controller
+              .position
+              .viewportDimension;
 
       final target =
           index * itemHeight -
           viewportHeight / 2 +
           itemHeight / 2;
 
-      final safeTarget = target.clamp(
+      final safeTarget =
+          target.clamp(
         0.0,
-        _controller.position.maxScrollExtent,
+        _controller
+            .position
+            .maxScrollExtent,
       );
 
       _controller.animateTo(
@@ -110,13 +117,18 @@ class _StellarLyricsViewState
 
     return ListView.builder(
       controller: _controller,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(
+      physics:
+          const BouncingScrollPhysics(),
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 24,
         vertical: 100,
       ),
       itemCount: widget.lines.length,
-      itemBuilder: (context, index) {
+      itemBuilder: (
+        context,
+        index,
+      ) {
         final active =
             index == activeIndex;
 
@@ -125,10 +137,12 @@ class _StellarLyricsViewState
             milliseconds: 280,
           ),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(
+          padding:
+              const EdgeInsets.symmetric(
             vertical: 9,
           ),
-          child: AnimatedDefaultTextStyle(
+          child:
+              AnimatedDefaultTextStyle(
             duration: const Duration(
               milliseconds: 280,
             ),
@@ -136,18 +150,23 @@ class _StellarLyricsViewState
             style: TextStyle(
               color: active
                   ? Colors.white
-                  : Colors.white.withOpacity(0.34),
-              fontSize: active ? 24 : 17,
+                  : Colors.white
+                      .withOpacity(0.34),
+              fontSize:
+                  active ? 24 : 17,
               fontWeight: active
                   ? FontWeight.w800
                   : FontWeight.w500,
               height: 1.4,
             ),
             child: Text(
-              widget.lines[index].text.isEmpty
+              widget.lines[index]
+                      .text
+                      .isEmpty
                   ? '♪'
                   : widget.lines[index].text,
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
             ),
           ),
         );
