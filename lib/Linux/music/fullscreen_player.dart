@@ -133,6 +133,8 @@ class _StellarFullscreenPlayerState
                                     child: Row(
                                       children: [
                                         IconButton(
+                                          tooltip:
+                                              'Edge Player',
                                           onPressed:
                                               () {
                                             Navigator.of(
@@ -142,10 +144,10 @@ class _StellarFullscreenPlayerState
                                           icon:
                                               const Icon(
                                             Icons
-                                                .keyboard_arrow_down_rounded,
+                                                .close_fullscreen_rounded,
                                             color:
                                                 Colors.white,
-                                            size: 32,
+                                            size: 28,
                                           ),
                                         ),
                                         const Spacer(),
@@ -197,7 +199,8 @@ class _StellarFullscreenPlayerState
                                             switchOutCurve:
                                                 Curves
                                                     .easeInCubic,
-                                            child: KeyedSubtree(
+                                            child:
+                                                KeyedSubtree(
                                               key: ValueKey(
                                                 track.path,
                                               ),
@@ -243,34 +246,46 @@ class _StellarFullscreenPlayerState
                                           const SizedBox(
                                             height: 7,
                                           ),
-                                          Text(
-                                            track.artist,
-                                            maxLines: 1,
-                                            overflow:
-                                                TextOverflow
-                                                    .ellipsis,
-                                            style:
-                                                const TextStyle(
-                                              color:
-                                                  Colors.white70,
-                                              fontSize: 16,
-                                            ),
+                                          Row(
+                                            mainAxisSize:
+                                                MainAxisSize
+                                                    .min,
+                                            children: [
+                                              Flexible(
+                                                child:
+                                                    Text(
+                                                  track
+                                                      .artist,
+                                                  maxLines:
+                                                      1,
+                                                  overflow:
+                                                      TextOverflow
+                                                          .ellipsis,
+                                                  style:
+                                                      const TextStyle(
+                                                    color:
+                                                        Colors.white70,
+                                                    fontSize:
+                                                        16,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (track
+                                                  .verifiedArtist) ...[
+                                                const SizedBox(
+                                                  width: 5,
+                                                ),
+                                                const Icon(
+                                                  Icons
+                                                      .verified_rounded,
+                                                  color:
+                                                      Color(0xFF2196F3),
+                                                  size:
+                                                      18,
+                                                ),
+                                              ],
+                                            ],
                                           ),
-                                          if (track
-                                              .verifiedArtist)
-                                            const Padding(
-                                              padding:
-                                                  EdgeInsets.only(
-                                                top: 6,
-                                              ),
-                                              child: Icon(
-                                                Icons
-                                                    .verified_rounded,
-                                                color:
-                                                    Colors.blue,
-                                                size: 18,
-                                              ),
-                                            ),
                                           const SizedBox(
                                             height: 30,
                                           ),
@@ -377,9 +392,6 @@ class _StellarFullscreenPlayerState
                                             onPlayPause:
                                                 service
                                                     .togglePlayPause,
-                                            onStop:
-                                                service
-                                                    .stop,
                                             onRepeat:
                                                 service
                                                     .cycleRepeatMode,
@@ -412,7 +424,6 @@ class _Controls extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onPlayPause;
-  final VoidCallback onStop;
   final VoidCallback onRepeat;
 
   const _Controls({
@@ -421,7 +432,6 @@ class _Controls extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onPlayPause,
-    required this.onStop,
     required this.onRepeat,
   });
 
@@ -486,18 +496,9 @@ class _Controls extends StatelessWidget {
           onTap: onNext,
           size: 54,
           child: const StellarMusicIcon(
-            type: StellarMusicIconType.next,
+            type:
+                StellarMusicIconType.next,
             size: 26,
-          ),
-        ),
-        const SizedBox(width: 14),
-        _Button(
-          onTap: onStop,
-          size: 46,
-          child: const Icon(
-            Icons.stop_rounded,
-            color: Colors.white,
-            size: 23,
           ),
         ),
       ],
