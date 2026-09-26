@@ -3,22 +3,60 @@ import 'dart:io';
 import 'lrc_parser.dart';
 
 class StellarLyricsLoader {
-  static final Map<String, List<StellarLrcLine>> _cache =
+  StellarLyricsLoader._();
+
+  static final Map<
+      String,
+      List<StellarLrcLine>> _cache =
       <String, List<StellarLrcLine>>{};
+
+  static final Map<
+      String,
+      Future<List<StellarLrcLine>>> _pending =
+      <String,
+      Future<List<StellarLrcLine>>>{};
 
   static Future<List<StellarLrcLine>> load(
     String? path,
-  ) async {
-    if (path == null || path.trim().isEmpty) {
-      return const [];
+  ) {
+    if (path == null ||
+        path.trim().isEmpty) {
+      return Future.value(
+        const <StellarLrcLine>[],
+      );
     }
 
-    final cached = _cache[path];
+    final normalized =
+        path.trim();
+
+    final cached =
+        _cache[normalized];
 
     if (cached != null) {
-      return cached;
+      return Future.value(cached);
     }
 
+    final existing =
+        _pending[normalized];
+
+    if (existing != null) {
+      return existing;
+    }
+
+    final future =
+        _loadInternal(normalized);
+
+    _pending[normalized] = future;
+
+    return future.whenComplete(
+      () => _pending.remove(normalized),
+    );
+  }
+
+  static Future<List<StellarLrcLine>>
+      _loadInternal(
+    String path,
+  ) async {
     try {
       final file = File(path);
 
@@ -26,13 +64,22 @@ class StellarLyricsLoader {
         return const [];
       }
 
-      final content = await file.readAsString();
+      final content =
+          await file.readAsString();
 
-      final lines = StellarLrcParser.parse(content);
+      final lines =
+          StellarLrcParser.parse(
+        content,
+      );
 
-      _cache[path] = lines;
+      final immutable =
+          List<StellarLrcLine>.unmodifiable(
+        lines,
+      );
 
-      return lines;
+      _cache[path] = immutable;
+
+      return immutable;
     } catch (_) {
       return const [];
     }
