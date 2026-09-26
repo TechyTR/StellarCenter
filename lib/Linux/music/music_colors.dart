@@ -16,42 +16,64 @@ class StellarMusicColors {
   static final Map<int, List<Color>> _cache =
       <int, List<Color>>{};
 
-  static Future<List<Color>> fromArtworkAsync(
+  static List<Color> fromArtwork(
     Uint8List? artwork,
-  ) async {
-    if (artwork == null || artwork.isEmpty) {
+  ) {
+    if (artwork == null ||
+        artwork.isEmpty) {
       return defaultColors;
     }
 
-    final cacheKey = Object.hash(
+    final key = Object.hash(
       artwork.length,
-      artwork.fold<int>(
-        0,
-        (value, byte) => (value * 31 + byte) & 0x7fffffff,
-      ),
+      artwork.first,
+      artwork[artwork.length ~/ 2],
+      artwork.last,
     );
 
-    final cached = _cache[cacheKey];
+    return _cache[key] ??
+        defaultColors;
+  }
+
+  static Future<List<Color>>
+      fromArtworkAsync(
+    Uint8List? artwork,
+  ) async {
+    if (artwork == null ||
+        artwork.isEmpty) {
+      return defaultColors;
+    }
+
+    final key = Object.hash(
+      artwork.length,
+      artwork.first,
+      artwork[artwork.length ~/ 2],
+      artwork.last,
+    );
+
+    final cached = _cache[key];
+
     if (cached != null) {
       return cached;
     }
 
     try {
-      final codec = await ui.instantiateImageCodec(
+      final codec =
+          await ui.instantiateImageCodec(
         artwork,
         targetWidth: 24,
         targetHeight: 24,
-        allowUpscaling: false,
       );
 
-      final frame = await codec.getNextFrame();
-      final image = frame.image;
+      final frame =
+          await codec.getNextFrame();
 
-      final data = await image.toByteData(
+      final data =
+          await frame.image.toByteData(
         format: ui.ImageByteFormat.rawRgba,
       );
 
-      image.dispose();
+      frame.image.dispose();
       codec.dispose();
 
       if (data == null) {
@@ -59,119 +81,105 @@ class StellarMusicColors {
       }
 
       final bytes = data.buffer.asUint8List();
+      final buckets =
+          <String, _ColorBucket>{};
 
-      final colors = _extractPalette(
-        bytes,
-      );
+      for (var i = 0;
+          i + 3 < bytes.length;
+          i += 4) {
+        final r = bytes[i];
+        final g = bytes[i + 1];
+        final b = bytes[i + 2];
+        final a = bytes[i + 3];
 
-      _cache[cacheKey] = colors;
-      return colors;
+        if (a < 80) continue;
+
+        final max = [
+          r,
+          g,
+          b,
+        ].reduce((a, b) => a > b ? a : b);
+
+        final min = [
+          r,
+          g,
+          b,
+        ].reduce((a, b) => a < b ? a : b);
+
+        final brightness =
+            (r + g + b) / 3;
+
+        final saturation =
+            max - min;
+
+        if (brightness < 20 ||
+            brightness > 245 ||
+            saturation < 18) {
+          continue;
+        }
+
+        final qr = (r ~/ 32) * 32;
+        final qg = (g ~/ 32) * 32;
+        final qb = (b ~/ 32) * 32;
+
+        final bucket =
+            buckets.putIfAbsent(
+          '$qr:$qg:$qb',
+          _ColorBucket.new,
+        );
+
+        bucket.r += r;
+        bucket.g += g;
+        bucket.b += b;
+        bucket.count++;
+      }
+
+      final entries =
+          buckets.values.toList()
+            ..sort(
+              (a, b) =>
+                  b.count.compareTo(a.count),
+            );
+
+      final colors = <Color>[];
+
+      for (final bucket in entries) {
+        if (bucket.count == 0) continue;
+
+        final color = Color.fromARGB(
+          255,
+          bucket.r ~/ bucket.count,
+          bucket.g ~/ bucket.count,
+          bucket.b ~/ bucket.count,
+        );
+
+        if (_isDistinct(
+          colors,
+          color,
+        )) {
+          colors.add(color);
+        }
+
+        if (colors.length >= 4) {
+          break;
+        }
+      }
+
+      final result = colors.length >= 2
+          ? List<Color>.unmodifiable(colors)
+          : defaultColors;
+
+      _cache[key] = result;
+
+      return result;
     } catch (_) {
       return defaultColors;
     }
   }
 
-  static List<Color> _extractPalette(
-    Uint8List bytes,
-  ) {
-    final buckets = <int, _ColorBucket>{};
-
-    for (var i = 0; i + 3 < bytes.length; i += 4) {
-      final r = bytes[i];
-      final g = bytes[i + 1];
-      final b = bytes[i + 2];
-      final a = bytes[i + 3];
-
-      if (a < 150) {
-        continue;
-      }
-
-      final max = [
-        r,
-        g,
-        b,
-      ].reduce((a, b) => a > b ? a : b);
-
-      final min = [
-        r,
-        g,
-        b,
-      ].reduce((a, b) => a < b ? a : b);
-
-      final brightness = (r + g + b) / 3;
-
-      if (max - min < 18 ||
-          brightness < 22 ||
-          brightness > 245) {
-        continue;
-      }
-
-      final qr = (r ~/ 32).clamp(0, 7);
-      final qg = (g ~/ 32).clamp(0, 7);
-      final qb = (b ~/ 32).clamp(0, 7);
-
-      final key =
-          (qr << 6) | (qg << 3) | qb;
-
-      final bucket = buckets.putIfAbsent(
-        key,
-        () => _ColorBucket(),
-      );
-
-      bucket.r += r;
-      bucket.g += g;
-      bucket.b += b;
-      bucket.count++;
-    }
-
-    if (buckets.isEmpty) {
-      return defaultColors;
-    }
-
-    final sorted = buckets.values.toList()
-      ..sort(
-        (a, b) => b.count.compareTo(a.count),
-      );
-
-    final result = <Color>[];
-
-    for (final bucket in sorted) {
-      final color = Color.fromARGB(
-        255,
-        (bucket.r / bucket.count).round(),
-        (bucket.g / bucket.count).round(),
-        (bucket.b / bucket.count).round(),
-      );
-
-      if (_isDistinct(
-        color,
-        result,
-      )) {
-        result.add(color);
-      }
-
-      if (result.length == 4) {
-        break;
-      }
-    }
-
-    if (result.isEmpty) {
-      return defaultColors;
-    }
-
-    while (result.length < 3) {
-      result.add(
-        defaultColors[
-            result.length % defaultColors.length],
-      );
-    }
-
-    return result;
-  }
-
   static bool _isDistinct(
-    Color color,
     List<Color> colors,
+    Color color,
   ) {
     for (final existing in colors) {
       final distance =
@@ -206,7 +214,8 @@ class StellarMusicColors {
   static Color secondary(
     Uint8List? artwork,
   ) {
-    final colors = fromArtwork(artwork);
+    final colors =
+        fromArtwork(artwork);
 
     return colors.length > 1
         ? colors[1]
