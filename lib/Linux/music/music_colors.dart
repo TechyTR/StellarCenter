@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 class StellarMusicColors {
+  StellarMusicColors._();
+
   static const List<Color> defaultColors = [
     Color(0xFF1769FF),
     Color(0xFF7B2CFF),
@@ -16,15 +18,6 @@ class StellarMusicColors {
         artwork.isEmpty) {
       return defaultColors;
     }
-
-    /*
-     * Burada ağır image processing yapmıyoruz.
-     * Müzik oynarken her frame'de artwork
-     * taramak ciddi gereksiz yük oluşturur.
-     *
-     * Gerçek palette extraction daha sonra
-     * yalnızca track değiştiğinde yapılabilir.
-     */
 
     return const [
       Color(0xFF1769FF),
@@ -44,5 +37,23 @@ class StellarMusicColors {
       end: Alignment.bottomRight,
       colors: colors,
     );
+  }
+
+  static Color primary(
+    Uint8List? artwork,
+  ) {
+    return fromArtwork(artwork).first;
+  }
+
+  static Color secondary(
+    Uint8List? artwork,
+  ) {
+    final colors = fromArtwork(artwork);
+
+    if (colors.length < 2) {
+      return colors.first;
+    }
+
+    return colors[1];
   }
 }
