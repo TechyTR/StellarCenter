@@ -7,7 +7,8 @@ import 'fullscreen_player.dart';
 import 'music_service.dart';
 import 'music_cover.dart';
 
-class StellarEdgePlayer extends StatefulWidget {
+class StellarEdgePlayer
+    extends StatefulWidget {
   final List<StellarMusicTrack> tracks;
 
   const StellarEdgePlayer({
@@ -45,7 +46,9 @@ class _StellarEdgePlayerState
     _trackSubscription =
         service.currentTrackStream.listen(
       (track) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
 
         setState(() {
           _track = track;
@@ -56,7 +59,9 @@ class _StellarEdgePlayerState
     _playingSubscription =
         service.playingStream.listen(
       (playing) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
 
         setState(() {
           _playing = playing;
@@ -92,8 +97,10 @@ class _StellarEdgePlayerState
     }
 
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.fromLTRB(
+      margin:
+          const EdgeInsets.all(12),
+      padding:
+          const EdgeInsets.fromLTRB(
         8,
         8,
         10,
@@ -102,19 +109,24 @@ class _StellarEdgePlayerState
       decoration: BoxDecoration(
         borderRadius:
             BorderRadius.circular(22),
-        color: Colors.black.withOpacity(0.48),
+        color:
+            Colors.black.withOpacity(0.48),
         border: Border.all(
-          color: Colors.white.withOpacity(0.14),
+          color:
+              Colors.white.withOpacity(0.14),
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+            MainAxisSize.min,
         children: [
           Align(
-            alignment: Alignment.centerLeft,
+            alignment:
+                Alignment.centerLeft,
             child: IconButton(
               tooltip: 'Tam ekran',
-              onPressed: _openFullscreen,
+              onPressed:
+                  _openFullscreen,
               icon: const Icon(
                 Icons.open_in_full_rounded,
                 color: Colors.white,
@@ -138,20 +150,24 @@ class _StellarEdgePlayerState
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize:
+                      MainAxisSize.min,
                   children: [
                     Text(
                       track.title,
                       maxLines: 1,
                       overflow:
                           TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         color: Colors.white,
                         fontWeight:
                             FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(
+                      height: 3,
+                    ),
                     Row(
                       children: [
                         Flexible(
@@ -170,9 +186,12 @@ class _StellarEdgePlayerState
                         ),
                         if (track
                             .verifiedArtist) ...[
-                          const SizedBox(width: 4),
+                          const SizedBox(
+                            width: 4,
+                          ),
                           const Icon(
-                            Icons.verified_rounded,
+                            Icons
+                                .verified_rounded,
                             color:
                                 Color(0xFF2196F3),
                             size: 15,
@@ -180,14 +199,18 @@ class _StellarEdgePlayerState
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(
+                      height: 2,
+                    ),
                     Text(
                       track.album,
                       maxLines: 1,
                       overflow:
                           TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white38,
+                      style:
+                          const TextStyle(
+                        color:
+                            Colors.white38,
                         fontSize: 10,
                       ),
                     ),
@@ -196,9 +219,11 @@ class _StellarEdgePlayerState
               ),
               IconButton(
                 tooltip: 'Önceki',
-                onPressed: service.previous,
+                onPressed:
+                    service.previous,
                 icon: const Icon(
-                  Icons.skip_previous_rounded,
+                  Icons
+                      .skip_previous_rounded,
                   color: Colors.white,
                 ),
               ),
@@ -206,12 +231,14 @@ class _StellarEdgePlayerState
                 tooltip: _playing
                     ? 'Duraklat'
                     : 'Oynat',
-                onPressed:
-                    service.togglePlayPause,
+                onPressed: service
+                    .togglePlayPause,
                 icon: Icon(
                   _playing
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_fill,
+                      ? Icons
+                          .pause_circle_filled
+                      : Icons
+                          .play_circle_fill,
                   color: Colors.white,
                 ),
               ),
