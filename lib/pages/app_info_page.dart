@@ -71,7 +71,7 @@ class AppInfoPage extends StatelessWidget {
     return Colors.white.withOpacity(.17);
   }
 
-  Widget _auroraAtmosphere() {
+  Widget _auroraAtmosphere(BuildContext context) {
     if (!_isAurora) {
       return const SizedBox.shrink();
     }
