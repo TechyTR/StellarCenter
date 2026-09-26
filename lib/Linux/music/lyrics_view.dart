@@ -34,7 +34,9 @@ class _StellarLyricsViewState
   }
 
   void _updateScroll() {
-    if (widget.lines.isEmpty) return;
+    if (widget.lines.isEmpty) {
+      return;
+    }
 
     final index =
         StellarLrcParser.activeIndex(
@@ -48,28 +50,36 @@ class _StellarLyricsViewState
 
     _lastIndex = index;
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) {
-        if (!mounted ||
-            !_controller.hasClients) {
-          return;
-        }
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+      if (!mounted ||
+          !_controller.hasClients) {
+        return;
+      }
 
-        final target =
-            (index * 62.0).clamp(
-          0.0,
-          _controller.position.maxScrollExtent,
-        );
+      const itemHeight = 58.0;
 
-        _controller.animateTo(
-          target.toDouble(),
-          duration: const Duration(
-            milliseconds: 420,
-          ),
-          curve: Curves.easeOutCubic,
-        );
-      },
-    );
+      final viewportHeight =
+          _controller.position.viewportDimension;
+
+      final target =
+          index * itemHeight -
+          viewportHeight / 2 +
+          itemHeight / 2;
+
+      final safeTarget = target.clamp(
+        0.0,
+        _controller.position.maxScrollExtent,
+      );
+
+      _controller.animateTo(
+        safeTarget.toDouble(),
+        duration: const Duration(
+          milliseconds: 420,
+        ),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   @override
@@ -86,6 +96,7 @@ class _StellarLyricsViewState
           'Bu şarkı için söz bulunamadı.',
           style: TextStyle(
             color: Colors.white54,
+            fontSize: 15,
           ),
         ),
       );
@@ -99,6 +110,7 @@ class _StellarLyricsViewState
 
     return ListView.builder(
       controller: _controller,
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(
         horizontal: 24,
         vertical: 100,
@@ -124,7 +136,7 @@ class _StellarLyricsViewState
             style: TextStyle(
               color: active
                   ? Colors.white
-                  : Colors.white.withOpacity(0.38),
+                  : Colors.white.withOpacity(0.34),
               fontSize: active ? 24 : 17,
               fontWeight: active
                   ? FontWeight.w800
