@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/app_theme.dart';
+import '../both/theme/app_theme.dart';
 
 class SystemMonitorPage extends StatefulWidget {
   final AppThemeColor selectedTheme;
