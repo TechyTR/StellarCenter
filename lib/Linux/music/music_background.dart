@@ -74,8 +74,14 @@ class _StellarMusicBackgroundState
           return DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment(x1, y1),
-                end: Alignment(x2, y2),
+                begin: Alignment(
+                  x1,
+                  y1,
+                ),
+                end: Alignment(
+                  x2,
+                  y2,
+                ),
                 colors: const [
                   Color(0xFF030713),
                   Color(0xFF0C1D4B),
