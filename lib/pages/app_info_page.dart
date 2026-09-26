@@ -519,7 +519,7 @@ class AppInfoPage extends StatelessWidget {
                           scheme.onSurface,
                       fontSize: 15,
                       fontWeight: selected
-                          ? FontWeight.w750
+                          ? FontWeight.w700
                           : FontWeight.w500,
                     ),
                     child:
