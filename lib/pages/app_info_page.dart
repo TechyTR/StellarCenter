@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -498,6 +499,10 @@ class AppInfoPage extends StatelessWidget {
   Widget _hero(BuildContext context) {
     final themeColor = AppTheme.colorOf(selectedTheme);
 
+    final heroAsset = Platform.isLinux
+        ? 'assets/StellarVerseSchool.png'
+        : 'assets/StellarVerse.png';
+
     return _glassCard(
       context,
       padding: EdgeInsets.zero,
@@ -531,7 +536,6 @@ class AppInfoPage extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Ana logonun arkasındaki yumuşak Stellar glow.
             Positioned(
               top: 8,
               left: 0,
@@ -566,7 +570,6 @@ class AppInfoPage extends StatelessWidget {
               ),
             ),
 
-            // Stellar_Version.png — ana üst görsel.
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(
@@ -576,7 +579,7 @@ class AppInfoPage extends StatelessWidget {
                 child: AspectRatio(
                   aspectRatio: 991 / 644,
                   child: Image.asset(
-                    'assets/Stellar_Version.png',
+                    heroAsset,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
                     errorBuilder: (
@@ -595,7 +598,6 @@ class AppInfoPage extends StatelessWidget {
               ),
             ),
 
-            // Alt bölüm: sürüm rozeti.
             Positioned(
               left: 0,
               right: 0,
@@ -860,3 +862,4 @@ class AppInfoPage extends StatelessWidget {
     );
   }
 }
+
