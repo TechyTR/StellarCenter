@@ -47,11 +47,8 @@ class _StellarLyricsOverlayState
   Future<void> _load() async {
     final path = widget.track.lyricsPath;
 
-    if (path == null ||
-        path.trim().isEmpty) {
-      if (!mounted) {
-        return;
-      }
+    if (path == null || path.trim().isEmpty) {
+      if (!mounted) return;
 
       setState(() {
         _lines = const [];
@@ -64,9 +61,7 @@ class _StellarLyricsOverlayState
     final lines =
         await StellarLyricsLoader.load(path);
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _lines = lines;
@@ -86,28 +81,24 @@ class _StellarLyricsOverlayState
       widget.position,
     );
 
-    if (activeIndex < 0) {
-      return _LyricLine(
-        text: _lines.first.text,
-        active: false,
-      );
-    }
+    final visibleIndex =
+        activeIndex < 0 ? 0 : activeIndex;
 
     final start = _clamp(
-      activeIndex - 2,
+      visibleIndex - 2,
       0,
       _lines.length,
     );
 
     final end = _clamp(
-      activeIndex + 3,
+      visibleIndex + 3,
       start,
       _lines.length,
     );
 
     return AnimatedSize(
       duration: const Duration(
-        milliseconds: 250,
+        milliseconds: 260,
       ),
       curve: Curves.easeOutCubic,
       child: Column(
@@ -135,13 +126,8 @@ class _StellarLyricsOverlayState
     int min,
     int max,
   ) {
-    if (value < min) {
-      return min;
-    }
-
-    if (value > max) {
-      return max;
-    }
+    if (value < min) return min;
+    if (value > max) return max;
 
     return value;
   }
@@ -187,9 +173,7 @@ class _LyricLine
               ? [
                   Shadow(
                     color:
-                        Colors.black.withOpacity(
-                      0.35,
-                    ),
+                        Colors.black.withOpacity(.35),
                     blurRadius: 8,
                   ),
                 ]
@@ -199,8 +183,7 @@ class _LyricLine
           text,
           textAlign: TextAlign.center,
           maxLines: 2,
-          overflow:
-              TextOverflow.ellipsis,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
