@@ -9,19 +9,16 @@ class StellarLrcLine {
 }
 
 class StellarLrcParser {
-  static final RegExp _timestampPattern =
-      RegExp(
+  static final RegExp _timestampPattern = RegExp(
     r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]',
   );
 
   static List<StellarLrcLine> parse(
     String content,
   ) {
-    final result =
-        <StellarLrcLine>[];
+    final result = <StellarLrcLine>[];
 
-    for (final rawLine
-        in content.split(RegExp(r'\r?\n'))) {
+    for (final rawLine in content.split(RegExp(r'\r?\n'))) {
       final line = rawLine.trim();
 
       if (line.isEmpty) {
@@ -29,19 +26,14 @@ class StellarLrcParser {
       }
 
       final matches =
-          _timestampPattern
-              .allMatches(line)
-              .toList();
+          _timestampPattern.allMatches(line).toList();
 
       if (matches.isEmpty) {
         continue;
       }
 
       final text = line
-          .replaceAll(
-            _timestampPattern,
-            '',
-          )
+          .replaceAll(_timestampPattern, '')
           .trim();
 
       if (text.isEmpty) {
@@ -50,23 +42,14 @@ class StellarLrcParser {
 
       for (final match in matches) {
         final minutes =
-            int.tryParse(
-                  match.group(1) ?? '',
-                ) ??
-                0;
+            int.tryParse(match.group(1) ?? '') ?? 0;
 
         final seconds =
-            int.tryParse(
-                  match.group(2) ?? '',
-                ) ??
-                0;
-
-        final fractionText =
-            match.group(3);
+            int.tryParse(match.group(2) ?? '') ?? 0;
 
         final milliseconds =
             _fractionToMilliseconds(
-          fractionText,
+          match.group(3),
         );
 
         result.add(
@@ -74,8 +57,7 @@ class StellarLrcParser {
             timestamp: Duration(
               minutes: minutes,
               seconds: seconds,
-              milliseconds:
-                  milliseconds,
+              milliseconds: milliseconds,
             ),
             text: text,
           ),
@@ -84,13 +66,10 @@ class StellarLrcParser {
     }
 
     result.sort(
-      (a, b) => a.timestamp
-          .compareTo(b.timestamp),
+      (a, b) => a.timestamp.compareTo(b.timestamp),
     );
 
-    return List.unmodifiable(
-      result,
-    );
+    return List.unmodifiable(result);
   }
 
   static int activeIndex(
@@ -109,8 +88,7 @@ class StellarLrcParser {
       final middle =
           low + ((high - low) ~/ 2);
 
-      if (lines[middle].timestamp <=
-          position) {
+      if (lines[middle].timestamp <= position) {
         result = middle;
         low = middle + 1;
       } else {
@@ -121,19 +99,29 @@ class StellarLrcParser {
     return result;
   }
 
+  static Duration? nextTimestamp(
+    List<StellarLrcLine> lines,
+    int index,
+  ) {
+    final next = index + 1;
+
+    if (next < 0 || next >= lines.length) {
+      return null;
+    }
+
+    return lines[next].timestamp;
+  }
+
   static int _fractionToMilliseconds(
     String? value,
   ) {
-    if (value == null ||
-        value.isEmpty) {
+    if (value == null || value.isEmpty) {
       return 0;
     }
 
-    final normalized =
-        value.padRight(3, '0');
+    final normalized = value.padRight(3, '0');
 
-    final limited =
-        normalized.substring(
+    final limited = normalized.substring(
       0,
       normalized.length > 3
           ? 3
