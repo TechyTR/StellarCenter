@@ -33,9 +33,26 @@ class StellarMusicTrack {
       artist: artist ?? this.artist,
       album: album ?? this.album,
       artwork: artwork ?? this.artwork,
-      lyricsPath: lyricsPath ?? this.lyricsPath,
+      lyricsPath:
+          lyricsPath ?? this.lyricsPath,
       verifiedArtist:
-          verifiedArtist ?? this.verifiedArtist,
+          verifiedArtist ??
+              this.verifiedArtist,
     );
   }
+
+  @override
+  bool operator ==(
+    Object other,
+  ) {
+    if (identical(this, other)) {
+      return true;
+    }
+
+    return other is StellarMusicTrack &&
+        other.path == path;
+  }
+
+  @override
+  int get hashCode => path.hashCode;
 }
