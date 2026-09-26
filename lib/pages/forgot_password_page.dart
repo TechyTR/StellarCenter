@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
@@ -31,25 +31,30 @@ class _ForgotPasswordPageState
       return;
     }
 
+    FocusScope.of(context).unfocus();
+
     setState(() {
       _loading = true;
     });
 
     try {
-      await AuthService.sendPasswordResetEmail(
-        email,
-      );
+      await AuthService.instance
+          .sendPasswordResetEmail(email);
 
       if (!mounted) return;
 
       _showMessage(
         'Şifre sıfırlama bağlantısı gönderildi.',
       );
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      _showMessage(e.message);
+    } catch (_) {
       if (!mounted) return;
 
       _showMessage(
-        AuthService.errorMessage(e),
+        'Şifre sıfırlama sırasında bir hata oluştu.',
       );
     } finally {
       if (mounted) {
@@ -62,7 +67,9 @@ class _ForgotPasswordPageState
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
   }
 
@@ -73,7 +80,7 @@ class _ForgotPasswordPageState
         title: const Text('Şifre Sıfırlama'),
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(
@@ -108,6 +115,8 @@ class _ForgotPasswordPageState
                   controller: _emailController,
                   keyboardType:
                       TextInputType.emailAddress,
+                  autocorrect: false,
+                  enabled: !_loading,
                   decoration: const InputDecoration(
                     labelText: 'E-posta',
                     prefixIcon:
