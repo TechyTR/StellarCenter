@@ -106,10 +106,14 @@ class _StellarEdgePlayerState
         ),
         child: Row(
           children: [
-            StellarMusicCover(
-              artwork: track.artwork,
-              size: 58,
-              radius: 14,
+            Hero(
+              tag:
+                  'stellar-cover-${track.path}',
+              child: StellarMusicCover(
+                artwork: track.artwork,
+                size: 58,
+                radius: 14,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -118,48 +122,91 @@ class _StellarEdgePlayerState
                     CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    track.title,
-                    maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          track.title,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight:
+                                FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          track.artist,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      if (track.verifiedArtist) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified_rounded,
+                          color: Color(
+                            0xFF2196F3,
+                          ),
+                          size: 15,
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    track.artist,
+                    track.album,
                     maxLines: 1,
                     overflow:
                         TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
+                      color: Colors.white38,
+                      fontSize: 10,
                     ),
                   ),
                 ],
               ),
             ),
             IconButton(
+              tooltip: 'Önceki',
               onPressed: service.previous,
               icon: const Icon(
                 Icons.skip_previous_rounded,
+                color: Colors.white,
               ),
             ),
             IconButton(
+              tooltip: _playing
+                  ? 'Duraklat'
+                  : 'Oynat',
               onPressed:
                   service.togglePlayPause,
               icon: Icon(
                 _playing
                     ? Icons.pause_circle_filled
                     : Icons.play_circle_fill,
+                color: Colors.white,
               ),
             ),
             IconButton(
+              tooltip: 'Sonraki',
               onPressed: service.next,
               icon: const Icon(
                 Icons.skip_next_rounded,
+                color: Colors.white,
               ),
             ),
           ],
