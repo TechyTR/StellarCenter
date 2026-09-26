@@ -8,7 +8,8 @@ enum StellarMusicIconType {
   repeat,
 }
 
-class StellarMusicIcon extends StatelessWidget {
+class StellarMusicIcon
+    extends StatelessWidget {
   final StellarMusicIconType type;
   final double size;
   final Color color;
@@ -35,7 +36,8 @@ class StellarMusicIcon extends StatelessWidget {
   }
 }
 
-class _MusicIconPainter extends CustomPainter {
+class _MusicIconPainter
+    extends CustomPainter {
   final StellarMusicIconType type;
   final Color color;
 
@@ -52,23 +54,29 @@ class _MusicIconPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.085
+      ..strokeWidth =
+          size.width * 0.085
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin =
+          StrokeJoin.round;
 
     switch (type) {
       case StellarMusicIconType.play:
         _play(canvas, size, paint);
         break;
+
       case StellarMusicIconType.pause:
         _pause(canvas, size, paint);
         break;
+
       case StellarMusicIconType.next:
         _next(canvas, size, paint);
         break;
+
       case StellarMusicIconType.previous:
         _previous(canvas, size, paint);
         break;
+
       case StellarMusicIconType.repeat:
         _repeat(canvas, size, paint);
         break;
@@ -81,9 +89,18 @@ class _MusicIconPainter extends CustomPainter {
     Paint p,
   ) {
     final path = Path()
-      ..moveTo(s.width * .30, s.height * .20)
-      ..lineTo(s.width * .76, s.height * .50)
-      ..lineTo(s.width * .30, s.height * .80)
+      ..moveTo(
+        s.width * .30,
+        s.height * .20,
+      )
+      ..lineTo(
+        s.width * .76,
+        s.height * .50,
+      )
+      ..lineTo(
+        s.width * .30,
+        s.height * .80,
+      )
       ..close();
 
     canvas.drawPath(path, p);
@@ -102,7 +119,9 @@ class _MusicIconPainter extends CustomPainter {
           s.width * .17,
           s.height * .60,
         ),
-        Radius.circular(s.width * .06),
+        Radius.circular(
+          s.width * .06,
+        ),
       ),
       p,
     );
@@ -115,7 +134,9 @@ class _MusicIconPainter extends CustomPainter {
           s.width * .17,
           s.height * .60,
         ),
-        Radius.circular(s.width * .06),
+        Radius.circular(
+          s.width * .06,
+        ),
       ),
       p,
     );
@@ -127,16 +148,31 @@ class _MusicIconPainter extends CustomPainter {
     Paint p,
   ) {
     final path = Path()
-      ..moveTo(s.width * .18, s.height * .25)
-      ..lineTo(s.width * .57, s.height * .50)
-      ..lineTo(s.width * .18, s.height * .75)
+      ..moveTo(
+        s.width * .18,
+        s.height * .25,
+      )
+      ..lineTo(
+        s.width * .57,
+        s.height * .50,
+      )
+      ..lineTo(
+        s.width * .18,
+        s.height * .75,
+      )
       ..close();
 
     canvas.drawPath(path, p);
 
     canvas.drawLine(
-      Offset(s.width * .78, s.height * .22),
-      Offset(s.width * .78, s.height * .78),
+      Offset(
+        s.width * .78,
+        s.height * .22,
+      ),
+      Offset(
+        s.width * .78,
+        s.height * .78,
+      ),
       p,
     );
   }
@@ -147,16 +183,31 @@ class _MusicIconPainter extends CustomPainter {
     Paint p,
   ) {
     final path = Path()
-      ..moveTo(s.width * .82, s.height * .25)
-      ..lineTo(s.width * .43, s.height * .50)
-      ..lineTo(s.width * .82, s.height * .75)
+      ..moveTo(
+        s.width * .82,
+        s.height * .25,
+      )
+      ..lineTo(
+        s.width * .43,
+        s.height * .50,
+      )
+      ..lineTo(
+        s.width * .82,
+        s.height * .75,
+      )
       ..close();
 
     canvas.drawPath(path, p);
 
     canvas.drawLine(
-      Offset(s.width * .22, s.height * .22),
-      Offset(s.width * .22, s.height * .78),
+      Offset(
+        s.width * .22,
+        s.height * .22,
+      ),
+      Offset(
+        s.width * .22,
+        s.height * .78,
+      ),
       p,
     );
   }
@@ -167,7 +218,10 @@ class _MusicIconPainter extends CustomPainter {
     Paint p,
   ) {
     final path = Path()
-      ..moveTo(s.width * .22, s.height * .40)
+      ..moveTo(
+        s.width * .22,
+        s.height * .40,
+      )
       ..cubicTo(
         s.width * .34,
         s.height * .20,
@@ -176,7 +230,10 @@ class _MusicIconPainter extends CustomPainter {
         s.width * .78,
         s.height * .40,
       )
-      ..moveTo(s.width * .78, s.height * .60)
+      ..moveTo(
+        s.width * .78,
+        s.height * .60,
+      )
       ..cubicTo(
         s.width * .66,
         s.height * .80,
@@ -189,33 +246,58 @@ class _MusicIconPainter extends CustomPainter {
     canvas.drawPath(path, p);
 
     canvas.drawLine(
-      Offset(s.width * .78, s.height * .40),
-      Offset(s.width * .67, s.height * .33),
+      Offset(
+        s.width * .78,
+        s.height * .40,
+      ),
+      Offset(
+        s.width * .67,
+        s.height * .33,
+      ),
       p,
     );
 
     canvas.drawLine(
-      Offset(s.width * .78, s.height * .40),
-      Offset(s.width * .68, s.height * .49),
+      Offset(
+        s.width * .78,
+        s.height * .40,
+      ),
+      Offset(
+        s.width * .68,
+        s.height * .49,
+      ),
       p,
     );
 
     canvas.drawLine(
-      Offset(s.width * .22, s.height * .60),
-      Offset(s.width * .32, s.height * .51),
+      Offset(
+        s.width * .22,
+        s.height * .60,
+      ),
+      Offset(
+        s.width * .32,
+        s.height * .51,
+      ),
       p,
     );
 
     canvas.drawLine(
-      Offset(s.width * .22, s.height * .60),
-      Offset(s.width * .33, s.height * .68),
+      Offset(
+        s.width * .22,
+        s.height * .60,
+      ),
+      Offset(
+        s.width * .33,
+        s.height * .68,
+      ),
       p,
     );
   }
 
   @override
   bool shouldRepaint(
-    covariant _MusicIconPainter oldDelegate,
+    covariant _MusicIconPainter
+        oldDelegate,
   ) {
     return oldDelegate.type != type ||
         oldDelegate.color != color;
