@@ -4,10 +4,19 @@ class StellarArtistVerification {
   static final StellarArtistVerification instance =
       StellarArtistVerification._();
 
-  final Set<String> _verifiedArtists = <String>{};
+  final Set<String> _verifiedArtists =
+      <String>{};
 
   bool isVerified(String artist) {
-    return _verifiedArtists.contains(_normalize(artist));
+    final normalized = _normalize(artist);
+
+    if (normalized.isEmpty) {
+      return false;
+    }
+
+    return _verifiedArtists.contains(
+      normalized,
+    );
   }
 
   void setVerified(
@@ -16,7 +25,9 @@ class StellarArtistVerification {
   ) {
     final normalized = _normalize(artist);
 
-    if (normalized.isEmpty) return;
+    if (normalized.isEmpty) {
+      return;
+    }
 
     if (verified) {
       _verifiedArtists.add(normalized);
@@ -33,11 +44,37 @@ class StellarArtistVerification {
       ..addAll(
         artists
             .map(_normalize)
-            .where((artist) => artist.isNotEmpty),
+            .where(
+              (artist) => artist.isNotEmpty,
+            ),
       );
   }
 
+  void addVerifiedArtist(String artist) {
+    setVerified(
+      artist,
+      true,
+    );
+  }
+
+  void removeVerifiedArtist(String artist) {
+    setVerified(
+      artist,
+      false,
+    );
+  }
+
+  Set<String> get verifiedArtists {
+    return Set<String>.unmodifiable(
+      _verifiedArtists,
+    );
+  }
+
   String _normalize(String value) {
-    return value.trim().toLowerCase();
+    return value
+        .replaceAll('\u0000', '')
+        .trim()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .toLowerCase();
   }
 }
