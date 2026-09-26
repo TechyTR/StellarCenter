@@ -4,8 +4,7 @@ class StellarArtistVerification {
   static final StellarArtistVerification instance =
       StellarArtistVerification._();
 
-  final Set<String> _verifiedArtists =
-      <String>{};
+  final Set<String> _verifiedArtists = <String>{};
 
   bool isVerified(String artist) {
     final normalized = _normalize(artist);
@@ -14,9 +13,7 @@ class StellarArtistVerification {
       return false;
     }
 
-    return _verifiedArtists.contains(
-      normalized,
-    );
+    return _verifiedArtists.contains(normalized);
   }
 
   void setVerified(
