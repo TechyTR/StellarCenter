@@ -19,8 +19,7 @@ Future<void> main() async {
   );
 }
 
-class StellarCenterApp
-    extends StatefulWidget {
+class StellarCenterApp extends StatefulWidget {
   const StellarCenterApp({
     super.key,
   });
@@ -57,14 +56,10 @@ class _StellarCenterAppState
 
     setState(() {
       _selectedTheme =
-          AppTheme.colorFromString(
-        colorValue,
-      );
+          AppTheme.colorFromString(colorValue);
 
       _selectedStyle =
-          AppTheme.styleFromString(
-        styleValue,
-      );
+          AppTheme.styleFromString(styleValue);
 
       _preferencesLoaded = true;
     });
@@ -73,9 +68,7 @@ class _StellarCenterAppState
   Future<void> _changeTheme(
     AppThemeColor color,
   ) async {
-    if (_selectedTheme == color) {
-      return;
-    }
+    if (_selectedTheme == color) return;
 
     setState(() {
       _selectedTheme = color;
@@ -89,9 +82,7 @@ class _StellarCenterAppState
   Future<void> _changeStyle(
     AppThemeStyle style,
   ) async {
-    if (_selectedStyle == style) {
-      return;
-    }
+    if (_selectedStyle == style) return;
 
     setState(() {
       _selectedStyle = style;
@@ -103,18 +94,14 @@ class _StellarCenterAppState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     if (!_preferencesLoaded) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor:
-              Colors.black,
+          backgroundColor: Colors.black,
           body: Center(
-            child:
-                CircularProgressIndicator(),
+            child: CircularProgressIndicator(),
           ),
         ),
       );
@@ -134,17 +121,12 @@ class _StellarCenterAppState
         duration: const Duration(
           milliseconds: 650,
         ),
-        curve:
-            Curves.easeInOutCubic,
+        curve: Curves.easeInOutCubic,
         child: BootScreen(
-          selectedTheme:
-              _selectedTheme,
-          selectedStyle:
-              _selectedStyle,
-          onThemeChanged:
-              _changeTheme,
-          onStyleChanged:
-              _changeStyle,
+          selectedTheme: _selectedTheme,
+          selectedStyle: _selectedStyle,
+          onThemeChanged: _changeTheme,
+          onStyleChanged: _changeStyle,
         ),
       ),
     );
