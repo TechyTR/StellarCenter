@@ -23,7 +23,11 @@ class _LoginPageState
       TextEditingController();
 
   bool _loading = false;
+  bool _googleLoading = false;
   bool _obscurePassword = true;
+
+  bool get _busy =>
+      _loading || _googleLoading;
 
   @override
   void dispose() {
@@ -87,6 +91,40 @@ class _LoginPageState
     }
   }
 
+  Future<void> _loginWithGoogle() async {
+    if (_busy) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _googleLoading = true;
+    });
+
+    try {
+      await AuthService.instance.signInWithGoogle();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      _showMessage(e.message);
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Google ile giriş sırasında bir hata oluştu: $e',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _googleLoading = false;
+        });
+      }
+    }
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -111,7 +149,9 @@ class _LoginPageState
             const ForgotPasswordPage(),
       ),
     );
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme =
         Theme.of(context).colorScheme;
@@ -191,7 +231,7 @@ class _LoginPageState
                     textInputAction:
                         TextInputAction.done,
                     onSubmitted: (_) {
-                      if (!_loading) {
+                      if (!_busy) {
                         _login();
                       }
                     },
@@ -204,12 +244,14 @@ class _LoginPageState
                       ),
                       suffixIcon:
                           IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
-                        },
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscurePassword =
+                                      !_obscurePassword;
+                                });
+                              },
                         icon: Icon(
                           _obscurePassword
                               ? Icons
@@ -228,7 +270,7 @@ class _LoginPageState
                         Alignment.centerRight,
                     child: TextButton(
                       onPressed:
-                          _loading
+                          _busy
                               ? null
                               : _openForgotPassword,
                       child: const Text(
@@ -241,7 +283,7 @@ class _LoginPageState
                     height: 52,
                     child: FilledButton(
                       onPressed:
-                          _loading
+                          _busy
                               ? null
                               : _login,
                       child: _loading
@@ -262,6 +304,63 @@ class _LoginPageState
                             ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: scheme.outlineVariant,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
+                        child: Text(
+                          'veya',
+                          style: TextStyle(
+                            color:
+                                scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: scheme.outlineVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _busy
+                              ? null
+                              : _loginWithGoogle,
+                      icon: _googleLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(
+                              Icons
+                                  .account_circle_outlined,
+                            ),
+                      label: const Text(
+                        'Google ile devam et',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment:
@@ -276,7 +375,7 @@ class _LoginPageState
                       ),
                       TextButton(
                         onPressed:
-                            _loading
+                            _busy
                                 ? null
                                 : _openRegister,
                         child: const Text(
