@@ -7,6 +7,7 @@ class StellarMusicTrack {
   final String album;
   final Uint8List? artwork;
   final String? lyricsPath;
+  final String? lyricsText;
   final bool verifiedArtist;
 
   const StellarMusicTrack({
@@ -16,8 +17,16 @@ class StellarMusicTrack {
     required this.album,
     required this.artwork,
     required this.lyricsPath,
+    required this.lyricsText,
     required this.verifiedArtist,
   });
+
+  bool get hasLyrics {
+    return (lyricsPath != null &&
+            lyricsPath!.trim().isNotEmpty) ||
+        (lyricsText != null &&
+            lyricsText!.trim().isNotEmpty);
+  }
 
   StellarMusicTrack copyWith({
     String? title,
@@ -25,6 +34,7 @@ class StellarMusicTrack {
     String? album,
     Uint8List? artwork,
     String? lyricsPath,
+    String? lyricsText,
     bool? verifiedArtist,
   }) {
     return StellarMusicTrack(
@@ -33,18 +43,15 @@ class StellarMusicTrack {
       artist: artist ?? this.artist,
       album: album ?? this.album,
       artwork: artwork ?? this.artwork,
-      lyricsPath:
-          lyricsPath ?? this.lyricsPath,
+      lyricsPath: lyricsPath ?? this.lyricsPath,
+      lyricsText: lyricsText ?? this.lyricsText,
       verifiedArtist:
-          verifiedArtist ??
-              this.verifiedArtist,
+          verifiedArtist ?? this.verifiedArtist,
     );
   }
 
   @override
-  bool operator ==(
-    Object other,
-  ) {
+  bool operator ==(Object other) {
     if (identical(this, other)) {
       return true;
     }
