@@ -18,7 +18,8 @@ enum AppThemeStyle {
   stellarAurora,
 }
 
-extension AppThemeColorExtension on AppThemeColor {
+extension AppThemeColorExtension
+    on AppThemeColor {
   Color get seed {
     switch (this) {
       case AppThemeColor.purple:
@@ -96,8 +97,10 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor:
           const Color(0xFF101010),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+      appBarTheme:
+          const AppBarTheme(
+        backgroundColor:
+            Colors.transparent,
         elevation: 0,
         surfaceTintColor:
             Colors.transparent,
@@ -111,8 +114,10 @@ class AppTheme {
               BorderRadius.circular(20),
         ),
       ),
-      dividerTheme: DividerThemeData(
-        color: color.seed.withOpacity(.16),
+      dividerTheme:
+          DividerThemeData(
+        color:
+            color.seed.withOpacity(.16),
       ),
       inputDecorationTheme:
           _inputTheme(
@@ -151,7 +156,8 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor:
           const Color(0xFFF3F4F8),
-      appBarTheme: const AppBarTheme(
+      appBarTheme:
+          const AppBarTheme(
         backgroundColor:
             Colors.transparent,
         elevation: 0,
@@ -216,7 +222,8 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor:
           const Color(0xFF08090D),
-      appBarTheme: const AppBarTheme(
+      appBarTheme:
+          const AppBarTheme(
         backgroundColor:
             Colors.transparent,
         elevation: 0,
@@ -271,10 +278,8 @@ class AppTheme {
     AppThemeColor color,
   ) {
     final primary = color.seed;
-
     final secondary =
         _auroraSecondary(color);
-
     final tertiary =
         _auroraTertiary(color);
 
@@ -286,7 +291,8 @@ class AppTheme {
       primary: primary,
       secondary: secondary,
       tertiary: tertiary,
-      surface: const Color(0xFF0B0D18),
+      surface:
+          const Color(0xFF0B0D18),
       surfaceContainerHighest:
           const Color(0xFF171A2A),
       outline:
@@ -297,10 +303,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-
       scaffoldBackgroundColor:
           const Color(0xFF050711),
-
       appBarTheme:
           const AppBarTheme(
         backgroundColor:
@@ -309,7 +313,6 @@ class AppTheme {
         surfaceTintColor:
             Colors.transparent,
       ),
-
       cardTheme: CardTheme(
         color:
             Colors.white.withOpacity(.055),
@@ -325,25 +328,21 @@ class AppTheme {
           side: BorderSide(
             color:
                 primary.withOpacity(.24),
-            width: 1,
           ),
         ),
       ),
-
       dividerTheme:
           DividerThemeData(
         color:
             primary.withOpacity(.15),
         thickness: .7,
       ),
-
       inputDecorationTheme:
           _inputTheme(
         color,
         false,
         aurora: true,
       ),
-
       filledButtonTheme:
           FilledButtonThemeData(
         style:
@@ -362,7 +361,6 @@ class AppTheme {
           ),
         ),
       ),
-
       navigationBarTheme:
           NavigationBarThemeData(
         backgroundColor:
@@ -373,14 +371,12 @@ class AppTheme {
             Colors.transparent,
         elevation: 0,
       ),
-
       progressIndicatorTheme:
           ProgressIndicatorThemeData(
         color: primary,
         linearTrackColor:
             primary.withOpacity(.12),
       ),
-
       sliderTheme:
           SliderThemeData(
         activeTrackColor:
@@ -433,11 +429,12 @@ class AppTheme {
         borderRadius:
             BorderRadius.circular(20),
         borderSide: BorderSide(
-          color: color.seed
-              .withOpacity(
+          color:
+              color.seed.withOpacity(
             aurora ? .82 : .60,
           ),
-          width: aurora ? 1.6 : 1.3,
+          width:
+              aurora ? 1.6 : 1.3,
         ),
       ),
     );
@@ -449,25 +446,18 @@ class AppTheme {
     switch (color) {
       case AppThemeColor.purple:
         return const Color(0xFF22D3EE);
-
       case AppThemeColor.blue:
         return const Color(0xFF8B5CF6);
-
       case AppThemeColor.green:
         return const Color(0xFF06B6D4);
-
       case AppThemeColor.orange:
         return const Color(0xFFF43F5E);
-
       case AppThemeColor.red:
         return const Color(0xFFFF7A59);
-
       case AppThemeColor.pink:
         return const Color(0xFFA855F7);
-
       case AppThemeColor.yellow:
         return const Color(0xFF22D3EE);
-
       case AppThemeColor.brown:
         return const Color(0xFFF59E0B);
     }
@@ -479,25 +469,18 @@ class AppTheme {
     switch (color) {
       case AppThemeColor.purple:
         return const Color(0xFFF472B6);
-
       case AppThemeColor.blue:
         return const Color(0xFF38BDF8);
-
       case AppThemeColor.green:
         return const Color(0xFF84CC16);
-
       case AppThemeColor.orange:
         return const Color(0xFFFACC15);
-
       case AppThemeColor.red:
         return const Color(0xFFFB7185);
-
       case AppThemeColor.pink:
         return const Color(0xFFF0ABFC);
-
       case AppThemeColor.yellow:
         return const Color(0xFFFDE047);
-
       case AppThemeColor.brown:
         return const Color(0xFFFBBF24);
     }
@@ -553,13 +536,10 @@ class AppTheme {
     switch (style) {
       case AppThemeStyle.normal:
         return 'Material Design';
-
       case AppThemeStyle.liquidGlassLight:
         return 'Liquid Glass Light';
-
       case AppThemeStyle.liquidGlassDark:
         return 'Liquid Glass Dark';
-
       case AppThemeStyle.stellarAurora:
         return 'Stellar Aurora';
     }
