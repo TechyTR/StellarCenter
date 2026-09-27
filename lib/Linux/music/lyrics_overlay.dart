@@ -1,14 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'lrc_parser.dart';
 import 'lyrics_loader.dart';
 import 'music_track.dart';
 
-class StellarLyricsOverlay
-    extends StatefulWidget {
+class StellarLyricsOverlay extends StatefulWidget {
   final StellarMusicTrack track;
   final Duration position;
 
@@ -41,60 +37,51 @@ class _StellarLyricsOverlayState
   ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.track.path !=
-        widget.track.path) {
-      _load();
-      return;
-    }
-
-    if (oldWidget.track.lyricsPath !=
-        widget.track.lyricsPath) {
-      _load();
-      return;
-    }
-
-    if (oldWidget.track.lyricsText !=
-        widget.track.lyricsText) {
+    if (oldWidget.track.path != widget.track.path ||
+        oldWidget.track.lyricsPath !=
+            widget.track.lyricsPath ||
+        oldWidget.track.lyricsText !=
+            widget.track.lyricsText) {
       _load();
     }
   }
 
   Future<void> _load() async {
-    /*
-     * 1. Önce LRC dosyasını dene.
-     */
     final path = widget.track.lyricsPath;
 
-    if (path != null &&
-        path.trim().isNotEmpty) {
-      final lines =
-          await StellarLyricsLoader.load(
-        path,
-      );
+    /*
+     * 1. Önce harici LRC dosyasını yükle.
+     */
+    if (path != null && path.trim().isNotEmpty) {
+      try {
+        final document =
+            await StellarLyricsLoader.loadDocument(
+          path,
+        );
 
-      if (lines.isNotEmpty) {
-        if (!mounted) return;
+        if (document.lines.isNotEmpty) {
+          if (!mounted) return;
 
-        setState(() {
-          _lines = lines;
-          _loadedPath = path;
-        });
+          setState(() {
+            _lines = document.lines;
+            _loadedPath = path;
+          });
 
-        return;
+          return;
+        }
+      } catch (_) {
+        // Embedded lyrics'e geç.
       }
     }
 
     /*
-     * 2. LRC yoksa metadata içindeki
-     * lyrics alanını kullan.
+     * 2. LRC bulunamazsa embedded lyrics.
      */
-    final embedded =
-        widget.track.lyricsText;
+    final embedded = widget.track.lyricsText;
 
     if (embedded != null &&
         embedded.trim().isNotEmpty) {
-      final lines =
-          StellarLrcParser.parse(
+      final lines = StellarLrcParser.parse(
         embedded,
       );
 
@@ -110,8 +97,7 @@ class _StellarLyricsOverlayState
       }
 
       /*
-       * Metadata'daki sözler timestamp
-       * içermiyorsa da göster.
+       * Timestamp yoksa düz metin olarak göster.
        */
       final plainLines =
           _plainTextToLines(embedded);
@@ -137,24 +123,22 @@ class _StellarLyricsOverlayState
   List<StellarLrcLine> _plainTextToLines(
     String content,
   ) {
-    final lines = <StellarLrcLine>[];
+    final result = <StellarLrcLine>[];
 
-    final rawLines =
-        content.split(
+    final rawLines = content.split(
       RegExp(r'\r?\n'),
     );
 
     var index = 0;
 
     for (final raw in rawLines) {
-      final text =
-          raw.trim();
+      final text = raw.trim();
 
       if (text.isEmpty) {
         continue;
       }
 
-      lines.add(
+      result.add(
         StellarLrcLine(
           timestamp: Duration(
             seconds: index,
@@ -166,7 +150,7 @@ class _StellarLyricsOverlayState
       index++;
     }
 
-    return List.unmodifiable(lines);
+    return List.unmodifiable(result);
   }
 
   @override
@@ -195,9 +179,7 @@ class _StellarLyricsOverlayState
     );
 
     final visibleIndex =
-        activeIndex < 0
-            ? 0
-            : activeIndex;
+        activeIndex < 0 ? 0 : activeIndex;
 
     final start = _clamp(
       visibleIndex - 2,
@@ -219,11 +201,7 @@ class _StellarLyricsOverlayState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (
-            var i = start;
-            i < end;
-            i++
-          )
+          for (var i = start; i < end; i++)
             _LyricLine(
               key: ValueKey(
                 '${_loadedPath ?? widget.track.path}-$i',
@@ -231,8 +209,7 @@ class _StellarLyricsOverlayState
               text: _lines[i].text,
               active:
                   i == activeIndex ||
-                  (activeIndex < 0 &&
-                      i == 0),
+                  (activeIndex < 0 && i == 0),
             ),
         ],
       ),
@@ -251,8 +228,7 @@ class _StellarLyricsOverlayState
   }
 }
 
-class _LyricLine
-    extends StatelessWidget {
+class _LyricLine extends StatelessWidget {
   final String text;
   final bool active;
 
@@ -281,9 +257,7 @@ class _LyricLine
         style: TextStyle(
           color: active
               ? Colors.white
-              : Colors.white.withOpacity(
-                  0.34,
-                ),
+              : Colors.white.withOpacity(.34),
           fontSize: active ? 21 : 14,
           fontWeight: active
               ? FontWeight.w800
@@ -293,9 +267,7 @@ class _LyricLine
               ? [
                   Shadow(
                     color:
-                        Colors.black.withOpacity(
-                      .35,
-                    ),
+                        Colors.black.withOpacity(.35),
                     blurRadius: 8,
                   ),
                 ]
@@ -305,8 +277,7 @@ class _LyricLine
           text,
           textAlign: TextAlign.center,
           maxLines: 3,
-          overflow:
-              TextOverflow.ellipsis,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
