@@ -122,9 +122,7 @@ class _RegisterPageState
         content: Text(message),
       ),
     );
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     final scheme =
         Theme.of(context).colorScheme;
