@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'artist_verification.dart';
 import 'local_artwork.dart';
+import 'lyrics_loader.dart';
 import 'music_metadata.dart';
 import 'music_track.dart';
 
@@ -61,86 +62,92 @@ class StellarMusicScanner {
   static Future<StellarMusicTrack?> _readTrack(
     File file,
   ) async {
-    final metadata = StellarMusicMetadataReader.read(file);
+    final metadata =
+        StellarMusicMetadataReader.read(file);
 
     final directory = file.parent;
 
-    final fileName = file.uri.pathSegments.isNotEmpty
-        ? _withoutExtension(
-            file.uri.pathSegments.last,
-          )
-        : _withoutExtension(file.path);
+    final fileName =
+        file.uri.pathSegments.isNotEmpty
+            ? _withoutExtension(
+                file.uri.pathSegments.last,
+              )
+            : _withoutExtension(file.path);
 
     /*
-     * Metadata'daki gerçek sanatçı kullanılacak.
+     * Önce aynı isimli .lrc dosyasını bul.
      *
-     * Metadata yoksa klasör yapısından sanatçı
-     * tahmin edilir.
+     * Örnek:
+     *
+     * şarkı.mp3
+     * şarkı.lrc
+     * şarkı.jpg
      */
+    final lyricsPath = await _findLyrics(file);
+
+    StellarLrcDocument? lrcDocument;
+
+    if (lyricsPath != null) {
+      try {
+        lrcDocument =
+            await StellarLyricsLoader.loadDocument(
+          lyricsPath,
+        );
+      } catch (_) {
+        lrcDocument = null;
+      }
+    }
+
+    /*
+     * Öncelik sırası:
+     *
+     * 1. Audio metadata
+     * 2. LRC metadata
+     * 3. Klasör yapısı
+     * 4. Fallback
+     */
+
     final artist =
         _clean(metadata.artist) ??
+        _clean(lrcDocument?.artist) ??
         _artistFromDirectory(
           directory,
           musicRoot: await _musicRoot(file),
         ) ??
         'Bilinmeyen Sanatçı';
 
-    /*
-     * ÖNEMLİ:
-     *
-     * Burada artık dosya adı / şarkı adı
-     * kesinlikle albüm olarak kullanılmıyor.
-     *
-     * Gerçek album metadata'sı varsa onu kullan.
-     * Yoksa albüm klasöründen almaya çalış.
-     * O da yoksa "Bilinmeyen Albüm".
-     */
     final album =
         _clean(metadata.album) ??
+        _clean(lrcDocument?.album) ??
         _albumFromDirectory(
           directory,
           musicRoot: await _musicRoot(file),
         ) ??
         'Bilinmeyen Albüm';
 
-    /*
-     * Şarkı adı yalnızca title olarak kullanılır.
-     */
     final title =
         _clean(metadata.title) ??
+        _clean(lrcDocument?.title) ??
         _clean(fileName) ??
         'Bilinmeyen Şarkı';
 
     /*
-     * Önce müzik dosyasının içine gömülü kapak.
+     * Kapak:
+     *
+     * 1. MP3 içindeki embedded artwork
+     * 2. Aynı klasördeki aynı isimli JPG/PNG
      */
     Uint8List? artwork = metadata.artwork;
 
-    /*
-     * Embedded artwork yoksa klasördeki kapak
-     * dosyalarını ara.
-     */
     if (artwork == null || artwork.isEmpty) {
       artwork = await StellarLocalArtwork.find(
         file.path,
       );
     }
 
-    /*
-     * Harici lyrics dosyasını bul.
-     */
-    final lyricsPath = await _findLyrics(file);
+    final lyricsText =
+        _cleanLyrics(metadata.lyrics);
 
-    /*
-     * Metadata içindeki lyrics.
-     */
-    final lyricsText = _cleanLyrics(
-      metadata.lyrics,
-    );
-
-    /*
-     * Sanatçı doğrulaması.
-     */
     final verified =
         StellarArtistVerification
             .instance
@@ -204,16 +211,6 @@ class StellarMusicScanner {
       return null;
     }
 
-    /*
-     * Beklenen yapı:
-     *
-     * Music/
-     *   Sanatçı/
-     *     Albüm/
-     *       Şarkı.mp3
-     *
-     * İlk klasör sanatçı kabul edilir.
-     */
     return _clean(parts.first);
   }
 
@@ -247,29 +244,10 @@ class StellarMusicScanner {
         )
         .toList();
 
-    /*
-     * Music/
-     *   Sanatçı/
-     *     Albüm/
-     *       Şarkı.mp3
-     *
-     * Burada ikinci klasör albüm.
-     */
     if (parts.length >= 2) {
       return _clean(parts[1]);
     }
 
-    /*
-     * Sadece:
-     *
-     * Music/
-     *   Sanatçı/
-     *     Şarkı.mp3
-     *
-     * varsa albüm bilinmiyor.
-     *
-     * Sanatçı klasörünün adını albüm yapmıyoruz.
-     */
     return null;
   }
 
@@ -332,6 +310,9 @@ class StellarMusicScanner {
     final withoutExtension =
         _withoutExtension(fileName);
 
+    /*
+     * Öncelik aynı isimli LRC.
+     */
     final candidates = <String>[
       '$base.lrc',
       '$base.LRC',
@@ -342,9 +323,6 @@ class StellarMusicScanner {
       '$directory/lyrics.lrc',
       '$directory/Lyrics.lrc',
       '$directory/LYRICS.LRC',
-
-      '$directory/lyrics.txt',
-      '$directory/Lyrics.txt',
     ];
 
     final seen = <String>{};
@@ -355,23 +333,56 @@ class StellarMusicScanner {
       }
 
       try {
-        final file = File(candidate);
+        final lyricsFile = File(candidate);
 
-        if (!await file.exists()) {
+        if (!await lyricsFile.exists()) {
           continue;
         }
 
-        final length = await file.length();
+        final length =
+            await lyricsFile.length();
 
         if (length <= 0) {
           continue;
         }
 
-        return file.path;
+        return lyricsFile.path;
       } catch (_) {
         continue;
       }
     }
+
+    /*
+     * Dosya adı büyük/küçük harf açısından farklıysa
+     * klasördeki .lrc dosyalarını da kontrol et.
+     */
+    try {
+      await for (final entity in audioFile.parent.list(
+        recursive: false,
+        followLinks: false,
+      )) {
+        if (entity is! File) {
+          continue;
+        }
+
+        final name =
+            entity.uri.pathSegments.last;
+
+        if (!name.toLowerCase().endsWith('.lrc')) {
+          continue;
+        }
+
+        final candidateBase =
+            _withoutExtension(name);
+
+        if (candidateBase.toLowerCase() ==
+            withoutExtension.toLowerCase()) {
+          if (await entity.length() > 0) {
+            return entity.path;
+          }
+        }
+      }
+    } catch (_) {}
 
     return null;
   }
@@ -380,8 +391,7 @@ class StellarMusicScanner {
     StellarMusicTrack a,
     StellarMusicTrack b,
   ) {
-    final artist =
-        _compareText(
+    final artist = _compareText(
       a.artist,
       b.artist,
     );
@@ -390,8 +400,7 @@ class StellarMusicScanner {
       return artist;
     }
 
-    final album =
-        _compareText(
+    final album = _compareText(
       a.album,
       b.album,
     );
@@ -400,8 +409,7 @@ class StellarMusicScanner {
       return album;
     }
 
-    final title =
-        _compareText(
+    final title = _compareText(
       a.title,
       b.title,
     );
@@ -431,8 +439,7 @@ class StellarMusicScanner {
   static bool _isSupportedAudio(
     String path,
   ) {
-    final value =
-        path.toLowerCase();
+    final value = path.toLowerCase();
 
     return value.endsWith('.mp3') ||
         value.endsWith('.flac') ||
@@ -456,9 +463,7 @@ class StellarMusicScanner {
           ' ',
         );
 
-    return result.isEmpty
-        ? null
-        : result;
+    return result.isEmpty ? null : result;
   }
 
   static String? _cleanLyrics(
@@ -472,9 +477,7 @@ class StellarMusicScanner {
         .replaceAll('\u0000', '')
         .trim();
 
-    return result.isEmpty
-        ? null
-        : result;
+    return result.isEmpty ? null : result;
   }
 
   static String _withoutExtension(
