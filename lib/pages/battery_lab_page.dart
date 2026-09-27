@@ -214,11 +214,7 @@ class _BatteryLabPageState
                 ),
               ),
             ),
-
-            const SizedBox(
-              height: 14,
-            ),
-
+            const SizedBox(height: 14),
             Card(
               child: Padding(
                 padding:
@@ -267,11 +263,7 @@ class _BatteryLabPageState
                 ),
               ),
             ),
-
-            const SizedBox(
-              height: 14,
-            ),
-
+            const SizedBox(height: 14),
             Card(
               child: ListTile(
                 leading: Icon(
@@ -286,11 +278,8 @@ class _BatteryLabPageState
                     Text(_stateText()),
               ),
             ),
-
             if (_error != null) ...[
-              const SizedBox(
-                height: 14,
-              ),
+              const SizedBox(height: 14),
               Card(
                 child: ListTile(
                   leading: Icon(
@@ -306,11 +295,7 @@ class _BatteryLabPageState
                 ),
               ),
             ],
-
-            const SizedBox(
-              height: 20,
-            ),
-
+            const SizedBox(height: 20),
             if (_loading)
               const Center(
                 child:
@@ -333,4 +318,3 @@ class _BatteryLabPageState
     );
   }
 }
-
