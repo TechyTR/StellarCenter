@@ -52,7 +52,15 @@ jobs:
         shell: bash
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not read version from pubspec.yaml"
+            exit 1
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Stellar Center version: $VERSION"
 
       - name: Prepare Android keystore
         shell: bash
@@ -166,7 +174,15 @@ jobs:
         shell: bash
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not read version from pubspec.yaml"
+            exit 1
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Stellar Center version: $VERSION"
 
       - name: Build Linux
         env:
@@ -274,9 +290,66 @@ jobs:
       - android
       - linux
 
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.ref == 'refs/heads/main' ||
+      startsWith(github.ref, 'refs/tags/v')
 
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not read version from pubspec.yaml"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "Release version: $VERSION"
+
+      - name: Determine release tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v${{ steps.version.outputs.version }}"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          echo "Release tag: $TAG"
+
+      - name: Create or verify release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists."
+          else
+            echo "Creating tag ${TAG}..."
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git tag "${TAG}" "${GITHUB_SHA}"
+            git push origin "${TAG}"
+          fi
+
       - name: Download Android artifact
         uses: actions/download-artifact@v5
         with:
@@ -291,16 +364,45 @@ jobs:
           path: release
           merge-multiple: true
 
+      - name: Show release files
+        shell: bash
+        run: |
+          echo "Release files:"
+          find release -maxdepth 2 -type f -print
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
 
-          gh release create "$TAG" \
-            release/*.apk \
-            release/*.tar.gz \
-            release/*.deb \
-            --title "Stellar Center ${TAG#v}" \
-            --generate-notes \
-            --latest
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists."
+            echo "Uploading/replacing artifacts..."
+
+            gh release upload "$TAG" \
+              release/*.apk \
+              release/*.tar.gz \
+              release/*.deb \
+              --clobber
+          else
+            echo "Creating GitHub Release ${TAG}..."
+
+            gh release create "$TAG" \
+              release/*.apk \
+              release/*.tar.gz \
+              release/*.deb \
+              --title "Stellar Center ${VERSION}" \
+              --generate-notes \
+              --latest
+          fi
+
+      - name: Release completed
+        run: |
+          echo "========================================"
+          echo "Stellar Center Release completed"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Tag: ${{ steps.tag.outputs.tag }}"
+          echo "========================================"
