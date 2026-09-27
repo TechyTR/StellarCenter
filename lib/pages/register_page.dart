@@ -24,8 +24,12 @@ class _RegisterPageState
       TextEditingController();
 
   bool _loading = false;
+  bool _googleLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  bool get _busy =>
+      _loading || _googleLoading;
 
   @override
   void dispose() {
@@ -116,13 +120,49 @@ class _RegisterPageState
     }
   }
 
+  Future<void> _registerWithGoogle() async {
+    if (_busy) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _googleLoading = true;
+    });
+
+    try {
+      await AuthService.instance.signInWithGoogle();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      _showError(e.message);
+    } catch (e) {
+      if (!mounted) return;
+
+      _showError(
+        'Google ile hesap oluşturulurken bir hata oluştu: $e',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _googleLoading = false;
+        });
+      }
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
       ),
     );
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme =
         Theme.of(context).colorScheme;
@@ -210,12 +250,14 @@ class _RegisterPageState
                       ),
                       suffixIcon:
                           IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
-                        },
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscurePassword =
+                                      !_obscurePassword;
+                                });
+                              },
                         icon: Icon(
                           _obscurePassword
                               ? Icons
@@ -237,7 +279,7 @@ class _RegisterPageState
                     textInputAction:
                         TextInputAction.done,
                     onSubmitted: (_) {
-                      if (!_loading) {
+                      if (!_busy) {
                         _register();
                       }
                     },
@@ -251,12 +293,14 @@ class _RegisterPageState
                       ),
                       suffixIcon:
                           IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword =
-                                !_obscureConfirmPassword;
-                          });
-                        },
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
                         icon: Icon(
                           _obscureConfirmPassword
                               ? Icons
@@ -274,7 +318,7 @@ class _RegisterPageState
                     height: 52,
                     child: FilledButton(
                       onPressed:
-                          _loading
+                          _busy
                               ? null
                               : _register,
                       child: _loading
@@ -296,8 +340,65 @@ class _RegisterPageState
                     ),
                   ),
                   const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: scheme.outlineVariant,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
+                        child: Text(
+                          'veya',
+                          style: TextStyle(
+                            color:
+                                scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: scheme.outlineVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _busy
+                              ? null
+                              : _registerWithGoogle,
+                      icon: _googleLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(
+                              Icons
+                                  .account_circle_outlined,
+                            ),
+                      label: const Text(
+                        'Google ile devam et',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
-                    'Hesap oluşturulduğunda doğrulama e-postası otomatik olarak gönderilir.',
+                    'E-posta ile hesap oluşturulduğunda doğrulama e-postası otomatik olarak gönderilir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
