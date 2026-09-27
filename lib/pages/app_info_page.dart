@@ -33,8 +33,7 @@ class AppInfoPage extends StatelessWidget {
   });
 
   bool get _isGlass =>
-      selectedStyle !=
-      AppThemeStyle.normal;
+      selectedStyle != AppThemeStyle.normal;
 
   bool get _isLightGlass =>
       selectedStyle ==
@@ -219,173 +218,111 @@ class AppInfoPage extends StatelessWidget {
     BuildContext context,
     AppThemeColor theme,
   ) {
-    final selected =
-        selectedTheme == theme;
-
-    final color =
-        AppTheme.colorOf(theme);
+    final selected = selectedTheme == theme;
+    final color = AppTheme.colorOf(theme);
 
     return Semantics(
       button: true,
       selected: selected,
-      label:
-          '${AppTheme.labelOf(theme)} tema',
+      label: '${AppTheme.labelOf(theme)} tema',
       child: GestureDetector(
-        onTap: () =>
-            onThemeChanged(theme),
+        onTap: () => onThemeChanged(theme),
+        behavior: HitTestBehavior.opaque,
         child: AnimatedScale(
-          scale: selected ? 1.0 : .97,
+          scale: selected ? 1.0 : 0.94,
           duration:
-              const Duration(
-            milliseconds: 280,
-          ),
-          curve:
-              Curves.easeOutBack,
+              const Duration(milliseconds: 280),
+          curve: Curves.easeOutBack,
           child: AnimatedContainer(
             duration:
-                const Duration(
-              milliseconds: 360,
+                const Duration(milliseconds: 360),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.only(
+              right: 10,
+              bottom: 10,
             ),
-            curve:
-                Curves.easeOutCubic,
-            margin:
-                const EdgeInsets.only(
-              right: 9,
-              bottom: 9,
-            ),
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 15,
-              vertical: 10,
-            ),
+            width: selected ? 58 : 50,
+            height: selected ? 58 : 50,
             decoration: BoxDecoration(
-              color: selected
-                  ? color.withOpacity(
-                      _isLightGlass
-                          ? .14
-                          : .17,
-                    )
-                  : Colors.transparent,
-              borderRadius:
-                  BorderRadius.circular(30),
+              shape: BoxShape.circle,
+              color: color.withOpacity(
+                selected
+                    ? (_isLightGlass ? .18 : .22)
+                    : .10,
+              ),
               border: Border.all(
                 color: selected
                     ? color
                     : color.withOpacity(.45),
-                width:
-                    selected ? 1.8 : 1,
+                width: selected ? 2.2 : 1.2,
               ),
               boxShadow: selected
                   ? [
                       BoxShadow(
-                        color: color
-                            .withOpacity(.28),
+                        color:
+                            color.withOpacity(.42),
                         blurRadius: 18,
                         spreadRadius: 1,
                       ),
                     ]
-                  : null,
+                  : [
+                      BoxShadow(
+                        color:
+                            color.withOpacity(.10),
+                        blurRadius: 7,
+                      ),
+                    ],
             ),
-            child: Row(
-              mainAxisSize:
-                  MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration:
-                      const Duration(
-                    milliseconds: 300,
-                  ),
-                  width:
-                      selected ? 12 : 9,
-                  height:
-                      selected ? 12 : 9,
-                  decoration:
-                      BoxDecoration(
-                    color: color,
-                    shape:
-                        BoxShape.circle,
-                    boxShadow:
-                        selected
-                            ? [
-                                BoxShadow(
-                                  color: color
-                                      .withOpacity(
-                                    .65,
-                                  ),
-                                  blurRadius:
-                                      10,
-                                ),
-                              ]
-                            : null,
-                  ),
-                ),
-                const SizedBox(
-                  width: 9,
-                ),
-                Text(
-                  AppTheme.labelOf(
-                    theme,
-                  ),
-                  style: TextStyle(
-                    color: selected
-                        ? color
-                        : Theme.of(
-                            context,
-                          )
-                            .colorScheme
-                            .onSurface,
-                    fontWeight:
-                        selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                  ),
-                ),
-                ClipRect(
-                  child:
-                      AnimatedSwitcher(
-                    duration:
-                        const Duration(
-                      milliseconds: 260,
+            child: Center(
+              child: AnimatedContainer(
+                duration:
+                    const Duration(milliseconds: 300),
+                curve: Curves.easeOutBack,
+                width: selected ? 28 : 22,
+                height: selected ? 28 : 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(
+                        selected ? .70 : .45,
+                      ),
+                      blurRadius:
+                          selected ? 13 : 7,
                     ),
-                    transitionBuilder:
-                        (
-                      child,
-                      animation,
-                    ) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      );
-                    },
-                    child: selected
-                        ? Padding(
-                            key:
-                                const ValueKey(
-                              'check',
-                            ),
-                            padding:
-                                const EdgeInsets
-                                    .only(
-                              left: 7,
-                            ),
-                            child:
-                                Icon(
-                              Icons
-                                  .check_circle_rounded,
-                              color:
-                                  color,
-                              size: 17,
-                            ),
-                          )
-                        : const SizedBox(
-                            key:
-                                ValueKey(
-                              'empty',
-                            ),
-                          ),
-                  ),
+                  ],
                 ),
-              ],
+                child: AnimatedSwitcher(
+                  duration:
+                      const Duration(milliseconds: 220),
+                  transitionBuilder:
+                      (child, animation) {
+                    return ScaleTransition(
+                      scale: CurvedAnimation(
+                        parent: animation,
+                        curve:
+                            Curves.easeOutBack,
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: selected
+                      ? const Icon(
+                          Icons.check_rounded,
+                          key: ValueKey(
+                            'selected',
+                          ),
+                          size: 17,
+                          color: Colors.white,
+                        )
+                      : const SizedBox(
+                          key: ValueKey(
+                            'unselected',
+                          ),
+                        ),
+                ),
+              ),
             ),
           ),
         ),
@@ -461,15 +398,11 @@ class AppInfoPage extends StatelessWidget {
                     color: selected
                         ? accent.withOpacity(.17)
                         : Colors.white
-                            .withOpacity(
-                            .055,
-                          ),
+                            .withOpacity(.055),
                     border: Border.all(
                       color: selected
                           ? accent
-                              .withOpacity(
-                              .45,
-                            )
+                              .withOpacity(.45)
                           : Colors.transparent,
                     ),
                     boxShadow:
@@ -610,8 +543,7 @@ class AppInfoPage extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
@@ -629,18 +561,17 @@ class AppInfoPage extends StatelessWidget {
                         subtitle,
                         style: TextStyle(
                           fontSize: 12.5,
-                          color: scheme
-                              .onSurfaceVariant,
+                          color:
+                              scheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Icon(
-                  Icons
-                      .chevron_right_rounded,
-                  color: scheme
-                      .onSurfaceVariant,
+                  Icons.chevron_right_rounded,
+                  color:
+                      scheme.onSurfaceVariant,
                 ),
               ],
             ),
@@ -693,42 +624,31 @@ class AppInfoPage extends StatelessWidget {
                 Alignment.bottomRight,
             colors: _isAurora
                 ? [
-                    _accent
-                        .withOpacity(.18),
-                    secondary
-                        .withOpacity(.08),
+                    _accent.withOpacity(.18),
+                    secondary.withOpacity(.08),
                     Colors.transparent,
                   ]
                 : [
-                    _accent
-                        .withOpacity(
-                      _isLightGlass
-                          ? .18
-                          : .13,
+                    _accent.withOpacity(
+                      _isLightGlass ? .18 : .13,
                     ),
-                    Colors.white
-                        .withOpacity(
-                      _isLightGlass
-                          ? .11
-                          : .025,
+                    Colors.white.withOpacity(
+                      _isLightGlass ? .11 : .025,
                     ),
                     Colors.transparent,
                   ],
           ),
         ),
         child: Stack(
-          alignment:
-              Alignment.center,
+          alignment: Alignment.center,
           children: [
             if (_isAurora)
               Positioned.fill(
-                child:
-                    IgnorePointer(
+                child: IgnorePointer(
                   child: CustomPaint(
                     painter:
                         _AuroraGridPainter(
-                      color:
-                          _accent,
+                      color: _accent,
                     ),
                   ),
                 ),
@@ -750,8 +670,7 @@ class AppInfoPage extends StatelessWidget {
                     Icons
                         .auto_awesome_rounded,
                     size: 72,
-                    color:
-                        _accent,
+                    color: _accent,
                   );
                 },
               ),
@@ -783,7 +702,6 @@ class AppInfoPage extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar:
           _isGlass || _isAurora,
-
       appBar: Platform.isAndroid
           ? null
           : AppBar(
@@ -801,11 +719,9 @@ class AppInfoPage extends StatelessWidget {
                   Colors.transparent,
               elevation: 0,
             ),
-
       body: Stack(
         children: [
           _auroraAtmosphere(context),
-
           ListView(
             padding:
                 const EdgeInsets.fromLTRB(
@@ -816,7 +732,6 @@ class AppInfoPage extends StatelessWidget {
             ),
             children: [
               _hero(context),
-
               Text(
                 'Tema Rengi',
                 style: TextStyle(
@@ -827,11 +742,7 @@ class AppInfoPage extends StatelessWidget {
                       scheme.onSurfaceVariant,
                 ),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
+              const SizedBox(height: 10),
               Wrap(
                 children:
                     AppThemeColor.values
@@ -844,11 +755,7 @@ class AppInfoPage extends StatelessWidget {
                         )
                         .toList(),
               ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
+              const SizedBox(height: 12),
               Text(
                 'Görünüm',
                 style: TextStyle(
@@ -859,46 +766,32 @@ class AppInfoPage extends StatelessWidget {
                       scheme.onSurfaceVariant,
                 ),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
+              const SizedBox(height: 10),
               _styleButton(
                 context,
                 AppThemeStyle.normal,
                 Icons.palette_outlined,
                 'Material Design',
               ),
-
               _styleButton(
                 context,
-                AppThemeStyle
-                    .liquidGlassLight,
+                AppThemeStyle.liquidGlassLight,
                 Icons.light_mode_rounded,
                 'Liquid Glass Light',
               ),
-
               _styleButton(
                 context,
-                AppThemeStyle
-                    .liquidGlassDark,
+                AppThemeStyle.liquidGlassDark,
                 Icons.dark_mode_rounded,
                 'Liquid Glass Dark',
               ),
-
               _styleButton(
                 context,
-                AppThemeStyle
-                    .stellarAurora,
+                AppThemeStyle.stellarAurora,
                 Icons.auto_awesome_rounded,
                 'Stellar Aurora',
               ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
+              const SizedBox(height: 12),
               Text(
                 'Araçlar',
                 style: TextStyle(
@@ -909,15 +802,10 @@ class AppInfoPage extends StatelessWidget {
                       scheme.onSurfaceVariant,
                 ),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
+              const SizedBox(height: 10),
               _toolButton(
                 context,
-                icon:
-                    Icons.speed_rounded,
+                icon: Icons.speed_rounded,
                 title: 'Benchmark',
                 subtitle:
                     'Cihaz performansını detaylı test et',
@@ -928,13 +816,10 @@ class AppInfoPage extends StatelessWidget {
                   );
                 },
               ),
-
               _toolButton(
                 context,
-                icon:
-                    Icons.storage_rounded,
-                title:
-                    'Storage Manager',
+                icon: Icons.storage_rounded,
+                title: 'Storage Manager',
                 subtitle:
                     'Depolama kullanımını incele',
                 onTap: () {
@@ -944,14 +829,11 @@ class AppInfoPage extends StatelessWidget {
                   );
                 },
               ),
-
               _toolButton(
                 context,
-                icon:
-                    Icons.sensors_rounded,
+                icon: Icons.sensors_rounded,
                 title: 'SensorLab',
-                subtitle:
-                    'Sensörleri incele',
+                subtitle: 'Sensörleri incele',
                 onTap: () {
                   _openPage(
                     context,
@@ -959,11 +841,9 @@ class AppInfoPage extends StatelessWidget {
                   );
                 },
               ),
-
               _toolButton(
                 context,
-                icon: Icons
-                    .network_check_rounded,
+                icon: Icons.network_check_rounded,
                 title: 'Network Lab',
                 subtitle:
                     'Ağ bağlantısını incele',
@@ -974,11 +854,9 @@ class AppInfoPage extends StatelessWidget {
                   );
                 },
               ),
-
               _toolButton(
                 context,
-                icon: Icons
-                    .battery_full_rounded,
+                icon: Icons.battery_full_rounded,
                 title: 'Battery Lab',
                 subtitle:
                     'Pil durumunu incele',
@@ -989,11 +867,7 @@ class AppInfoPage extends StatelessWidget {
                   );
                 },
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
+              const SizedBox(height: 10),
               Text(
                 'Güncelleme',
                 style: TextStyle(
@@ -1004,46 +878,33 @@ class AppInfoPage extends StatelessWidget {
                       scheme.onSurfaceVariant,
                 ),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
-
+              const SizedBox(height: 10),
               _glassCard(
                 context,
-                child:
-                    const UpdateButton(
+                child: const UpdateButton(
                   currentVersion:
                       AppVersion.current,
                 ),
               ),
-
-              const SizedBox(
-                height: 8,
-              ),
-
+              const SizedBox(height: 8),
               Center(
                 child: Column(
                   children: [
                     Text(
                       'Stellar Center',
-                      style:
-                          TextStyle(
+                      style: TextStyle(
                         fontWeight:
                             FontWeight.w600,
-                        color: scheme
-                            .onSurfaceVariant,
+                        color:
+                            scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(
-                      height: 4,
-                    ),
+                    const SizedBox(height: 4),
                     Text(
                       'Linux • v${AppVersion.current}',
-                      style:
-                          TextStyle(
-                        color: scheme
-                            .onSurfaceVariant,
+                      style: TextStyle(
+                        color:
+                            scheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -1058,8 +919,7 @@ class AppInfoPage extends StatelessWidget {
   }
 }
 
-class _AuroraOrb
-    extends StatelessWidget {
+class _AuroraOrb extends StatelessWidget {
   final Color color;
   final double size;
 
@@ -1073,28 +933,23 @@ class _AuroraOrb
     BuildContext context,
   ) {
     return ImageFiltered(
-      imageFilter:
-          ImageFilter.blur(
+      imageFilter: ImageFilter.blur(
         sigmaX: 70,
         sigmaY: 70,
       ),
       child: Container(
         width: size,
         height: size,
-        decoration:
-            BoxDecoration(
-          shape:
-              BoxShape.circle,
-          color:
-              color.withOpacity(.11),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withOpacity(.11),
         ),
       ),
     );
   }
 }
 
-class _AuroraGridPainter
-    extends CustomPainter {
+class _AuroraGridPainter extends CustomPainter {
   final Color color;
 
   _AuroraGridPainter({
@@ -1107,8 +962,7 @@ class _AuroraGridPainter
     Size size,
   ) {
     final paint = Paint()
-      ..color =
-          color.withOpacity(.055)
+      ..color = color.withOpacity(.055)
       ..strokeWidth = .7
       ..style = PaintingStyle.stroke;
 
@@ -1171,3 +1025,4 @@ class _AuroraGridPainter
     return oldDelegate.color != color;
   }
 }
+
