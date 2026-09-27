@@ -38,10 +38,8 @@ class _StellarLyricsOverlayState
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.track.path != widget.track.path ||
-        oldWidget.track.lyricsPath !=
-            widget.track.lyricsPath ||
-        oldWidget.track.lyricsText !=
-            widget.track.lyricsText) {
+        oldWidget.track.lyricsPath != widget.track.lyricsPath ||
+        oldWidget.track.lyricsText != widget.track.lyricsText) {
       _load();
     }
   }
@@ -50,17 +48,17 @@ class _StellarLyricsOverlayState
     final path = widget.track.lyricsPath;
 
     /*
-     * 1. Önce harici LRC dosyasını yükle.
+     * 1. Harici LRC dosyası.
      */
     if (path != null && path.trim().isNotEmpty) {
       try {
         final document =
-            await StellarLyricsLoader.loadDocument(
-          path,
-        );
+            await StellarLyricsLoader.loadDocument(path);
 
         if (document.lines.isNotEmpty) {
-          if (!mounted) return;
+          if (!mounted) {
+            return;
+          }
 
           setState(() {
             _lines = document.lines;
@@ -75,18 +73,19 @@ class _StellarLyricsOverlayState
     }
 
     /*
-     * 2. LRC bulunamazsa embedded lyrics.
+     * 2. MP3 embedded lyrics.
      */
     final embedded = widget.track.lyricsText;
 
     if (embedded != null &&
         embedded.trim().isNotEmpty) {
-      final lines = StellarLrcParser.parse(
-        embedded,
-      );
+      final lines =
+          StellarLrcParser.parse(embedded);
 
       if (lines.isNotEmpty) {
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
 
         setState(() {
           _lines = lines;
@@ -97,12 +96,14 @@ class _StellarLyricsOverlayState
       }
 
       /*
-       * Timestamp yoksa düz metin olarak göster.
+       * Timestamp yoksa düz metin.
        */
       final plainLines =
           _plainTextToLines(embedded);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _lines = plainLines;
@@ -112,7 +113,9 @@ class _StellarLyricsOverlayState
       return;
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _lines = const [];
@@ -125,9 +128,8 @@ class _StellarLyricsOverlayState
   ) {
     final result = <StellarLrcLine>[];
 
-    final rawLines = content.split(
-      RegExp(r'\r?\n'),
-    );
+    final rawLines =
+        content.split(RegExp(r'\r?\n'));
 
     var index = 0;
 
@@ -221,8 +223,13 @@ class _StellarLyricsOverlayState
     int min,
     int max,
   ) {
-    if (value < min) return min;
-    if (value > max) return max;
+    if (value < min) {
+      return min;
+    }
+
+    if (value > max) {
+      return max;
+    }
 
     return value;
   }
