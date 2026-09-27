@@ -83,6 +83,8 @@ jobs:
           flutter clean
           flutter pub get
 
+          dart run flutter_launcher_icons
+
           flutter build apk \
             --release \
             -t lib/main/main_android.dart
@@ -153,18 +155,27 @@ jobs:
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
 
-      - name: Verify GLib version
-        run: |
-          echo "GLib version:"
-          pkg-config --modversion glib-2.0
+      # ----------------------------------------------------------
+      # IMPORTANT:
+      # Do NOT overwrite an existing Linux project.
+      # ----------------------------------------------------------
 
-      - name: Generate Linux desktop project
+      - name: Generate Linux desktop project if missing
+        shell: bash
         run: |
-          flutter create \
-            --platforms=linux \
-            --project-name stellarcenter \
-            --no-pub \
-            .
+          if [ ! -d "linux" ]; then
+            echo "Linux project does not exist."
+            echo "Generating Linux project..."
+
+            flutter create \
+              --platforms=linux \
+              --project-name stellarcenter \
+              --no-pub \
+              .
+          else
+            echo "Existing Linux project found."
+            echo "Keeping repository Linux project."
+          fi
 
       - name: Install Flutter dependencies
         run: flutter pub get
@@ -183,6 +194,22 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
           echo "Stellar Center version: $VERSION"
+
+      - name: Prepare Linux icon directories
+        shell: bash
+        run: |
+          mkdir -p \
+            linux/icons/hicolor/16x16/apps \
+            linux/icons/hicolor/24x24/apps \
+            linux/icons/hicolor/32x32/apps \
+            linux/icons/hicolor/48x48/apps \
+            linux/icons/hicolor/64x64/apps \
+            linux/icons/hicolor/128x128/apps \
+            linux/icons/hicolor/256x256/apps \
+            linux/icons/hicolor/512x512/apps \
+            linux/icons/hicolor/1024x1024/apps
+
+          test -f assets/icon.png
 
       - name: Build Linux
         env:
@@ -222,11 +249,9 @@ jobs:
             echo "OK: No direct g_once_init_enter_pointer reference found."
           fi
 
-      - name: Create Linux tar.gz
-        run: |
-          tar -czf \
-            "stellar-center-${{ steps.version.outputs.version }}-linux-x64.tar.gz" \
-            -C build/linux/x64/release bundle
+      # ----------------------------------------------------------
+      # Prepare Debian package
+      # ----------------------------------------------------------
 
       - name: Create Linux .deb
         shell: bash
@@ -239,15 +264,61 @@ jobs:
             "debian-package/DEBIAN" \
             "debian-package/opt/stellarcenter" \
             "debian-package/usr/share/applications" \
+            "debian-package/usr/share/icons/hicolor/16x16/apps" \
+            "debian-package/usr/share/icons/hicolor/24x24/apps" \
+            "debian-package/usr/share/icons/hicolor/32x32/apps" \
+            "debian-package/usr/share/icons/hicolor/48x48/apps" \
+            "debian-package/usr/share/icons/hicolor/64x64/apps" \
+            "debian-package/usr/share/icons/hicolor/128x128/apps" \
+            "debian-package/usr/share/icons/hicolor/256x256/apps" \
+            "debian-package/usr/share/icons/hicolor/512x512/apps" \
             "debian-package/usr/share/icons/hicolor/1024x1024/apps"
 
           cp -r \
             build/linux/x64/release/bundle/. \
             debian-package/opt/stellarcenter/
 
-          cp \
-            assets/icon.png \
-            "debian-package/usr/share/icons/hicolor/1024x1024/apps/stellarcenter.png"
+          # ------------------------------------------------------
+          # Install application icon in all common hicolor sizes.
+          #
+          # The source icon remains the original assets/icon.png.
+          # ImageMagick is installed below only for resizing.
+          # ------------------------------------------------------
+
+          apt-get update
+          apt-get install -y imagemagick
+
+          for SIZE in 16 24 32 48 64 128 256 512 1024; do
+            convert \
+              assets/icon.png \
+              -resize "${SIZE}x${SIZE}" \
+              -strip \
+              "debian-package/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/stellarcenter.png"
+          done
+
+          # ------------------------------------------------------
+          # Desktop launcher
+          # ------------------------------------------------------
+
+          cat > \
+            debian-package/usr/share/applications/stellarcenter.desktop \
+            <<EOF
+          [Desktop Entry]
+          Name=Stellar Center
+          GenericName=Stellar Center
+          Comment=Stellar Center system utility application
+          Exec=/opt/stellarcenter/stellarcenter
+          Icon=stellarcenter
+          Terminal=false
+          Type=Application
+          Categories=Utility;System;
+          StartupNotify=true
+          StartupWMClass=stellarcenter
+          EOF
+
+          # ------------------------------------------------------
+          # Debian package metadata
+          # ------------------------------------------------------
 
           cat > debian-package/DEBIAN/control <<EOF
           Package: stellarcenter
@@ -259,22 +330,35 @@ jobs:
           Description: Stellar Center system utility application
           EOF
 
-          cat > debian-package/usr/share/applications/stellarcenter.desktop <<EOF
-          [Desktop Entry]
-          Name=Stellar Center
-          Comment=Stellar Center system utility application
-          Exec=/opt/stellarcenter/stellarcenter
-          Icon=stellarcenter
-          Terminal=false
-          Type=Application
-          Categories=Utility;System;
-          StartupWMClass=stellarcenter
-          EOF
+          # ------------------------------------------------------
+          # Update desktop icon cache when available.
+          # ------------------------------------------------------
+
+          mkdir -p \
+            debian-package/usr/share/icons/hicolor
+
+          if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+            gtk-update-icon-cache \
+              -f \
+              -t \
+              debian-package/usr/share/icons/hicolor \
+              || true
+          fi
+
+          # ------------------------------------------------------
+          # Build DEB
+          # ------------------------------------------------------
 
           dpkg-deb \
             --build \
             debian-package \
             "stellar-center-${VERSION}-amd64.deb"
+
+      - name: Create Linux tar.gz
+        run: |
+          tar -czf \
+            "stellar-center-${{ steps.version.outputs.version }}-linux-x64.tar.gz" \
+            -C build/linux/x64/release bundle
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v7
