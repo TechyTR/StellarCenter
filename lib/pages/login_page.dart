@@ -10,12 +10,17 @@ class LoginPage extends StatefulWidget {
   });
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() =>
+      _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+class _LoginPageState
+    extends State<LoginPage> {
+  final _emailController =
+      TextEditingController();
+
+  final _passwordController =
+      TextEditingController();
 
   bool _loading = false;
   bool _obscurePassword = true;
@@ -30,14 +35,34 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
 
+    final email =
+        _emailController.text.trim();
+
+    final password =
+        _passwordController.text;
+
+    if (email.isEmpty) {
+      _showMessage(
+        'E-posta adresini girin.',
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showMessage(
+        'Şifrenizi girin.',
+      );
+      return;
+    }
+
     setState(() {
       _loading = true;
     });
 
     try {
       await AuthService.instance.login(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: email,
+        password: password,
       );
 
       if (!mounted) return;
@@ -46,20 +71,12 @@ class _LoginPageState extends State<LoginPage> {
     } on AuthException catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-        ),
-      );
-    } catch (_) {
+      _showMessage(e.message);
+    } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Giriş sırasında beklenmeyen bir hata oluştu.',
-          ),
-        ),
+      _showMessage(
+        'Giriş sırasında beklenmeyen bir hata oluştu: $e',
       );
     } finally {
       if (mounted) {
@@ -70,9 +87,36 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
+  Future<void> _openRegister() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            const RegisterPage(),
+      ),
+    );
+  }
+
+  Future<void> _openForgotPassword() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            const ForgotPasswordPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final scheme =
+        Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -88,7 +132,8 @@ class _LoginPageState extends State<LoginPage> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
+              constraints:
+                  const BoxConstraints(
                 maxWidth: 430,
               ),
               child: Column(
@@ -100,9 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                     size: 76,
                     color: scheme.primary,
                   ),
-
                   const SizedBox(height: 20),
-
                   const Text(
                     'Stellar hesabına giriş yap',
                     textAlign: TextAlign.center,
@@ -111,41 +154,42 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     'Hesabınla Stellar Center deneyimini cihazların arasında kullan.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: scheme.onSurfaceVariant,
+                      color:
+                          scheme.onSurfaceVariant,
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   TextField(
-                    controller: _emailController,
+                    controller:
+                        _emailController,
                     keyboardType:
                         TextInputType.emailAddress,
                     autocorrect: false,
                     textInputAction:
                         TextInputAction.next,
-                    decoration: const InputDecoration(
+                    decoration:
+                        const InputDecoration(
                       labelText: 'E-posta',
-                      hintText: 'ornek@mail.com',
+                      hintText:
+                          'ornek@mail.com',
                       prefixIcon: Icon(
                         Icons.email_outlined,
                       ),
-                      border: OutlineInputBorder(),
+                      border:
+                          OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
+                    controller:
+                        _passwordController,
+                    obscureText:
+                        _obscurePassword,
                     textInputAction:
                         TextInputAction.done,
                     onSubmitted: (_) {
@@ -153,12 +197,15 @@ class _LoginPageState extends State<LoginPage> {
                         _login();
                       }
                     },
-                    decoration: InputDecoration(
+                    decoration:
+                        InputDecoration(
                       labelText: 'Şifre',
-                      prefixIcon: const Icon(
+                      prefixIcon:
+                          const Icon(
                         Icons.lock_outline_rounded,
                       ),
-                      suffixIcon: IconButton(
+                      suffixIcon:
+                          IconButton(
                         onPressed: () {
                           setState(() {
                             _obscurePassword =
@@ -167,43 +214,38 @@ class _LoginPageState extends State<LoginPage> {
                         },
                         icon: Icon(
                           _obscurePassword
-                              ? Icons.visibility_outlined
+                              ? Icons
+                                  .visibility_outlined
                               : Icons
                                   .visibility_off_outlined,
                         ),
                       ),
-                      border: const OutlineInputBorder(),
+                      border:
+                          const OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Align(
-                    alignment: Alignment.centerRight,
+                    alignment:
+                        Alignment.centerRight,
                     child: TextButton(
-                      onPressed: _loading
-                          ? null
-                          : () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const ForgotPasswordPage(),
-                                ),
-                              );
-                            },
+                      onPressed:
+                          _loading
+                              ? null
+                              : _openForgotPassword,
                       child: const Text(
                         'Şifremi unuttum',
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   SizedBox(
                     height: 52,
                     child: FilledButton(
                       onPressed:
-                          _loading ? null : _login,
+                          _loading
+                              ? null
+                              : _login,
                       child: _loading
                           ? const SizedBox(
                               width: 23,
@@ -222,9 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
                   Row(
                     mainAxisAlignment:
                         MainAxisAlignment.center,
@@ -232,21 +272,15 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         'Hesabın yok mu?',
                         style: TextStyle(
-                          color:
-                              scheme.onSurfaceVariant,
+                          color: scheme
+                              .onSurfaceVariant,
                         ),
                       ),
                       TextButton(
-                        onPressed: _loading
-                            ? null
-                            : () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const RegisterPage(),
-                                  ),
-                                );
-                              },
+                        onPressed:
+                            _loading
+                                ? null
+                                : _openRegister,
                         child: const Text(
                           'Kayıt ol',
                         ),
