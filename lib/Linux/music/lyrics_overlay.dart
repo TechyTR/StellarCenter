@@ -24,6 +24,7 @@ class _StellarLyricsOverlayState
   List<StellarLrcLine> _lines = const [];
 
   String? _loadedPath;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -38,18 +39,27 @@ class _StellarLyricsOverlayState
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.track.path != widget.track.path ||
-        oldWidget.track.lyricsPath != widget.track.lyricsPath ||
-        oldWidget.track.lyricsText != widget.track.lyricsText) {
+        oldWidget.track.lyricsPath !=
+            widget.track.lyricsPath ||
+        oldWidget.track.lyricsText !=
+            widget.track.lyricsText) {
       _load();
     }
   }
 
   Future<void> _load() async {
-    final path = widget.track.lyricsPath;
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _lines = const [];
+      });
+    }
 
     /*
-     * 1. Harici LRC dosyası.
+     * 1. Harici .lrc dosyası.
      */
+    final path = widget.track.lyricsPath;
+
     if (path != null && path.trim().isNotEmpty) {
       try {
         final document =
@@ -63,6 +73,7 @@ class _StellarLyricsOverlayState
           setState(() {
             _lines = document.lines;
             _loadedPath = path;
+            _loading = false;
           });
 
           return;
@@ -73,32 +84,33 @@ class _StellarLyricsOverlayState
     }
 
     /*
-     * 2. MP3 embedded lyrics.
+     * 2. MP3 metadata içindeki lyrics.
      */
     final embedded = widget.track.lyricsText;
 
     if (embedded != null &&
         embedded.trim().isNotEmpty) {
-      final lines =
+      final parsed =
           StellarLrcParser.parse(embedded);
 
-      if (lines.isNotEmpty) {
+      if (parsed.isNotEmpty) {
         if (!mounted) {
           return;
         }
 
         setState(() {
-          _lines = lines;
+          _lines = parsed;
           _loadedPath = null;
+          _loading = false;
         });
 
         return;
       }
 
       /*
-       * Timestamp yoksa düz metin.
+       * Timestamp yoksa düz sözleri satır satır göster.
        */
-      final plainLines =
+      final plain =
           _plainTextToLines(embedded);
 
       if (!mounted) {
@@ -106,8 +118,9 @@ class _StellarLyricsOverlayState
       }
 
       setState(() {
-        _lines = plainLines;
+        _lines = plain;
         _loadedPath = null;
+        _loading = false;
       });
 
       return;
@@ -120,6 +133,7 @@ class _StellarLyricsOverlayState
     setState(() {
       _lines = const [];
       _loadedPath = null;
+      _loading = false;
     });
   }
 
@@ -157,12 +171,21 @@ class _StellarLyricsOverlayState
 
   @override
   Widget build(BuildContext context) {
-    if (_lines.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 8,
+    if (_loading) {
+      return const Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white54,
+          ),
         ),
+      );
+    }
+
+    if (_lines.isEmpty) {
+      return const Center(
         child: Text(
           'Şarkı sözü bulunamadı',
           textAlign: TextAlign.center,
@@ -183,6 +206,9 @@ class _StellarLyricsOverlayState
     final visibleIndex =
         activeIndex < 0 ? 0 : activeIndex;
 
+    /*
+     * Aktif satırın etrafında birkaç satır göster.
+     */
     final start = _clamp(
       visibleIndex - 2,
       0,
@@ -190,30 +216,36 @@ class _StellarLyricsOverlayState
     );
 
     final end = _clamp(
-      visibleIndex + 3,
+      visibleIndex + 4,
       start,
       _lines.length,
     );
 
-    return AnimatedSize(
-      duration: const Duration(
-        milliseconds: 260,
-      ),
-      curve: Curves.easeOutCubic,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = start; i < end; i++)
-            _LyricLine(
-              key: ValueKey(
-                '${_loadedPath ?? widget.track.path}-$i',
-              ),
-              text: _lines[i].text,
-              active:
-                  i == activeIndex ||
-                  (activeIndex < 0 && i == 0),
-            ),
-        ],
+    return ClipRect(
+      child: AnimatedSize(
+        duration: const Duration(
+          milliseconds: 220,
+        ),
+        curve: Curves.easeOutCubic,
+        child: SingleChildScrollView(
+          physics:
+              const NeverScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = start; i < end; i++)
+                _LyricLine(
+                  key: ValueKey(
+                    '${_loadedPath ?? widget.track.path}-$i',
+                  ),
+                  text: _lines[i].text,
+                  active:
+                      i == activeIndex ||
+                      (activeIndex < 0 && i == 0),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -249,40 +281,41 @@ class _LyricLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(
-        milliseconds: 260,
+        milliseconds: 220,
       ),
       curve: Curves.easeOutCubic,
+      width: double.infinity,
       padding: EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: active ? 8 : 4,
+        horizontal: 16,
+        vertical: active ? 9 : 5,
       ),
       child: AnimatedDefaultTextStyle(
         duration: const Duration(
-          milliseconds: 260,
+          milliseconds: 220,
         ),
         curve: Curves.easeOutCubic,
         style: TextStyle(
           color: active
               ? Colors.white
-              : Colors.white.withOpacity(.34),
-          fontSize: active ? 21 : 14,
+              : Colors.white.withOpacity(.32),
+          fontSize: active ? 20 : 14,
           fontWeight: active
               ? FontWeight.w800
               : FontWeight.w500,
-          height: 1.3,
+          height: 1.35,
           shadows: active
               ? [
                   Shadow(
                     color:
-                        Colors.black.withOpacity(.35),
-                    blurRadius: 8,
+                        Colors.black.withOpacity(.45),
+                    blurRadius: 9,
                   ),
                 ]
               : null,
         ),
         child: Text(
           text,
-          textAlign: TextAlign.center,
+          textAlign: TextAlign.left,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
