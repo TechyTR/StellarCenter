@@ -111,9 +111,7 @@ class _LoginPageState
             const ForgotPasswordPage(),
       ),
     );
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     final scheme =
         Theme.of(context).colorScheme;
