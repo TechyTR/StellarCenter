@@ -10,14 +10,11 @@ class AccountPage extends StatefulWidget {
   });
 
   @override
-  State<AccountPage> createState() =>
-      _AccountPageState();
+  State<AccountPage> createState() => _AccountPageState();
 }
 
-class _AccountPageState
-    extends State<AccountPage> {
-  AuthService get _auth =>
-      AuthService.instance;
+class _AccountPageState extends State<AccountPage> {
+  AuthService get _auth => AuthService.instance;
 
   bool _sendingVerification = false;
   bool _checkingVerification = false;
@@ -32,9 +29,7 @@ class _AccountPageState
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Çıkış yapıldı.',
-          ),
+          content: Text('Çıkış yapıldı.'),
         ),
       );
     } on AuthException catch (e) {
@@ -43,9 +38,7 @@ class _AccountPageState
   }
 
   Future<void> _verifyEmail() async {
-    if (_sendingVerification) {
-      return;
-    }
+    if (_sendingVerification) return;
 
     setState(() {
       _sendingVerification = true;
@@ -62,7 +55,6 @@ class _AccountPageState
       );
     } on AuthException catch (e) {
       if (!mounted) return;
-
       _showMessage(e.message);
     } catch (e) {
       if (!mounted) return;
@@ -80,9 +72,7 @@ class _AccountPageState
   }
 
   Future<void> _checkVerification() async {
-    if (_checkingVerification) {
-      return;
-    }
+    if (_checkingVerification) return;
 
     setState(() {
       _checkingVerification = true;
@@ -103,7 +93,6 @@ class _AccountPageState
       );
     } on AuthException catch (e) {
       if (!mounted) return;
-
       _showMessage(e.message);
     } catch (e) {
       if (!mounted) return;
@@ -145,8 +134,7 @@ class _AccountPageState
   Future<void> _openRegister() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            const RegisterPage(),
+        builder: (_) => const RegisterPage(),
       ),
     );
 
@@ -162,8 +150,7 @@ class _AccountPageState
     final verified = _auth.isEmailVerified;
     final photoUrl = _auth.currentPhotoUrl;
 
-    final scheme =
-        Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     if (!loggedIn) {
       return Scaffold(
@@ -174,13 +161,11 @@ class _AccountPageState
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints:
-                  const BoxConstraints(
+              constraints: const BoxConstraints(
                 maxWidth: 440,
               ),
               child: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.account_circle_outlined,
@@ -208,25 +193,20 @@ class _AccountPageState
                     child: FilledButton(
                       onPressed: _openLogin,
                       child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           vertical: 13,
                         ),
-                        child:
-                            Text('Giriş Yap'),
+                        child: Text('Giriş Yap'),
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child:
-                        OutlinedButton(
-                      onPressed:
-                          _openRegister,
+                    child: OutlinedButton(
+                      onPressed: _openRegister,
                       child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           vertical: 12,
                         ),
                         child: Text(
@@ -252,8 +232,7 @@ class _AccountPageState
         children: [
           Card(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(22),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -261,17 +240,14 @@ class _AccountPageState
                     backgroundImage:
                         photoUrl != null &&
                                 photoUrl.isNotEmpty
-                            ? NetworkImage(
-                                photoUrl,
-                              )
+                            ? NetworkImage(photoUrl)
                             : null,
                     child: photoUrl == null ||
                             photoUrl.isEmpty
                         ? Icon(
                             Icons.person_rounded,
                             size: 42,
-                            color:
-                                scheme.primary,
+                            color: scheme.primary,
                           )
                         : null,
                   ),
@@ -280,15 +256,13 @@ class _AccountPageState
                     'Stellar Center Hesabı',
                     style: TextStyle(
                       fontSize: 21,
-                      fontWeight:
-                          FontWeight.w800,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 7),
                   Text(
                     email ?? 'E-posta yok',
-                    textAlign:
-                        TextAlign.center,
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -297,20 +271,16 @@ class _AccountPageState
           const SizedBox(height: 12),
           Card(
             child: Padding(
-              padding:
-                  const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               child: Column(
                 children: [
                   ListTile(
                     leading: Icon(
                       verified
-                          ? Icons
-                              .verified_rounded
-                          : Icons
-                              .warning_amber_rounded,
-                      color: verified
-                          ? Colors.green
-                          : Colors.orange,
+                          ? Icons.verified_rounded
+                          : Icons.warning_amber_rounded,
+                      color:
+                          verified ? Colors.green : Colors.orange,
                     ),
                     title: Text(
                       verified
@@ -326,59 +296,47 @@ class _AccountPageState
                     trailing: verified
                         ? null
                         : TextButton(
-                            onPressed:
-                                _sendingVerification
-                                    ? null
-                                    : _verifyEmail,
-                            child:
-                                _sendingVerification
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child:
-                                            CircularProgressIndicator(
-                                          strokeWidth:
-                                              2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Gönder',
-                                      ),
+                            onPressed: _sendingVerification
+                                ? null
+                                : _verifyEmail,
+                            child: _sendingVerification
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child:
+                                        CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Gönder'),
                           ),
                   ),
                   if (!verified)
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(
+                      padding: const EdgeInsets.fromLTRB(
                         16,
                         0,
                         16,
                         10,
                       ),
                       child: SizedBox(
-                        width:
-                            double.infinity,
-                        child:
-                            OutlinedButton.icon(
-                          onPressed:
-                              _checkingVerification
-                                  ? null
-                                  : _checkVerification,
-                          icon:
-                              _checkingVerification
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child:
-                                          CircularProgressIndicator(
-                                        strokeWidth:
-                                            2,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons
-                                          .refresh_rounded,
-                                    ),
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _checkingVerification
+                              ? null
+                              : _checkVerification,
+                          icon: _checkingVerification
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.refresh_rounded,
+                                ),
                           label: Text(
                             _checkingVerification
                                 ? 'Kontrol ediliyor...'
@@ -397,9 +355,7 @@ class _AccountPageState
             icon: const Icon(
               Icons.logout_rounded,
             ),
-            label: const Text(
-              'Çıkış Yap',
-            ),
+            label: const Text('Çıkış Yap'),
           ),
         ],
       ),
