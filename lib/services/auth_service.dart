@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
@@ -14,6 +15,13 @@ class AuthService {
 
   static const String _baseUrl =
       'https://identitytoolkit.googleapis.com/v1/accounts';
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: <String>[
+      'email',
+      'profile',
+    ],
+  );
 
   String? _linuxIdToken;
   String? _linuxRefreshToken;
@@ -60,6 +68,14 @@ class AuthService {
     return null;
   }
 
+  String? get currentDisplayName {
+    if (Platform.isAndroid) {
+      return FirebaseAuth.instance.currentUser?.displayName;
+    }
+
+    return null;
+  }
+
   Future<void> register({
     required String email,
     required String password,
@@ -94,16 +110,12 @@ class AuthService {
           );
         }
 
-        // Yeni hesap oluşturulduğunda doğrulama e-postasını
-        // otomatik olarak gönderiyoruz.
         try {
           await user.sendEmailVerification();
         } on FirebaseAuthException catch (e) {
-          // Hesap oluşturma başarılı olduğu için burada
-          // hesabı başarısız saymıyoruz.
           throw AuthException(
-            'Hesap oluşturuldu ancak doğrulama e-postası gönderilemedi: '
-            '${_firebaseError(e.code)}',
+            'Hesap oluşturuldu ancak doğrulama e-postası '
+            'gönderilemedi: ${_firebaseError(e.code)}',
           );
         }
 
@@ -132,8 +144,6 @@ class AuthService {
 
       _handleLinuxResponse(response);
 
-      // Linux REST oturumunu aldıktan sonra doğrulama e-postasını
-      // otomatik gönderiyoruz.
       await sendEmailVerification();
 
       return;
@@ -202,9 +212,97 @@ class AuthService {
     );
   }
 
+  Future<void> signInWithGoogle() async {
+    if (!Platform.isAndroid) {
+      throw AuthException(
+        'Google ile giriş şu anda yalnızca Android üzerinde destekleniyor.',
+      );
+    }
+
+    try {
+      final GoogleSignInAccount? googleUser =
+          await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        throw AuthException(
+          'Google ile giriş iptal edildi.',
+        );
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final idToken = googleAuth.idToken;
+      final accessToken = googleAuth.accessToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw AuthException(
+          'Google kimlik doğrulama belirteci alınamadı.',
+        );
+      }
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: accessToken,
+        idToken: idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw AuthException(
+          'Google hesabı ile giriş yapıldı ancak kullanıcı '
+          'bilgileri alınamadı.',
+        );
+      }
+
+      final googlePhotoUrl = googleUser.photoUrl;
+      final googleDisplayName = googleUser.displayName;
+
+      if ((googlePhotoUrl != null &&
+              googlePhotoUrl.isNotEmpty) ||
+          (googleDisplayName != null &&
+              googleDisplayName.isNotEmpty)) {
+        await user.updateProfile(
+          displayName: googleDisplayName,
+          photoURL: googlePhotoUrl,
+        );
+
+        await user.reload();
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(
+        _firebaseError(e.code),
+      );
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      final message = e.toString();
+
+      if (message.contains('sign_in_canceled') ||
+          message.contains('canceled') ||
+          message.contains('cancelled')) {
+        throw AuthException(
+          'Google ile giriş iptal edildi.',
+        );
+      }
+
+      throw AuthException(
+        'Google ile giriş yapılamadı: $e',
+      );
+    }
+  }
+
   Future<void> logout() async {
     if (Platform.isAndroid) {
       await FirebaseAuth.instance.signOut();
+
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+
       return;
     }
 
@@ -336,7 +434,8 @@ class AuthService {
       'Bu platformda e-posta doğrulama desteklenmiyor.',
     );
   }
-    Future<bool> refreshEmailVerificationStatus() async {
+
+  Future<bool> refreshEmailVerificationStatus() async {
     if (Platform.isAndroid) {
       final auth = FirebaseAuth.instance;
       final user = auth.currentUser;
@@ -355,7 +454,8 @@ class AuthService {
 
   bool get isEmailVerified {
     if (Platform.isAndroid) {
-      return FirebaseAuth.instance.currentUser?.emailVerified ??
+      return FirebaseAuth.instance.currentUser
+              ?.emailVerified ??
           false;
     }
 
