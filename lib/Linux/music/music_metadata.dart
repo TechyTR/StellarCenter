@@ -8,12 +8,14 @@ class StellarMusicMetadata {
   final String? artist;
   final String? album;
   final Uint8List? artwork;
+  final String? lyrics;
 
   const StellarMusicMetadata({
     this.title,
     this.artist,
     this.album,
     this.artwork,
+    this.lyrics,
   });
 }
 
@@ -30,16 +32,24 @@ class StellarMusicMetadataReader {
       Uint8List? artwork;
 
       try {
-        final pictures =
-            metadata.pictures;
+        final pictures = metadata.pictures;
 
         if (pictures.isNotEmpty) {
-          final bytes =
-              pictures.first.bytes;
+          /*
+           * Önce cover/front görselini tercih et.
+           * Bulamazsak ilk resmi kullan.
+           */
+          final picture = pictures.firstWhere(
+            (picture) =>
+                picture.bytes.isNotEmpty,
+            orElse: () => pictures.first,
+          );
 
-          if (bytes.isNotEmpty) {
+          if (picture.bytes.isNotEmpty) {
             artwork =
-                Uint8List.fromList(bytes);
+                Uint8List.fromList(
+              picture.bytes,
+            );
           }
         }
       } catch (_) {
@@ -50,6 +60,7 @@ class StellarMusicMetadataReader {
         title: _clean(metadata.title),
         artist: _clean(metadata.artist),
         album: _clean(metadata.album),
+        lyrics: _clean(metadata.lyrics),
         artwork: artwork,
       );
     } catch (_) {
