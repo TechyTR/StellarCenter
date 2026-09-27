@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../services/benchmark_service.dart';
@@ -250,7 +249,6 @@ class _BenchmarkPageState
               ),
             ),
           ),
-
           if (_running) ...[
             const SizedBox(height: 14),
             ClipRRect(
@@ -271,53 +269,44 @@ class _BenchmarkPageState
               ),
             ),
           ],
-
           const SizedBox(height: 18),
-
           _scoreCard(
             context,
             icon: Icons.memory,
             title: 'CPU Single-Core',
             value: result?.singleCore,
           ),
-
           _scoreCard(
             context,
             icon: Icons.developer_board,
             title: 'CPU Multi-Core',
             value: result?.multiCore,
           ),
-
           _scoreCard(
             context,
             icon: Icons.sd_storage,
             title: 'RAM',
             value: result?.ram,
           ),
-
           _scoreCard(
             context,
             icon: Icons.storage,
             title: 'Storage',
             value: result?.storage,
           ),
-
           _scoreCard(
             context,
             icon: Icons.graphic_eq,
             title: 'Graphics / UI',
             value: result?.graphics,
           ),
-
           _scoreCard(
             context,
             icon: Icons.speed,
             title: 'Mixed System',
             value: result?.mixed,
           ),
-
           const SizedBox(height: 8),
-
           SizedBox(
             height: 54,
             child: FilledButton.icon(
@@ -335,9 +324,7 @@ class _BenchmarkPageState
               ),
             ),
           ),
-
           const SizedBox(height: 14),
-
           Text(
             'Stellar Score, Stellar Center '
             'için kullanılan bağımsız bir '
@@ -353,4 +340,3 @@ class _BenchmarkPageState
     );
   }
 }
-
