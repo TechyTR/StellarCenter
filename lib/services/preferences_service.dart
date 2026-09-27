@@ -5,13 +5,18 @@ class PreferencesService {
   static const String _themeStyleKey = 'theme_style';
 
   static Future<String> getThemeColor() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    return prefs.getString(_themeColorKey) ?? 'purple';
+    return prefs.getString(_themeColorKey) ??
+        'purple';
   }
 
-  static Future<void> saveThemeColor(String value) async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<void> saveThemeColor(
+    String value,
+  ) async {
+    final prefs =
+        await SharedPreferences.getInstance();
 
     await prefs.setString(
       _themeColorKey,
@@ -20,13 +25,18 @@ class PreferencesService {
   }
 
   static Future<String> getThemeStyle() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    return prefs.getString(_themeStyleKey) ?? 'normal';
+    return prefs.getString(_themeStyleKey) ??
+        'normal';
   }
 
-  static Future<void> saveThemeStyle(String value) async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<void> saveThemeStyle(
+    String value,
+  ) async {
+    final prefs =
+        await SharedPreferences.getInstance();
 
     await prefs.setString(
       _themeStyleKey,
@@ -35,13 +45,19 @@ class PreferencesService {
   }
 
   static Future<bool> hasPassword() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    return prefs.containsKey('stellar_password_hash');
+    return prefs.containsKey(
+      'stellar_password_hash',
+    );
   }
 
-  static Future<void> savePasswordHash(String hash) async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<void> savePasswordHash(
+    String hash,
+  ) async {
+    final prefs =
+        await SharedPreferences.getInstance();
 
     await prefs.setString(
       'stellar_password_hash',
@@ -50,14 +66,20 @@ class PreferencesService {
   }
 
   static Future<String?> getPasswordHash() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    return prefs.getString('stellar_password_hash');
+    return prefs.getString(
+      'stellar_password_hash',
+    );
   }
 
   static Future<void> removePassword() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    await prefs.remove('stellar_password_hash');
+    await prefs.remove(
+      'stellar_password_hash',
+    );
   }
 }
