@@ -242,42 +242,31 @@ class _NetworkLabPageState
               ),
             ),
           ),
-
-          const SizedBox(
-            height: 16,
-          ),
-
+          const SizedBox(height: 16),
           _infoCard(
             icon: Icons.speed,
             title: 'Gecikme',
             value: _latencyText(),
           ),
-
           _infoCard(
             icon: Icons.analytics_outlined,
             title: 'Gecikme Kalitesi',
             value:
                 _latencyQuality(),
           ),
-
           _infoCard(
             icon: Icons.http,
             title: 'HTTP Durumu',
             value:
                 _statusCodeText(),
           ),
-
           _infoCard(
             icon: Icons.schedule,
             title: 'Son Test',
             value:
                 _lastTestText(),
           ),
-
-          const SizedBox(
-            height: 12,
-          ),
-
+          const SizedBox(height: 12),
           SizedBox(
             height: 54,
             child: FilledButton.icon(
@@ -295,11 +284,7 @@ class _NetworkLabPageState
               ),
             ),
           ),
-
-          const SizedBox(
-            height: 18,
-          ),
-
+          const SizedBox(height: 18),
           Text(
             'Gecikme değeri internet bağlantısının '
             'anlık durumuna göre değişebilir.',
@@ -316,4 +301,3 @@ class _NetworkLabPageState
     );
   }
 }
-
