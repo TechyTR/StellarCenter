@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'lrc_parser.dart';
@@ -5,19 +6,21 @@ import 'lrc_parser.dart';
 class StellarLyricsLoader {
   StellarLyricsLoader._();
 
-  static final Map<String, List<StellarLrcLine>>
-      _cache = <String, List<StellarLrcLine>>{};
+  static final Map<
+      String,
+      List<StellarLrcLine>> _cache =
+      <String, List<StellarLrcLine>>{};
 
   static final Map<
-          String,
-          Future<List<StellarLrcLine>>>
-      _pending =
+      String,
+      Future<List<StellarLrcLine>>> _pending =
       <String, Future<List<StellarLrcLine>>>{};
 
   static Future<List<StellarLrcLine>> load(
     String? path,
   ) {
-    if (path == null || path.trim().isEmpty) {
+    if (path == null ||
+        path.trim().isEmpty) {
       return Future.value(
         const <StellarLrcLine>[],
       );
@@ -37,7 +40,8 @@ class StellarLyricsLoader {
       return existing;
     }
 
-    final future = _loadInternal(normalized);
+    final future =
+        _loadInternal(normalized);
 
     _pending[normalized] = future;
 
@@ -57,13 +61,22 @@ class StellarLyricsLoader {
         return const [];
       }
 
-      final content = await file.readAsString();
+      final bytes =
+          await file.readAsBytes();
+
+      if (bytes.isEmpty) {
+        return const [];
+      }
+
+      final content =
+          _decodeText(bytes);
 
       if (content.trim().isEmpty) {
         return const [];
       }
 
-      final lines = StellarLrcParser.parse(
+      final lines =
+          StellarLrcParser.parse(
         content,
       );
 
@@ -80,11 +93,110 @@ class StellarLyricsLoader {
     }
   }
 
+  static String _decodeText(
+    List<int> bytes,
+  ) {
+    /*
+     * UTF-8 BOM
+     */
+    if (_startsWith(
+      bytes,
+      const [0xEF, 0xBB, 0xBF],
+    )) {
+      return utf8.decode(
+        bytes.sublist(3),
+        allowMalformed: true,
+      );
+    }
+
+    /*
+     * UTF-16 LE BOM
+     */
+    if (_startsWith(
+      bytes,
+      const [0xFF, 0xFE],
+    )) {
+      return _decodeUtf16(
+        bytes.sublist(2),
+        littleEndian: true,
+      );
+    }
+
+    /*
+     * UTF-16 BE BOM
+     */
+    if (_startsWith(
+      bytes,
+      const [0xFE, 0xFF],
+    )) {
+      return _decodeUtf16(
+        bytes.sublist(2),
+        littleEndian: false,
+      );
+    }
+
+    /*
+     * Normal UTF-8.
+     */
+    return utf8.decode(
+      bytes,
+      allowMalformed: true,
+    );
+  }
+
+  static bool _startsWith(
+    List<int> bytes,
+    List<int> prefix,
+  ) {
+    if (bytes.length < prefix.length) {
+      return false;
+    }
+
+    for (var i = 0;
+        i < prefix.length;
+        i++) {
+      if (bytes[i] != prefix[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static String _decodeUtf16(
+    List<int> bytes, {
+    required bool littleEndian,
+  }) {
+    final units = <int>[];
+
+    /*
+     * UTF-16 iki byte'lık code unit'lerden oluşur.
+     */
+    for (var i = 0;
+        i + 1 < bytes.length;
+        i += 2) {
+      final first = bytes[i];
+      final second = bytes[i + 1];
+
+      final value = littleEndian
+          ? (first | (second << 8))
+          : ((first << 8) | second);
+
+      units.add(value);
+    }
+
+    return String.fromCharCodes(
+      units,
+    );
+  }
+
   static void clear() {
     _cache.clear();
   }
 
-  static void remove(String path) {
+  static void remove(
+    String path,
+  ) {
     _cache.remove(path);
   }
 
