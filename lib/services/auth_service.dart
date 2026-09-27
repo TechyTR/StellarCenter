@@ -336,8 +336,7 @@ class AuthService {
       'Bu platformda e-posta doğrulama desteklenmiyor.',
     );
   }
-
-  Future<bool> refreshEmailVerificationStatus() async {
+    Future<bool> refreshEmailVerificationStatus() async {
     if (Platform.isAndroid) {
       final auth = FirebaseAuth.instance;
       final user = auth.currentUser;
