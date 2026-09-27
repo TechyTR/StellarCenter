@@ -6,6 +6,7 @@ import 'local_artwork.dart';
 import 'lyrics_loader.dart';
 import 'music_metadata.dart';
 import 'music_track.dart';
+import 'lrc_parser.dart' ;
 
 class StellarMusicScanner {
   StellarMusicScanner._();
