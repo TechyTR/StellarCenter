@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../../both/theme/app_theme.dart';
-import '../../both/widgets/bottom_nav_bar.dart';
+import '../both/theme/app_theme.dart';
+import '../both/widgets/bottom_nav_bar.dart';
 
-import '../../pages/app_info_page.dart';
-import '../../pages/dashboard_page.dart';
-import '../../pages/notes_page.dart';
-import '../../pages/system_info_page.dart';
-import '../../pages/system_monitor_page.dart';
+import 'app_info_page.dart';
+import 'dashboard_page.dart';
+import 'notes_page.dart';
+import 'system_info_page.dart';
+import 'system_monitor_page.dart';
 
-class HomeShellAndroid extends StatefulWidget {
+class HomeShellAndroid
+    extends StatefulWidget {
   final AppThemeColor selectedTheme;
   final AppThemeStyle selectedStyle;
 
-  final Future<void> Function(AppThemeColor) onThemeChanged;
-  final Future<void> Function(AppThemeStyle) onStyleChanged;
+  final Future<void> Function(AppThemeColor)
+      onThemeChanged;
+
+  final Future<void> Function(AppThemeStyle)
+      onStyleChanged;
 
   const HomeShellAndroid({
     super.key,
@@ -46,8 +50,10 @@ class _HomeShellAndroidState
       DashboardPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
         onSystemInfo: () => _openPage(1),
         onSystemMonitor: () => _openPage(2),
         onNotes: () => _openPage(3),
@@ -57,15 +63,19 @@ class _HomeShellAndroidState
       SystemInfoPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
 
       SystemMonitorPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
 
       const NotesPage(),
@@ -73,14 +83,17 @@ class _HomeShellAndroidState
       AppInfoPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
     ];
   }
 
   void _openPage(int index) {
-    if (index < 0 || index >= _pages.length) {
+    if (index < 0 ||
+        index >= _pages.length) {
       return;
     }
 
@@ -90,7 +103,8 @@ class _HomeShellAndroidState
   }
 
   void _selectDestination(int index) {
-    if (index < 0 || index >= _pages.length) {
+    if (index < 0 ||
+        index >= _pages.length) {
       return;
     }
 
@@ -130,9 +144,13 @@ class _HomeShellAndroidState
 
       body: AnimatedSwitcher(
         duration:
-            const Duration(milliseconds: 320),
+            const Duration(
+          milliseconds: 320,
+        ),
         reverseDuration:
-            const Duration(milliseconds: 220),
+            const Duration(
+          milliseconds: 220,
+        ),
         switchInCurve:
             Curves.easeOutCubic,
         switchOutCurve:
@@ -143,7 +161,8 @@ class _HomeShellAndroidState
           List<Widget> previousChildren,
         ) {
           return Stack(
-            alignment: Alignment.center,
+            alignment:
+                Alignment.center,
             children: [
               ...previousChildren,
               if (currentChild != null)
@@ -156,13 +175,20 @@ class _HomeShellAndroidState
           child,
           animation,
         ) {
-          final fade = CurvedAnimation(
+          final fade =
+              CurvedAnimation(
             parent: animation,
-            curve: Curves.easeOutCubic,
+            curve:
+                Curves.easeOutCubic,
           );
 
-          final slide = Tween<Offset>(
-            begin: const Offset(0.025, 0),
+          final slide =
+              Tween<Offset>(
+            begin:
+                const Offset(
+              0.025,
+              0,
+            ),
             end: Offset.zero,
           ).animate(fade);
 
@@ -176,14 +202,20 @@ class _HomeShellAndroidState
         },
 
         child: KeyedSubtree(
-          key: ValueKey(_currentIndex),
-          child: _pages[_currentIndex],
+          key: ValueKey(
+            _currentIndex,
+          ),
+          child:
+              _pages[_currentIndex],
         ),
       ),
 
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        selectedStyle: widget.selectedStyle,
+      bottomNavigationBar:
+          BottomNavBar(
+        currentIndex:
+            _currentIndex,
+        selectedStyle:
+            widget.selectedStyle,
         onDestinationSelected:
             _selectDestination,
       ),
