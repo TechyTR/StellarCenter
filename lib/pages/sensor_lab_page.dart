@@ -332,7 +332,6 @@ class _SensorLabPageState
               ),
             ],
           ),
-
           _sensorCard(
             icon:
                 Icons.screen_rotation,
@@ -353,7 +352,6 @@ class _SensorLabPageState
               ),
             ],
           ),
-
           _sensorCard(
             icon:
                 Icons.explore_outlined,
@@ -374,7 +372,6 @@ class _SensorLabPageState
               ),
             ],
           ),
-
           _sensorCard(
             icon: Icons.vibration,
             title:
@@ -395,11 +392,7 @@ class _SensorLabPageState
               ),
             ],
           ),
-
-          const SizedBox(
-            height: 8,
-          ),
-
+          const SizedBox(height: 8),
           Text(
             'Değerler gerçek zamanlı olarak '
             'sensörlerden okunur. Cihazınızda '
@@ -419,4 +412,3 @@ class _SensorLabPageState
     );
   }
 }
-
