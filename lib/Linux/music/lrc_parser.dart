@@ -8,149 +8,165 @@ class StellarLrcLine {
   });
 }
 
+class StellarLrcDocument {
+  final String? artist;
+  final String? album;
+  final String? title;
+  final List<StellarLrcLine> lines;
+
+  const StellarLrcDocument({
+    this.artist,
+    this.album,
+    this.title,
+    required this.lines,
+  });
+}
+
 class StellarLrcParser {
-  /*
-   * Desteklenen örnekler:
-   *
-   * [00:12.34]Söz
-   * [00:12:34]Söz
-   * [0:12.3]Söz
-   * [01:02]Söz
-   *
-   * Aynı satırda birden fazla timestamp da
-   * desteklenir:
-   *
-   * [00:12.00][00:15.50]Söz
-   */
   static final RegExp _timestampPattern = RegExp(
-    r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]',
+    r'\[(\d{1,3}):(\d{2})(?:[.:](\d{1,4}))?\]',
   );
 
-  /*
-   * LRC metadata/tag satırları.
-   *
-   * [ar:Artist]
-   * [al:Album]
-   * [ti:Title]
-   * [by:Creator]
-   * [re:...]
-   * [ve:...]
-   * [offset:...]
-   *
-   * Ayrıca bazı dosyalarda bracketsız:
-   *
-   * ar:Artist
-   * al:Album
-   * ti:Title
-   */
-  static final RegExp _metadataTagPattern =
-      RegExp(
-    r'^\s*\[(ar|al|ti|by|re|ve|offset|length|'
-    r'language|la|au|artist|album|title)\s*:',
+  static final RegExp _metadataPattern = RegExp(
+    r'^\s*\[\s*(ar|al|ti|by|re|ve|offset|length|language|la|au|artist|album|title)\s*:\s*(.*?)\s*\]\s*$',
     caseSensitive: false,
   );
 
-  static final RegExp _plainMetadataTagPattern =
-      RegExp(
-    r'^\s*(ar|al|ti|by|re|ve|offset|length|'
-    r'language|la|au|artist|album|title)\s*:',
+  static final RegExp _plainMetadataPattern = RegExp(
+    r'^\s*(ar|al|ti|by|re|ve|offset|length|language|la|au|artist|album|title)\s*:\s*(.*?)\s*$',
     caseSensitive: false,
   );
 
-  static List<StellarLrcLine> parse(
+  static StellarLrcDocument parseDocument(
     String content,
   ) {
     final result = <StellarLrcLine>[];
 
-    /*
-     * BOM temizle.
-     */
-    var normalizedContent =
-        content.replaceFirst('\uFEFF', '');
+    String? artist;
+    String? album;
+    String? title;
 
-    /*
-     * CRLF / CR -> LF
-     */
-    normalizedContent =
-        normalizedContent.replaceAll(
+    var normalizedContent = content.replaceFirst(
+      '\uFEFF',
+      '',
+    );
+
+    normalizedContent = normalizedContent.replaceAll(
       '\r\n',
       '\n',
     );
 
-    normalizedContent =
-        normalizedContent.replaceAll(
+    normalizedContent = normalizedContent.replaceAll(
       '\r',
       '\n',
     );
 
-    for (final rawLine
-        in normalizedContent.split('\n')) {
-      var line = rawLine.trim();
+    for (final rawLine in normalizedContent.split('\n')) {
+      final line = rawLine.trim();
 
       if (line.isEmpty) {
         continue;
       }
 
       /*
-       * LRC metadata satırlarını atla.
+       * Önce:
+       *
+       * [al: Albüm]
+       * [ar: Sanatçı]
+       * [ti: Başlık]
+       *
+       * gibi metadata satırlarını oku.
        */
-      if (_metadataTagPattern.hasMatch(line) ||
-          _plainMetadataTagPattern.hasMatch(
-            line,
-          )) {
+      final metadataMatch = _metadataPattern.firstMatch(
+        line,
+      );
+
+      if (metadataMatch != null) {
+        final key = (
+          metadataMatch.group(1) ?? ''
+        ).trim().toLowerCase();
+
+        final value = _cleanValue(
+          metadataMatch.group(2),
+        );
+
+        if (value != null) {
+          if (key == 'ar' || key == 'artist') {
+            artist = value;
+          } else if (key == 'al' || key == 'album') {
+            album = value;
+          } else if (key == 'ti' || key == 'title') {
+            title = value;
+          }
+        }
+
         continue;
       }
 
-      final matches =
-          _timestampPattern
-              .allMatches(line)
-              .toList();
+      /*
+       * Bazı LRC dosyalarında köşeli parantez
+       * kullanılmadan da metadata bulunabilir.
+       */
+      final plainMetadataMatch =
+          _plainMetadataPattern.firstMatch(line);
+
+      if (plainMetadataMatch != null) {
+        final key = (
+          plainMetadataMatch.group(1) ?? ''
+        ).trim().toLowerCase();
+
+        final value = _cleanValue(
+          plainMetadataMatch.group(2),
+        );
+
+        if (value != null) {
+          if (key == 'ar' || key == 'artist') {
+            artist = value;
+          } else if (key == 'al' || key == 'album') {
+            album = value;
+          } else if (key == 'ti' || key == 'title') {
+            title = value;
+          }
+        }
+
+        continue;
+      }
 
       /*
-       * Timestamp yoksa bu bir normal metadata
-       * veya anlamsız satırdır.
+       * Şimdi zaman damgalı söz satırını bul.
+       *
+       * Örnek:
+       * [00:12.50] ayayayya
        */
+      final matches = _timestampPattern.allMatches(
+        line,
+      ).toList();
+
       if (matches.isEmpty) {
         continue;
       }
 
-      /*
-       * Timestamp'leri metinden çıkar.
-       */
-      line = line
+      final lyricText = line
           .replaceAll(
             _timestampPattern,
             '',
           )
           .trim();
 
-      /*
-       * Bazı LRC dosyalarında timestamp'ten sonra
-       * metadata kalıntısı bulunabiliyor.
-       */
-      if (line.isEmpty) {
-        continue;
-      }
-
-      if (_metadataTagPattern.hasMatch(line) ||
-          _plainMetadataTagPattern.hasMatch(
-            line,
-          )) {
+      if (lyricText.isEmpty) {
         continue;
       }
 
       for (final match in matches) {
-        final minutes =
-            int.tryParse(
-                  match.group(1) ?? '',
-                ) ??
-                0;
+        final minutes = int.tryParse(
+              match.group(1) ?? '',
+            ) ??
+            0;
 
-        final seconds =
-            int.tryParse(
-                  match.group(2) ?? '',
-                ) ??
-                0;
+        final seconds = int.tryParse(
+              match.group(2) ?? '',
+            ) ??
+            0;
 
         final milliseconds =
             _fractionToMilliseconds(
@@ -162,10 +178,9 @@ class StellarLrcParser {
             timestamp: Duration(
               minutes: minutes,
               seconds: seconds,
-              milliseconds:
-                  milliseconds,
+              milliseconds: milliseconds,
             ),
-            text: line,
+            text: lyricText,
           ),
         );
       }
@@ -177,7 +192,22 @@ class StellarLrcParser {
       ),
     );
 
-    return List.unmodifiable(result);
+    return StellarLrcDocument(
+      artist: artist,
+      album: album,
+      title: title,
+      lines: List.unmodifiable(result),
+    );
+  }
+
+  /*
+   * Mevcut sistemle uyumluluk için parse()
+   * hâlâ sadece söz satırlarını döndürüyor.
+   */
+  static List<StellarLrcLine> parse(
+    String content,
+  ) {
+    return parseDocument(content).lines;
   }
 
   static int activeIndex(
@@ -196,8 +226,7 @@ class StellarLrcParser {
       final middle =
           low + ((high - low) ~/ 2);
 
-      if (lines[middle].timestamp <=
-          position) {
+      if (lines[middle].timestamp <= position) {
         result = middle;
         low = middle + 1;
       } else {
@@ -214,8 +243,7 @@ class StellarLrcParser {
   ) {
     final next = index + 1;
 
-    if (next < 0 ||
-        next >= lines.length) {
+    if (next < 0 || next >= lines.length) {
       return null;
     }
 
@@ -225,22 +253,22 @@ class StellarLrcParser {
   static int _fractionToMilliseconds(
     String? value,
   ) {
-    if (value == null ||
-        value.isEmpty) {
+    if (value == null || value.isEmpty) {
       return 0;
     }
 
     /*
-     * .1  -> 100 ms
-     * .12 -> 120 ms
-     * .123 -> 123 ms
+     * .1    -> 100 ms
+     * .12   -> 120 ms
+     * .123  -> 123 ms
      * .1234 -> 123 ms
      */
-    final normalized =
-        value.padRight(3, '0');
+    final normalized = value.padRight(
+      3,
+      '0',
+    );
 
-    final limited =
-        normalized.substring(
+    final limited = normalized.substring(
       0,
       normalized.length > 3
           ? 3
@@ -248,5 +276,23 @@ class StellarLrcParser {
     );
 
     return int.tryParse(limited) ?? 0;
+  }
+
+  static String? _cleanValue(
+    String? value,
+  ) {
+    if (value == null) {
+      return null;
+    }
+
+    final cleaned = value
+        .replaceAll('\u0000', '')
+        .trim()
+        .replaceAll(
+          RegExp(r'\s+'),
+          ' ',
+        );
+
+    return cleaned.isEmpty ? null : cleaned;
   }
 }
