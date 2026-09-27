@@ -8,8 +8,7 @@ import 'music_service.dart';
 import 'music_track.dart';
 import 'repeat_mode.dart';
 
-class StellarFullscreenPlayer
-    extends StatefulWidget {
+class StellarFullscreenPlayer extends StatefulWidget {
   final List<StellarMusicTrack> tracks;
 
   const StellarFullscreenPlayer({
@@ -24,7 +23,7 @@ class StellarFullscreenPlayer
 
 class _StellarFullscreenPlayerState
     extends State<StellarFullscreenPlayer> {
-  final service =
+  final StellarMusicService service =
       StellarMusicService.instance;
 
   @override
@@ -80,105 +79,73 @@ class _StellarFullscreenPlayerState
           initialData: service.position,
           builder: (context, positionSnapshot) {
             final position =
-                positionSnapshot.data ??
-                    Duration.zero;
+                positionSnapshot.data ?? Duration.zero;
 
             return StreamBuilder<Duration>(
               stream: service.durationStream,
               initialData: service.duration,
-              builder:
-                  (context, durationSnapshot) {
+              builder: (context, durationSnapshot) {
                 final duration =
-                    durationSnapshot.data ??
-                        Duration.zero;
+                    durationSnapshot.data ?? Duration.zero;
 
                 return StreamBuilder<bool>(
                   stream: service.playingStream,
-                  initialData:
-                      service.isPlaying,
-                  builder:
-                      (context, playingSnapshot) {
+                  initialData: service.isPlaying,
+                  builder: (context, playingSnapshot) {
                     final playing =
-                        playingSnapshot.data ??
-                            false;
+                        playingSnapshot.data ?? false;
 
-                    return StreamBuilder<
-                        StellarRepeatMode>(
-                      stream:
-                          service.repeatModeStream,
-                      initialData:
-                          service.repeatMode,
-                      builder: (
-                        context,
-                        repeatSnapshot,
-                      ) {
+                    return StreamBuilder<StellarRepeatMode>(
+                      stream: service.repeatModeStream,
+                      initialData: service.repeatMode,
+                      builder: (context, repeatSnapshot) {
                         final repeat =
-                            repeatSnapshot.data ??
-                                service.repeatMode;
+                            repeatSnapshot.data ?? service.repeatMode;
 
                         return Scaffold(
-                          backgroundColor:
-                              Colors.transparent,
-                          body:
-                              StellarMusicBackground(
-                            artwork:
-                                track.artwork,
+                          backgroundColor: Colors.transparent,
+                          body: StellarMusicBackground(
+                            artwork: track.artwork,
                             child: SafeArea(
                               child: Column(
                                 children: [
                                   Padding(
-                                    padding:
-                                        const EdgeInsets
-                                            .symmetric(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 18,
                                       vertical: 10,
                                     ),
                                     child: Row(
                                       children: [
                                         IconButton(
-                                          tooltip:
-                                              'Edge Player',
+                                          tooltip: 'Edge Player',
                                           onPressed: () {
-                                            Navigator.of(
-                                              context,
-                                            ).pop();
+                                            Navigator.of(context).pop();
                                           },
-                                          icon:
-                                              const Icon(
-                                            Icons
-                                                .close_fullscreen_rounded,
-                                            color:
-                                                Colors.white,
+                                          icon: const Icon(
+                                            Icons.close_fullscreen_rounded,
+                                            color: Colors.white,
                                             size: 28,
                                           ),
                                         ),
                                         const Spacer(),
                                         const Text(
                                           'STELLAR MUSIC',
-                                          style:
-                                              TextStyle(
-                                            color:
-                                                Colors.white70,
+                                          style: TextStyle(
+                                            color: Colors.white70,
                                             fontSize: 11,
-                                            letterSpacing:
-                                                2.2,
-                                            fontWeight:
-                                                FontWeight.w700,
+                                            letterSpacing: 2.2,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                         const Spacer(),
-                                        const SizedBox(
-                                          width: 48,
-                                        ),
+                                        const SizedBox(width: 48),
                                       ],
                                     ),
                                   ),
+
                                   Expanded(
-                                    child:
-                                        SingleChildScrollView(
-                                      padding:
-                                          const EdgeInsets
-                                              .fromLTRB(
+                                    child: SingleChildScrollView(
+                                      padding: const EdgeInsets.fromLTRB(
                                         28,
                                         12,
                                         28,
@@ -187,134 +154,115 @@ class _StellarFullscreenPlayerState
                                       child: Column(
                                         children: [
                                           AnimatedSwitcher(
-                                            duration:
-                                                const Duration(
-                                              milliseconds:
-                                                  450,
+                                            duration: const Duration(
+                                              milliseconds: 450,
                                             ),
-                                            child:
-                                                KeyedSubtree(
-                                              key: ValueKey(
-                                                track.path,
-                                              ),
-                                              child:
-                                                  Hero(
+                                            child: KeyedSubtree(
+                                              key: ValueKey(track.path),
+                                              child: Hero(
                                                 tag:
                                                     'stellar-cover-${track.path}',
-                                                child:
-                                                    StellarMusicCover(
-                                                  artwork:
-                                                      track.artwork,
-                                                  size:
-                                                      310,
-                                                  radius:
-                                                      30,
+                                                child: StellarMusicCover(
+                                                  artwork: track.artwork,
+                                                  size: 310,
+                                                  radius: 30,
                                                 ),
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(
-                                            height: 26,
-                                          ),
+
+                                          const SizedBox(height: 26),
+
                                           Text(
                                             track.title,
-                                            textAlign:
-                                                TextAlign
-                                                    .center,
+                                            textAlign: TextAlign.center,
                                             maxLines: 2,
                                             overflow:
-                                                TextOverflow
-                                                    .ellipsis,
-                                            style:
-                                                const TextStyle(
-                                              color:
-                                                  Colors.white,
-                                              fontSize:
-                                                  25,
-                                              fontWeight:
-                                                  FontWeight
-                                                      .w800,
+                                                TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 25,
+                                              fontWeight: FontWeight.w800,
                                             ),
                                           ),
-                                          const SizedBox(
-                                            height: 7,
-                                          ),
+
+                                          const SizedBox(height: 7),
+
                                           Row(
-                                            mainAxisSize:
-                                                MainAxisSize
-                                                    .min,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Flexible(
                                                 child: Text(
                                                   track.artist,
                                                   maxLines: 1,
                                                   overflow:
-                                                      TextOverflow
-                                                          .ellipsis,
-                                                  style:
-                                                      const TextStyle(
-                                                    color:
-                                                        Colors.white70,
-                                                    fontSize:
-                                                        16,
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 16,
                                                   ),
                                                 ),
                                               ),
-                                              if (track
-                                                  .verifiedArtist) ...[
-                                                const SizedBox(
-                                                  width: 5,
-                                                ),
+
+                                              if (track.verifiedArtist) ...[
+                                                const SizedBox(width: 5),
                                                 const Icon(
-                                                  Icons
-                                                      .verified_rounded,
-                                                  color:
-                                                      Color(
-                                                    0xFF2196F3,
-                                                  ),
+                                                  Icons.verified_rounded,
+                                                  color: Color(0xFF2196F3),
                                                   size: 18,
                                                 ),
                                               ],
                                             ],
                                           ),
-                                          const SizedBox(
-                                            height: 30,
+
+                                          const SizedBox(height: 8),
+
+                                          Text(
+                                            track.album,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Colors.white38,
+                                              fontSize: 12,
+                                            ),
                                           ),
-                                          if (track
-                                                  .lyricsPath !=
-                                              null)
+
+                                          const SizedBox(height: 24),
+
+                                          /*
+                                           * LRC varsa veya embedded lyrics
+                                           * varsa sözleri göster.
+                                           *
+                                           * Önceden yalnızca lyricsPath
+                                           * kontrol edildiği için bazı
+                                           * şarkılarda sözler hiç
+                                           * oluşturulmuyordu.
+                                           */
+                                          if (track.hasLyrics)
                                             StellarLyricsOverlay(
                                               track: track,
-                                              position:
-                                                  position,
+                                              position: position,
                                             ),
-                                          const SizedBox(
-                                            height: 24,
-                                          ),
+
+                                          const SizedBox(height: 24),
+
                                           Slider(
-                                            value: duration
-                                                        .inMilliseconds >
-                                                    0
-                                                ? position
-                                                    .inMilliseconds
+                                            value: duration.inMilliseconds > 0
+                                                ? position.inMilliseconds
                                                     .clamp(
                                                       0,
-                                                      duration
-                                                          .inMilliseconds,
+                                                      duration.inMilliseconds,
                                                     )
                                                     .toDouble()
                                                 : 0,
-                                            max: duration
-                                                        .inMilliseconds >
-                                                    0
-                                                ? duration
-                                                    .inMilliseconds
+                                            max: duration.inMilliseconds > 0
+                                                ? duration.inMilliseconds
                                                     .toDouble()
                                                 : 1,
                                             onChanged:
-                                                duration
-                                                            .inMilliseconds >
-                                                        0
+                                                duration.inMilliseconds > 0
                                                     ? (value) {
                                                         service.seek(
                                                           Duration(
@@ -325,55 +273,38 @@ class _StellarFullscreenPlayerState
                                                       }
                                                     : null,
                                           ),
+
                                           Row(
                                             children: [
                                               Text(
-                                                _time(
-                                                  position,
-                                                ),
-                                                style:
-                                                    const TextStyle(
-                                                  color:
-                                                      Colors.white60,
-                                                  fontSize:
-                                                      12,
+                                                _time(position),
+                                                style: const TextStyle(
+                                                  color: Colors.white60,
+                                                  fontSize: 12,
                                                 ),
                                               ),
                                               const Spacer(),
                                               Text(
-                                                _time(
-                                                  duration,
-                                                ),
-                                                style:
-                                                    const TextStyle(
-                                                  color:
-                                                      Colors.white60,
-                                                  fontSize:
-                                                      12,
+                                                _time(duration),
+                                                style: const TextStyle(
+                                                  color: Colors.white60,
+                                                  fontSize: 12,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(
-                                            height: 20,
-                                          ),
+
+                                          const SizedBox(height: 20),
+
                                           _Controls(
-                                            playing:
-                                                playing,
-                                            repeat:
-                                                repeat,
-                                            onPrevious:
-                                                service
-                                                    .previous,
-                                            onNext:
-                                                service
-                                                    .next,
+                                            playing: playing,
+                                            repeat: repeat,
+                                            onPrevious: service.previous,
+                                            onNext: service.next,
                                             onPlayPause:
-                                                service
-                                                    .togglePlayPause,
+                                                service.togglePlayPause,
                                             onRepeat:
-                                                service
-                                                    .cycleRepeatMode,
+                                                service.cycleRepeatMode,
                                           ),
                                         ],
                                       ),
@@ -397,8 +328,7 @@ class _StellarFullscreenPlayerState
   }
 }
 
-class _Controls
-    extends StatelessWidget {
+class _Controls extends StatelessWidget {
   final bool playing;
   final StellarRepeatMode repeat;
   final VoidCallback onPrevious;
@@ -418,15 +348,13 @@ class _Controls
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _Button(
           onTap: onRepeat,
           size: 46,
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
                 Icons.repeat_rounded,
@@ -435,8 +363,7 @@ class _Controls
               ),
               Text(
                 repeat.label,
-                style:
-                    const TextStyle(
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 8,
                 ),
@@ -444,28 +371,26 @@ class _Controls
             ],
           ),
         ),
+
         const SizedBox(width: 14),
+
         _Button(
           onTap: onPrevious,
           size: 54,
-          child:
-              const StellarMusicIcon(
-            type:
-                StellarMusicIconType.previous,
+          child: const StellarMusicIcon(
+            type: StellarMusicIconType.previous,
             size: 26,
           ),
         ),
+
         const SizedBox(width: 14),
+
         _Button(
           onTap: onPlayPause,
           size: 72,
           filled: true,
-          child:
-              AnimatedSwitcher(
-            duration:
-                const Duration(
-              milliseconds: 220,
-            ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
             child: StellarMusicIcon(
               key: ValueKey(playing),
               type: playing
@@ -476,14 +401,14 @@ class _Controls
             ),
           ),
         ),
+
         const SizedBox(width: 14),
+
         _Button(
           onTap: onNext,
           size: 54,
-          child:
-              const StellarMusicIcon(
-            type:
-                StellarMusicIconType.next,
+          child: const StellarMusicIcon(
+            type: StellarMusicIconType.next,
             size: 26,
           ),
         ),
@@ -492,8 +417,7 @@ class _Controls
   }
 }
 
-class _Button
-    extends StatelessWidget {
+class _Button extends StatelessWidget {
   final VoidCallback onTap;
   final Widget child;
   final double size;
@@ -511,14 +435,12 @@ class _Button
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius:
-            BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(100),
         onTap: onTap,
         child: Container(
           width: size,
           height: size,
-          decoration:
-              BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: filled
                 ? Colors.white
