@@ -22,8 +22,12 @@ class BootScreen extends StatefulWidget {
   final Widget Function({
     required AppThemeColor selectedTheme,
     required AppThemeStyle selectedStyle,
-    required Future<void> Function(AppThemeColor) onThemeChanged,
-    required Future<void> Function(AppThemeStyle) onStyleChanged,
+    required Future<void> Function(
+      AppThemeColor,
+    ) onThemeChanged,
+    required Future<void> Function(
+      AppThemeStyle,
+    ) onStyleChanged,
   }) homeShellBuilder;
 
   const BootScreen({
@@ -36,10 +40,12 @@ class BootScreen extends StatefulWidget {
   });
 
   @override
-  State<BootScreen> createState() => _BootScreenState();
+  State<BootScreen> createState() =>
+      _BootScreenState();
 }
 
-class _BootScreenState extends State<BootScreen> {
+class _BootScreenState
+    extends State<BootScreen> {
   final List<String> _bootLines = [
     '[  OK  ] Starting Stellar Center...',
     '[  OK  ] Initializing system...',
@@ -57,7 +63,8 @@ class _BootScreenState extends State<BootScreen> {
   bool _finished = false;
   bool _updateAvailable = false;
 
-  String get _currentVersion => AppVersion.current;
+  String get _currentVersion =>
+      AppVersion.current;
 
   int _currentLine = 0;
 
@@ -70,7 +77,8 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   Future<void> _checkUpdate() async {
-    final update = await UpdateService.checkForUpdate();
+    final update =
+        await UpdateService.checkForUpdate();
 
     if (!mounted || update == null) {
       return;
@@ -86,21 +94,25 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   void _startBootAnimation() {
-    const totalBootTime = Duration(seconds: 2);
+    const totalBootTime =
+        Duration(seconds: 2);
 
     final lineDuration =
         totalBootTime.inMilliseconds ~/
             _bootLines.length;
 
     _timer = Timer.periodic(
-      Duration(milliseconds: lineDuration),
+      Duration(
+        milliseconds: lineDuration,
+      ),
       (timer) {
         if (!mounted) {
           timer.cancel();
           return;
         }
 
-        if (_currentLine < _bootLines.length) {
+        if (_currentLine <
+            _bootLines.length) {
           setState(() {
             _visibleLines.add(
               _bootLines[_currentLine],
@@ -110,7 +122,8 @@ class _BootScreenState extends State<BootScreen> {
           });
         }
 
-        if (_currentLine >= _bootLines.length) {
+        if (_currentLine >=
+            _bootLines.length) {
           timer.cancel();
           _showLinuxLogo();
         }
@@ -126,7 +139,9 @@ class _BootScreenState extends State<BootScreen> {
     });
 
     await Future.delayed(
-      const Duration(milliseconds: 500),
+      const Duration(
+        milliseconds: 500,
+      ),
     );
 
     if (!mounted) return;
@@ -155,7 +170,9 @@ class _BootScreenState extends State<BootScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  dialogContext,
+                ).pop();
               },
               child: const Text(
                 'Daha sonra',
@@ -163,22 +180,31 @@ class _BootScreenState extends State<BootScreen> {
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  dialogContext,
+                ).pop();
 
-                Navigator.of(context).push(
+                Navigator.of(context)
+                    .push(
                   MaterialPageRoute(
-                    builder: (_) => Scaffold(
+                    builder: (_) =>
+                        Scaffold(
                       appBar: AppBar(
-                        title: const Text(
+                        title:
+                            const Text(
                           'Güncelleme',
                         ),
                       ),
                       body: ListView(
-                        padding: const EdgeInsets.all(20),
+                        padding:
+                            const EdgeInsets.all(
+                          20,
+                        ),
                         children: [
                           const UpdateButton(
                             currentVersion:
-                                AppVersion.current,
+                                AppVersion
+                                    .current,
                           ),
                         ],
                       ),
@@ -186,7 +212,9 @@ class _BootScreenState extends State<BootScreen> {
                   ),
                 );
               },
-              child: const Text('Aç'),
+              child: const Text(
+                'Aç',
+              ),
             ),
           ],
         );
@@ -204,21 +232,27 @@ class _BootScreenState extends State<BootScreen> {
   Widget build(BuildContext context) {
     if (_finished) {
       return widget.homeShellBuilder(
-        selectedTheme: widget.selectedTheme,
-        selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        selectedTheme:
+            widget.selectedTheme,
+        selectedStyle:
+            widget.selectedStyle,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor:
+          Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
             if (!_showLogo)
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding:
+                    const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
@@ -228,10 +262,13 @@ class _BootScreenState extends State<BootScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(
+                      height: 24,
+                    ),
                     ..._visibleLines.map(
                       (line) => Padding(
                         padding:
@@ -240,9 +277,11 @@ class _BootScreenState extends State<BootScreen> {
                         ),
                         child: Text(
                           line,
-                          style: const TextStyle(
+                          style:
+                              const TextStyle(
                             color: Colors.white,
-                            fontFamily: 'monospace',
+                            fontFamily:
+                                'monospace',
                             fontSize: 13,
                           ),
                         ),
@@ -263,8 +302,10 @@ class _BootScreenState extends State<BootScreen> {
                     stackTrace,
                   ) {
                     return const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white,
+                      Icons
+                          .auto_awesome_rounded,
+                      color:
+                          Colors.white,
                       size: 90,
                     );
                   },
@@ -274,12 +315,16 @@ class _BootScreenState extends State<BootScreen> {
               Positioned(
                 right: 18,
                 bottom: 18,
-                child: FilledButton.icon(
-                  onPressed: _showUpdateDialog,
+                child:
+                    FilledButton.icon(
+                  onPressed:
+                      _showUpdateDialog,
                   icon: const Icon(
                     Icons.system_update,
                   ),
-                  label: const Text('UPDATE'),
+                  label: const Text(
+                    'UPDATE',
+                  ),
                 ),
               ),
             Positioned(
@@ -287,9 +332,12 @@ class _BootScreenState extends State<BootScreen> {
               bottom: 4,
               child: Text(
                 'v$_currentVersion',
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontFamily: 'monospace',
+                style:
+                    const TextStyle(
+                  color:
+                      Colors.white54,
+                  fontFamily:
+                      'monospace',
                   fontSize: 11,
                 ),
               ),
