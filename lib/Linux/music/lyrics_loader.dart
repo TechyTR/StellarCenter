@@ -8,27 +8,28 @@ class StellarLyricsLoader {
 
   static final Map<
       String,
-      List<StellarLrcLine>> _cache =
-      <String, List<StellarLrcLine>>{};
+      StellarLrcDocument> _documentCache =
+      <String, StellarLrcDocument>{};
 
   static final Map<
       String,
-      Future<List<StellarLrcLine>>> _pending =
-      <String, Future<List<StellarLrcLine>>>{};
+      Future<StellarLrcDocument>> _pending =
+      <String, Future<StellarLrcDocument>>{};
 
-  static Future<List<StellarLrcLine>> load(
+  static Future<StellarLrcDocument> loadDocument(
     String? path,
   ) {
-    if (path == null ||
-        path.trim().isEmpty) {
+    if (path == null || path.trim().isEmpty) {
       return Future.value(
-        const <StellarLrcLine>[],
+        const StellarLrcDocument(
+          lines: <StellarLrcLine>[],
+        ),
       );
     }
 
     final normalized = path.trim();
 
-    final cached = _cache[normalized];
+    final cached = _documentCache[normalized];
 
     if (cached != null) {
       return Future.value(cached);
@@ -40,8 +41,7 @@ class StellarLyricsLoader {
       return existing;
     }
 
-    final future =
-        _loadInternal(normalized);
+    final future = _loadInternal(normalized);
 
     _pending[normalized] = future;
 
@@ -50,46 +50,63 @@ class StellarLyricsLoader {
     );
   }
 
-  static Future<List<StellarLrcLine>>
-      _loadInternal(
+  static Future<List<StellarLrcLine>> load(
+    String? path,
+  ) async {
+    final document = await loadDocument(path);
+    return document.lines;
+  }
+
+  static Future<StellarLrcDocument> _loadInternal(
     String path,
   ) async {
     try {
       final file = File(path);
 
       if (!await file.exists()) {
-        return const [];
+        return const StellarLrcDocument(
+          lines: <StellarLrcLine>[],
+        );
       }
 
-      final bytes =
-          await file.readAsBytes();
+      final bytes = await file.readAsBytes();
 
       if (bytes.isEmpty) {
-        return const [];
+        return const StellarLrcDocument(
+          lines: <StellarLrcLine>[],
+        );
       }
 
-      final content =
-          _decodeText(bytes);
+      final content = _decodeText(bytes);
 
       if (content.trim().isEmpty) {
-        return const [];
+        return const StellarLrcDocument(
+          lines: <StellarLrcLine>[],
+        );
       }
 
-      final lines =
-          StellarLrcParser.parse(
+      final document =
+          StellarLrcParser.parseDocument(
         content,
       );
 
       final immutable =
-          List<StellarLrcLine>.unmodifiable(
-        lines,
+          StellarLrcDocument(
+        artist: document.artist,
+        album: document.album,
+        title: document.title,
+        lines: List.unmodifiable(
+          document.lines,
+        ),
       );
 
-      _cache[path] = immutable;
+      _documentCache[path] = immutable;
 
       return immutable;
     } catch (_) {
-      return const [];
+      return const StellarLrcDocument(
+        lines: <StellarLrcLine>[],
+      );
     }
   }
 
@@ -101,7 +118,11 @@ class StellarLyricsLoader {
      */
     if (_startsWith(
       bytes,
-      const [0xEF, 0xBB, 0xBF],
+      const [
+        0xEF,
+        0xBB,
+        0xBF,
+      ],
     )) {
       return utf8.decode(
         bytes.sublist(3),
@@ -114,7 +135,10 @@ class StellarLyricsLoader {
      */
     if (_startsWith(
       bytes,
-      const [0xFF, 0xFE],
+      const [
+        0xFF,
+        0xFE,
+      ],
     )) {
       return _decodeUtf16(
         bytes.sublist(2),
@@ -127,7 +151,10 @@ class StellarLyricsLoader {
      */
     if (_startsWith(
       bytes,
-      const [0xFE, 0xFF],
+      const [
+        0xFE,
+        0xFF,
+      ],
     )) {
       return _decodeUtf16(
         bytes.sublist(2),
@@ -135,9 +162,6 @@ class StellarLyricsLoader {
       );
     }
 
-    /*
-     * Normal UTF-8.
-     */
     return utf8.decode(
       bytes,
       allowMalformed: true,
@@ -152,9 +176,7 @@ class StellarLyricsLoader {
       return false;
     }
 
-    for (var i = 0;
-        i < prefix.length;
-        i++) {
+    for (var i = 0; i < prefix.length; i++) {
       if (bytes[i] != prefix[i]) {
         return false;
       }
@@ -169,9 +191,6 @@ class StellarLyricsLoader {
   }) {
     final units = <int>[];
 
-    /*
-     * UTF-16 iki byte'lık code unit'lerden oluşur.
-     */
     for (var i = 0;
         i + 1 < bytes.length;
         i += 2) {
@@ -185,26 +204,24 @@ class StellarLyricsLoader {
       units.add(value);
     }
 
-    return String.fromCharCodes(
-      units,
-    );
+    return String.fromCharCodes(units);
   }
 
   static void clear() {
-    _cache.clear();
+    _documentCache.clear();
   }
 
   static void remove(
     String path,
   ) {
-    _cache.remove(path);
+    _documentCache.remove(path);
   }
 
   static void removeAll(
     Iterable<String> paths,
   ) {
     for (final path in paths) {
-      _cache.remove(path);
+      _documentCache.remove(path);
     }
   }
 }
