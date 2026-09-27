@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'lrc_parser.dart';
@@ -38,41 +41,151 @@ class _StellarLyricsOverlayState
   ) {
     super.didUpdateWidget(oldWidget);
 
+    if (oldWidget.track.path !=
+        widget.track.path) {
+      _load();
+      return;
+    }
+
     if (oldWidget.track.lyricsPath !=
         widget.track.lyricsPath) {
+      _load();
+      return;
+    }
+
+    if (oldWidget.track.lyricsText !=
+        widget.track.lyricsText) {
       _load();
     }
   }
 
   Future<void> _load() async {
+    /*
+     * 1. Önce LRC dosyasını dene.
+     */
     final path = widget.track.lyricsPath;
 
-    if (path == null || path.trim().isEmpty) {
+    if (path != null &&
+        path.trim().isNotEmpty) {
+      final lines =
+          await StellarLyricsLoader.load(
+        path,
+      );
+
+      if (lines.isNotEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          _lines = lines;
+          _loadedPath = path;
+        });
+
+        return;
+      }
+    }
+
+    /*
+     * 2. LRC yoksa metadata içindeki
+     * lyrics alanını kullan.
+     */
+    final embedded =
+        widget.track.lyricsText;
+
+    if (embedded != null &&
+        embedded.trim().isNotEmpty) {
+      final lines =
+          StellarLrcParser.parse(
+        embedded,
+      );
+
+      if (lines.isNotEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          _lines = lines;
+          _loadedPath = null;
+        });
+
+        return;
+      }
+
+      /*
+       * Metadata'daki sözler timestamp
+       * içermiyorsa da göster.
+       */
+      final plainLines =
+          _plainTextToLines(embedded);
+
       if (!mounted) return;
 
       setState(() {
-        _lines = const [];
+        _lines = plainLines;
         _loadedPath = null;
       });
 
       return;
     }
 
-    final lines =
-        await StellarLyricsLoader.load(path);
-
     if (!mounted) return;
 
     setState(() {
-      _lines = lines;
-      _loadedPath = path;
+      _lines = const [];
+      _loadedPath = null;
     });
+  }
+
+  List<StellarLrcLine> _plainTextToLines(
+    String content,
+  ) {
+    final lines = <StellarLrcLine>[];
+
+    final rawLines =
+        content.split(
+      RegExp(r'\r?\n'),
+    );
+
+    var index = 0;
+
+    for (final raw in rawLines) {
+      final text =
+          raw.trim();
+
+      if (text.isEmpty) {
+        continue;
+      }
+
+      lines.add(
+        StellarLrcLine(
+          timestamp: Duration(
+            seconds: index,
+          ),
+          text: text,
+        ),
+      );
+
+      index++;
+    }
+
+    return List.unmodifiable(lines);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_lines.isEmpty) {
-      return const SizedBox.shrink();
+      return const Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 8,
+        ),
+        child: Text(
+          'Şarkı sözü bulunamadı',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white38,
+            fontSize: 13,
+          ),
+        ),
+      );
     }
 
     final activeIndex =
@@ -82,7 +195,9 @@ class _StellarLyricsOverlayState
     );
 
     final visibleIndex =
-        activeIndex < 0 ? 0 : activeIndex;
+        activeIndex < 0
+            ? 0
+            : activeIndex;
 
     final start = _clamp(
       visibleIndex - 2,
@@ -114,7 +229,10 @@ class _StellarLyricsOverlayState
                 '${_loadedPath ?? widget.track.path}-$i',
               ),
               text: _lines[i].text,
-              active: i == activeIndex,
+              active:
+                  i == activeIndex ||
+                  (activeIndex < 0 &&
+                      i == 0),
             ),
         ],
       ),
@@ -163,7 +281,9 @@ class _LyricLine
         style: TextStyle(
           color: active
               ? Colors.white
-              : Colors.white.withOpacity(0.34),
+              : Colors.white.withOpacity(
+                  0.34,
+                ),
           fontSize: active ? 21 : 14,
           fontWeight: active
               ? FontWeight.w800
@@ -173,7 +293,9 @@ class _LyricLine
               ? [
                   Shadow(
                     color:
-                        Colors.black.withOpacity(.35),
+                        Colors.black.withOpacity(
+                      .35,
+                    ),
                     blurRadius: 8,
                   ),
                 ]
@@ -182,8 +304,9 @@ class _LyricLine
         child: Text(
           text,
           textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+          maxLines: 3,
+          overflow:
+              TextOverflow.ellipsis,
         ),
       ),
     );
