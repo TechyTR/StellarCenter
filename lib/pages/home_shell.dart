@@ -18,8 +18,11 @@ class HomeShell extends StatefulWidget {
   final AppThemeColor selectedTheme;
   final AppThemeStyle selectedStyle;
 
-  final Future<void> Function(AppThemeColor) onThemeChanged;
-  final Future<void> Function(AppThemeStyle) onStyleChanged;
+  final Future<void> Function(AppThemeColor)
+      onThemeChanged;
+
+  final Future<void> Function(AppThemeStyle)
+      onStyleChanged;
 
   const HomeShell({
     super.key,
@@ -30,10 +33,12 @@ class HomeShell extends StatefulWidget {
   });
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  State<HomeShell> createState() =>
+      _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState
+    extends State<HomeShell> {
   int _currentIndex = 0;
 
   late List<Widget> _pages;
@@ -52,8 +57,10 @@ class _HomeShellState extends State<HomeShell> {
         DashboardPage(
           selectedTheme: widget.selectedTheme,
           selectedStyle: widget.selectedStyle,
-          onThemeChanged: widget.onThemeChanged,
-          onStyleChanged: widget.onStyleChanged,
+          onThemeChanged:
+              widget.onThemeChanged,
+          onStyleChanged:
+              widget.onStyleChanged,
           onSystemInfo: () => _openPage(1),
           onSystemMonitor: () => _openPage(2),
           onNotes: () => _openPage(5),
@@ -63,15 +70,19 @@ class _HomeShellState extends State<HomeShell> {
         SystemInfoPage(
           selectedTheme: widget.selectedTheme,
           selectedStyle: widget.selectedStyle,
-          onThemeChanged: widget.onThemeChanged,
-          onStyleChanged: widget.onStyleChanged,
+          onThemeChanged:
+              widget.onThemeChanged,
+          onStyleChanged:
+              widget.onStyleChanged,
         ),
 
         SystemMonitorPage(
           selectedTheme: widget.selectedTheme,
           selectedStyle: widget.selectedStyle,
-          onThemeChanged: widget.onThemeChanged,
-          onStyleChanged: widget.onStyleChanged,
+          onThemeChanged:
+              widget.onThemeChanged,
+          onStyleChanged:
+              widget.onStyleChanged,
         ),
 
         const LinuxMusicPage(),
@@ -79,8 +90,10 @@ class _HomeShellState extends State<HomeShell> {
         AppInfoPage(
           selectedTheme: widget.selectedTheme,
           selectedStyle: widget.selectedStyle,
-          onThemeChanged: widget.onThemeChanged,
-          onStyleChanged: widget.onStyleChanged,
+          onThemeChanged:
+              widget.onThemeChanged,
+          onStyleChanged:
+              widget.onStyleChanged,
         ),
 
         const NotesPage(),
@@ -93,8 +106,10 @@ class _HomeShellState extends State<HomeShell> {
       DashboardPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
         onSystemInfo: () => _openPage(1),
         onSystemMonitor: () => _openPage(2),
         onNotes: () => _openPage(3),
@@ -104,15 +119,19 @@ class _HomeShellState extends State<HomeShell> {
       SystemInfoPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
 
       SystemMonitorPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
 
       const NotesPage(),
@@ -120,14 +139,17 @@ class _HomeShellState extends State<HomeShell> {
       AppInfoPage(
         selectedTheme: widget.selectedTheme,
         selectedStyle: widget.selectedStyle,
-        onThemeChanged: widget.onThemeChanged,
-        onStyleChanged: widget.onStyleChanged,
+        onThemeChanged:
+            widget.onThemeChanged,
+        onStyleChanged:
+            widget.onStyleChanged,
       ),
     ];
   }
 
   void _openPage(int index) {
-    if (index < 0 || index >= _pages.length) {
+    if (index < 0 ||
+        index >= _pages.length) {
       return;
     }
 
@@ -142,7 +164,8 @@ class _HomeShellState extends State<HomeShell> {
         return;
       }
     } else {
-      if (index < 0 || index >= _pages.length) {
+      if (index < 0 ||
+          index >= _pages.length) {
         return;
       }
     }
@@ -179,7 +202,8 @@ class _HomeShellState extends State<HomeShell> {
             AppThemeStyle.normal;
 
     return Scaffold(
-      extendBody: !_isLinux && glass,
+      extendBody:
+          !_isLinux && glass,
 
       body: Row(
         children: [
@@ -194,7 +218,8 @@ class _HomeShellState extends State<HomeShell> {
 
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(
+              duration:
+                  const Duration(
                 milliseconds: 320,
               ),
               reverseDuration:
@@ -207,10 +232,12 @@ class _HomeShellState extends State<HomeShell> {
                   Curves.easeInCubic,
               layoutBuilder: (
                 Widget? currentChild,
-                List<Widget> previousChildren,
+                List<Widget>
+                    previousChildren,
               ) {
                 return Stack(
-                  alignment: Alignment.center,
+                  alignment:
+                      Alignment.center,
                   children: [
                     ...previousChildren,
                     if (currentChild != null)
@@ -232,13 +259,17 @@ class _HomeShellState extends State<HomeShell> {
                 final slide =
                     Tween<Offset>(
                   begin:
-                      const Offset(0.025, 0),
+                      const Offset(
+                    0.025,
+                    0,
+                  ),
                   end: Offset.zero,
                 ).animate(fade);
 
                 return FadeTransition(
                   opacity: fade,
-                  child: SlideTransition(
+                  child:
+                      SlideTransition(
                     position: slide,
                     child: child,
                   ),
@@ -259,7 +290,8 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: _isLinux
           ? null
           : BottomNavBar(
-              currentIndex: _currentIndex,
+              currentIndex:
+                  _currentIndex,
               selectedStyle:
                   widget.selectedStyle,
               onDestinationSelected:
