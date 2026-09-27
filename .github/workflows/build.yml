@@ -238,11 +238,16 @@ jobs:
           mkdir -p \
             "debian-package/DEBIAN" \
             "debian-package/opt/stellarcenter" \
-            "debian-package/usr/share/applications"
+            "debian-package/usr/share/applications" \
+            "debian-package/usr/share/icons/hicolor/1024x1024/apps"
 
           cp -r \
             build/linux/x64/release/bundle/. \
             debian-package/opt/stellarcenter/
+
+          cp \
+            assets/icon.png \
+            "debian-package/usr/share/icons/hicolor/1024x1024/apps/stellarcenter.png"
 
           cat > debian-package/DEBIAN/control <<EOF
           Package: stellarcenter
@@ -259,9 +264,11 @@ jobs:
           Name=Stellar Center
           Comment=Stellar Center system utility application
           Exec=/opt/stellarcenter/stellarcenter
+          Icon=stellarcenter
           Terminal=false
           Type=Application
           Categories=Utility;System;
+          StartupWMClass=stellarcenter
           EOF
 
           dpkg-deb \
