@@ -20,9 +20,7 @@ class StellarMusicMetadata {
 }
 
 class StellarMusicMetadataReader {
-  static StellarMusicMetadata read(
-    File file,
-  ) {
+  static StellarMusicMetadata read(File file) {
     try {
       final metadata = readMetadata(
         file,
@@ -35,21 +33,13 @@ class StellarMusicMetadataReader {
         final pictures = metadata.pictures;
 
         if (pictures.isNotEmpty) {
-          /*
-           * Önce cover/front görselini tercih et.
-           * Bulamazsak ilk resmi kullan.
-           */
-          final picture = pictures.firstWhere(
-            (picture) =>
-                picture.bytes.isNotEmpty,
-            orElse: () => pictures.first,
-          );
-
-          if (picture.bytes.isNotEmpty) {
-            artwork =
-                Uint8List.fromList(
-              picture.bytes,
-            );
+          for (final picture in pictures) {
+            if (picture.bytes.isNotEmpty) {
+              artwork = Uint8List.fromList(
+                picture.bytes,
+              );
+              break;
+            }
           }
         }
       } catch (_) {
@@ -68,9 +58,7 @@ class StellarMusicMetadataReader {
     }
   }
 
-  static String? _clean(
-    String? value,
-  ) {
+  static String? _clean(String? value) {
     if (value == null) {
       return null;
     }
@@ -83,8 +71,10 @@ class StellarMusicMetadataReader {
           ' ',
         );
 
-    return result.isEmpty
-        ? null
-        : result;
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return result;
   }
 }
