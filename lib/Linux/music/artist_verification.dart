@@ -4,115 +4,62 @@ class StellarArtistVerification {
   static final StellarArtistVerification instance =
       StellarArtistVerification._();
 
-  /*
-   * Buraya doğrulanmış sanatçıları ekle.
-   *
-   * Örnek:
-   *
-   * static const Set<String> defaultVerifiedArtists = {
-   *   'Sanatçı Adı',
-   * };
-   *
-   * Şu an boş bırakılmıştır çünkü bir sanatçıyı
-   * otomatik olarak gerçek/doğrulanmış kabul etmek
-   * doğru olmaz.
-   */
-  static const Set<String> defaultVerifiedArtists = {};
-
-  final Set<String> _verifiedArtists =
-      <String>{};
-
-  bool _initialized = false;
-
-  void _ensureInitialized() {
-    if (_initialized) {
-      return;
-    }
-
-    _initialized = true;
-
-    _verifiedArtists.addAll(
-      defaultVerifiedArtists.map(_normalize),
-    );
-  }
-
+  /// Sanatçı adı gerçekten bulunmuşsa mavi tik gösterilir.
+  ///
+  /// Örneğin:
+  /// - "Tarkan" -> mavi tik
+  /// - "Barış Manço" -> mavi tik
+  /// - "Bilinmeyen Sanatçı" -> mavi tik yok
+  /// - boş sanatçı adı -> mavi tik yok
+  ///
+  /// Böylece manuel sanatçı listesi tutmaya gerek kalmaz.
   bool isVerified(String artist) {
-    _ensureInitialized();
-
     final normalized = _normalize(artist);
 
     if (normalized.isEmpty) {
       return false;
     }
 
-    return _verifiedArtists.contains(normalized);
+    const unknownArtists = <String>{
+      'bilinmeyen sanatçı',
+      'bilinmeyen sanatci',
+      'unknown artist',
+      'unknown',
+      'artist',
+    };
+
+    return !unknownArtists.contains(normalized);
   }
 
+  /// Eski API ile uyumluluk için tutuldu.
+  /// Artık manuel doğrulama listesi kullanılmıyor.
   void setVerified(
     String artist,
     bool verified,
-  ) {
-    _ensureInitialized();
+  ) {}
 
-    final normalized = _normalize(artist);
-
-    if (normalized.isEmpty) {
-      return;
-    }
-
-    if (verified) {
-      _verifiedArtists.add(normalized);
-    } else {
-      _verifiedArtists.remove(normalized);
-    }
-  }
-
+  /// Eski API ile uyumluluk için tutuldu.
   void setVerifiedArtists(
     Iterable<String> artists,
-  ) {
-    _ensureInitialized();
+  ) {}
 
-    _verifiedArtists
-      ..clear()
-      ..addAll(
-        artists
-            .map(_normalize)
-            .where(
-              (artist) => artist.isNotEmpty,
-            ),
-      );
-  }
-
+  /// Eski API ile uyumluluk için tutuldu.
   void addVerifiedArtist(
     String artist,
-  ) {
-    setVerified(
-      artist,
-      true,
-    );
-  }
+  ) {}
 
+  /// Eski API ile uyumluluk için tutuldu.
   void removeVerifiedArtist(
     String artist,
-  ) {
-    setVerified(
-      artist,
-      false,
-    );
-  }
+  ) {}
 
+  /// Artık manuel liste kullanılmadığı için boş döner.
   Set<String> get verifiedArtists {
-    _ensureInitialized();
-
-    return Set<String>.unmodifiable(
-      _verifiedArtists,
-    );
+    return const <String>{};
   }
 
-  void clear() {
-    _ensureInitialized();
-    _verifiedArtists.clear();
-  }
+  /// Eski API ile uyumluluk için tutuldu.
+  void clear() {}
 
   String _normalize(String value) {
     return value
