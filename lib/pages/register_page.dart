@@ -14,9 +14,12 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState
     extends State<RegisterPage> {
-  final _emailController = TextEditingController();
+  final _emailController =
+      TextEditingController();
+
   final _passwordController =
       TextEditingController();
+
   final _confirmPasswordController =
       TextEditingController();
 
@@ -51,6 +54,14 @@ class _RegisterPageState
       return;
     }
 
+    if (!email.contains('@') ||
+        !email.contains('.')) {
+      _showError(
+        'Geçerli bir e-posta adresi girin.',
+      );
+      return;
+    }
+
     if (password.length < 6) {
       _showError(
         'Şifre en az 6 karakter olmalıdır.',
@@ -80,7 +91,7 @@ class _RegisterPageState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Hesabın başarıyla oluşturuldu.',
+            'Hesabın oluşturuldu. Doğrulama e-postanı kontrol et.',
           ),
         ),
       );
@@ -90,11 +101,11 @@ class _RegisterPageState
       if (!mounted) return;
 
       _showError(e.message);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       _showError(
-        'Kayıt sırasında beklenmeyen bir hata oluştu.',
+        'Kayıt sırasında beklenmeyen bir hata oluştu: $e',
       );
     } finally {
       if (mounted) {
@@ -132,7 +143,8 @@ class _RegisterPageState
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
+              constraints:
+                  const BoxConstraints(
                 maxWidth: 430,
               ),
               child: Column(
@@ -144,9 +156,7 @@ class _RegisterPageState
                     size: 70,
                     color: scheme.primary,
                   ),
-
                   const SizedBox(height: 18),
-
                   const Text(
                     'Stellar hesabını oluştur',
                     textAlign: TextAlign.center,
@@ -155,9 +165,7 @@ class _RegisterPageState
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     'Android ve Linux üzerinde aynı hesabı kullan.',
                     textAlign: TextAlign.center,
@@ -166,9 +174,7 @@ class _RegisterPageState
                           scheme.onSurfaceVariant,
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   TextField(
                     controller:
                         _emailController,
@@ -189,9 +195,7 @@ class _RegisterPageState
                           OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   TextField(
                     controller:
                         _passwordController,
@@ -226,9 +230,7 @@ class _RegisterPageState
                           const OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   TextField(
                     controller:
                         _confirmPasswordController,
@@ -269,9 +271,7 @@ class _RegisterPageState
                           const OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   SizedBox(
                     height: 52,
                     child: FilledButton(
@@ -297,11 +297,9 @@ class _RegisterPageState
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   Text(
-                    'Hesap oluşturduğunda aynı e-posta ve şifreyle Stellar Center\'a Android ve Linux üzerinden giriş yapabilirsin.',
+                    'Hesap oluşturulduğunda doğrulama e-postası otomatik olarak gönderilir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
