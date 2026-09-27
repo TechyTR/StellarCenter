@@ -110,7 +110,8 @@ class _StellarCenterAppState
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor:
+              Colors.black,
           body: Center(
             child:
                 CircularProgressIndicator(),
@@ -133,7 +134,8 @@ class _StellarCenterAppState
         duration: const Duration(
           milliseconds: 650,
         ),
-        curve: Curves.easeInOutCubic,
+        curve:
+            Curves.easeInOutCubic,
         child: BootScreen(
           selectedTheme:
               _selectedTheme,
