@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class AuthService {
   AuthService._();
@@ -10,7 +10,7 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   static const String _firebaseApiKey =
-    String.fromEnvironment('FIREBASE_APIKEY');
+      String.fromEnvironment('FIREBASE_APIKEY');
 
   static const String _baseUrl =
       'https://identitytoolkit.googleapis.com/v1/accounts';
@@ -21,6 +21,7 @@ class AuthService {
   String? _linuxEmail;
 
   bool get isLinux => Platform.isLinux;
+
   bool get isAndroid => Platform.isAndroid;
 
   bool get isLoggedIn {
@@ -51,12 +52,24 @@ class AuthService {
     return _linuxLocalId;
   }
 
+  String? get currentPhotoUrl {
+    if (Platform.isAndroid) {
+      return FirebaseAuth.instance.currentUser?.photoURL;
+    }
+
+    return null;
+  }
+
   Future<void> register({
     required String email,
     required String password,
   }) async {
-    if (email.trim().isEmpty) {
-      throw AuthException('E-posta adresi boş bırakılamaz.');
+    final normalizedEmail = email.trim();
+
+    if (normalizedEmail.isEmpty) {
+      throw AuthException(
+        'E-posta adresi boş bırakılamaz.',
+      );
     }
 
     if (password.length < 6) {
@@ -67,14 +80,38 @@ class AuthService {
 
     if (Platform.isAndroid) {
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: email.trim(),
+        final credential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+          email: normalizedEmail,
           password: password,
         );
 
+        final user = credential.user;
+
+        if (user == null) {
+          throw AuthException(
+            'Hesap oluşturuldu ancak kullanıcı oturumu alınamadı.',
+          );
+        }
+
+        // Yeni hesap oluşturulduğunda doğrulama e-postasını
+        // otomatik olarak gönderiyoruz.
+        try {
+          await user.sendEmailVerification();
+        } on FirebaseAuthException catch (e) {
+          // Hesap oluşturma başarılı olduğu için burada
+          // hesabı başarısız saymıyoruz.
+          throw AuthException(
+            'Hesap oluşturuldu ancak doğrulama e-postası gönderilemedi: '
+            '${_firebaseError(e.code)}',
+          );
+        }
+
         return;
       } on FirebaseAuthException catch (e) {
-        throw AuthException(_firebaseError(e.code));
+        throw AuthException(
+          _firebaseError(e.code),
+        );
       }
     }
 
@@ -87,13 +124,18 @@ class AuthService {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'email': email.trim(),
+          'email': normalizedEmail,
           'password': password,
           'returnSecureToken': true,
         }),
       );
 
       _handleLinuxResponse(response);
+
+      // Linux REST oturumunu aldıktan sonra doğrulama e-postasını
+      // otomatik gönderiyoruz.
+      await sendEmailVerification();
+
       return;
     }
 
@@ -106,24 +148,33 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    if (email.trim().isEmpty) {
-      throw AuthException('E-posta adresi boş bırakılamaz.');
+    final normalizedEmail = email.trim();
+
+    if (normalizedEmail.isEmpty) {
+      throw AuthException(
+        'E-posta adresi boş bırakılamaz.',
+      );
     }
 
     if (password.isEmpty) {
-      throw AuthException('Şifre boş bırakılamaz.');
+      throw AuthException(
+        'Şifre boş bırakılamaz.',
+      );
     }
 
     if (Platform.isAndroid) {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email.trim(),
+        await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+          email: normalizedEmail,
           password: password,
         );
 
         return;
       } on FirebaseAuthException catch (e) {
-        throw AuthException(_firebaseError(e.code));
+        throw AuthException(
+          _firebaseError(e.code),
+        );
       }
     }
 
@@ -136,7 +187,7 @@ class AuthService {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'email': email.trim(),
+          'email': normalizedEmail,
           'password': password,
           'returnSecureToken': true,
         }),
@@ -168,7 +219,9 @@ class AuthService {
   Future<void> sendPasswordResetEmail(
     String email,
   ) async {
-    if (email.trim().isEmpty) {
+    final normalizedEmail = email.trim();
+
+    if (normalizedEmail.isEmpty) {
       throw AuthException(
         'E-posta adresi boş bırakılamaz.',
       );
@@ -176,13 +229,16 @@ class AuthService {
 
     if (Platform.isAndroid) {
       try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(
-          email: email.trim(),
+        await FirebaseAuth.instance
+            .sendPasswordResetEmail(
+          email: normalizedEmail,
         );
 
         return;
       } on FirebaseAuthException catch (e) {
-        throw AuthException(_firebaseError(e.code));
+        throw AuthException(
+          _firebaseError(e.code),
+        );
       }
     }
 
@@ -196,7 +252,7 @@ class AuthService {
         },
         body: jsonEncode({
           'requestType': 'PASSWORD_RESET',
-          'email': email.trim(),
+          'email': normalizedEmail,
         }),
       );
 
@@ -211,7 +267,8 @@ class AuthService {
 
   Future<void> sendEmailVerification() async {
     if (Platform.isAndroid) {
-      final user = FirebaseAuth.instance.currentUser;
+      final auth = FirebaseAuth.instance;
+      var user = auth.currentUser;
 
       if (user == null) {
         throw AuthException(
@@ -219,8 +276,29 @@ class AuthService {
         );
       }
 
-      if (!user.emailVerified) {
+      await user.reload();
+      user = auth.currentUser;
+
+      if (user == null) {
+        throw AuthException(
+          'Kullanıcı oturumu yenilenemedi.',
+        );
+      }
+
+      if (user.emailVerified) {
+        return;
+      }
+
+      try {
         await user.sendEmailVerification();
+      } on FirebaseAuthException catch (e) {
+        throw AuthException(
+          _firebaseVerificationError(e.code),
+        );
+      } catch (e) {
+        throw AuthException(
+          'Doğrulama e-postası gönderilemedi: $e',
+        );
       }
 
       return;
@@ -246,13 +324,34 @@ class AuthService {
         }),
       );
 
-      _handleLinuxResponse(response);
+      _handleLinuxResponse(
+        response,
+        saveSession: false,
+      );
+
       return;
     }
 
     throw AuthException(
       'Bu platformda e-posta doğrulama desteklenmiyor.',
     );
+  }
+
+  Future<bool> refreshEmailVerificationStatus() async {
+    if (Platform.isAndroid) {
+      final auth = FirebaseAuth.instance;
+      final user = auth.currentUser;
+
+      if (user == null) {
+        return false;
+      }
+
+      await user.reload();
+
+      return auth.currentUser?.emailVerified ?? false;
+    }
+
+    return false;
   }
 
   bool get isEmailVerified {
@@ -265,8 +364,9 @@ class AuthService {
   }
 
   void _handleLinuxResponse(
-    http.Response response,
-  ) {
+    http.Response response, {
+    bool saveSession = true,
+  }) {
     final Map<String, dynamic> data;
 
     try {
@@ -280,7 +380,10 @@ class AuthService {
 
     if (response.statusCode >= 200 &&
         response.statusCode < 300) {
-      _saveLinuxSession(data);
+      if (saveSession) {
+        _saveLinuxSession(data);
+      }
+
       return;
     }
 
@@ -311,6 +414,33 @@ class AuthService {
         data['email']?.toString();
   }
 
+  String _firebaseVerificationError(
+    String code,
+  ) {
+    switch (code) {
+      case 'too-many-requests':
+        return 'Doğrulama e-postası çok sık istendi. '
+            'Biraz bekleyip tekrar deneyin.';
+
+      case 'network-request-failed':
+        return 'İnternet bağlantısı kurulamadı.';
+
+      case 'user-disabled':
+        return 'Bu hesap devre dışı bırakılmış.';
+
+      case 'invalid-user-token':
+      case 'user-token-expired':
+        return 'Oturum süresi dolmuş. Tekrar giriş yapın.';
+
+      case 'operation-not-allowed':
+        return 'E-posta doğrulama işlemi Firebase tarafında '
+            'etkin değil.';
+
+      default:
+        return 'Firebase doğrulama hatası: $code';
+    }
+  }
+
   String _firebaseError(String code) {
     switch (code) {
       case 'email-already-in-use':
@@ -333,10 +463,15 @@ class AuthService {
         return 'Bu hesap devre dışı bırakılmış.';
 
       case 'too-many-requests':
-        return 'Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.';
+        return 'Çok fazla deneme yapıldı. '
+            'Daha sonra tekrar deneyin.';
 
       case 'network-request-failed':
         return 'İnternet bağlantısı kurulamadı.';
+
+      case 'operation-not-allowed':
+        return 'E-posta/şifre ile giriş Firebase tarafında '
+            'etkin değil.';
 
       default:
         return 'Firebase hatası: $code';
@@ -371,6 +506,10 @@ class AuthService {
 
       case 'INVALID_API_KEY':
         return 'Firebase API anahtarı geçersiz.';
+
+      case 'INVALID_ID_TOKEN':
+      case 'TOKEN_EXPIRED':
+        return 'Firebase oturumunun süresi dolmuş. Tekrar giriş yapın.';
 
       default:
         return 'Firebase hatası: ${code ?? 'Bilinmeyen hata'}';
