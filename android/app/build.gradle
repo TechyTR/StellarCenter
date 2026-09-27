@@ -33,10 +33,17 @@ android {
 
     signingConfigs {
         release {
-            def keystorePath = System.getenv("STELLAR_KEYSTORE_PATH")
-            def keystorePassword = System.getenv("STELLAR_KEYSTORE_PASSWORD")
-            def stellarKeyAlias = System.getenv("STELLAR_KEY_ALIAS")
-            def stellarKeyPassword = System.getenv("STELLAR_KEY_PASSWORD")
+            def keystorePath =
+                System.getenv("STELLAR_KEYSTORE_PATH")
+
+            def keystorePassword =
+                System.getenv("STELLAR_KEYSTORE_PASSWORD")
+
+            def stellarKeyAlias =
+                System.getenv("STELLAR_KEY_ALIAS")
+
+            def stellarKeyPassword =
+                System.getenv("STELLAR_KEY_PASSWORD")
 
             if (keystorePath == null ||
                 keystorePassword == null ||
