@@ -13,5 +13,14 @@
   "batteryCharging": "Cargando",
   "batteryFull": "Completa",
   "batteryConnected": "Conectado",
-  "batteryInUse": "Usando batería"
+  "batteryInUse": "Usando batería",
+  "themeColor": "Color del tema",
+  "appearance": "Apariencia",
+  "tools": "Herramientas",
+  "update": "Actualizaciones",
+  "benchmarkSubtitle": "Prueba el rendimiento del dispositivo",
+  "storageSubtitle": "Revisa el uso del almacenamiento",
+  "sensorSubtitle": "Inspecciona los sensores",
+  "networkSubtitle": "Revisa la conexión de red",
+  "batterySubtitle": "Revisa el estado de la batería"
 }
