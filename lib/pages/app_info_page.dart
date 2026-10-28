@@ -219,9 +219,9 @@ class AppInfoPage extends StatelessWidget {
   Widget _languageCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final currentCode = LocaleService.selectedCode;
-    final currentName =
-        LocaleService.supportedLanguageNames[currentCode] ??
-        LocaleService.supportedLanguageNames['system']!;
+    final currentName = currentCode == 'system'
+        ? l10n.languageSystem
+        : LocaleService.supportedLanguageNames[currentCode] ?? l10n.languageSystem;
 
     return _glassCard(
       context,
@@ -250,7 +250,7 @@ class AppInfoPage extends StatelessWidget {
                   ...LocaleService.supportedLanguageNames.entries.map((entry) {
                     final selected = entry.key == currentCode;
                     return ListTile(
-                      title: Text(entry.value),
+                      title: Text(entry.key == 'system' ? l10n.languageSystem : entry.value),
                       trailing: selected
                           ? const Icon(Icons.check_rounded)
                           : null,
@@ -791,7 +791,7 @@ class AppInfoPage extends StatelessWidget {
               _hero(context),
               _languageCard(context),
               Text(
-                'Tema Rengi',
+                AppLocalizations.of(context).themeColor,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -815,7 +815,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Görünüm',
+                AppLocalizations.of(context).appearance,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -851,7 +851,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Araçlar',
+                AppLocalizations.of(context).tools,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -866,7 +866,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.speed_rounded,
                 title: 'Benchmark',
                 subtitle:
-                    'Cihaz performansını detaylı test et',
+                    AppLocalizations.of(context).benchmarkSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -879,7 +879,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.storage_rounded,
                 title: 'Storage Manager',
                 subtitle:
-                    'Depolama kullanımını incele',
+                    AppLocalizations.of(context).storageSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -891,7 +891,7 @@ class AppInfoPage extends StatelessWidget {
                 context,
                 icon: Icons.sensors_rounded,
                 title: 'SensorLab',
-                subtitle: 'Sensörleri incele',
+                subtitle: AppLocalizations.of(context).sensorSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -904,7 +904,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.network_check_rounded,
                 title: 'Network Lab',
                 subtitle:
-                    'Ağ bağlantısını incele',
+                    AppLocalizations.of(context).networkSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -917,7 +917,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.battery_full_rounded,
                 title: 'Battery Lab',
                 subtitle:
-                    'Pil durumunu incele',
+                    AppLocalizations.of(context).batterySubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -927,7 +927,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Güncelleme',
+                AppLocalizations.of(context).update,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
