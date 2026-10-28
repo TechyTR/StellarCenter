@@ -13,5 +13,14 @@
   "batteryCharging": "Wird geladen",
   "batteryFull": "Vollständig geladen",
   "batteryConnected": "Verbunden",
-  "batteryInUse": "Akkubetrieb"
+  "batteryInUse": "Akkubetrieb",
+  "themeColor": "Designfarbe",
+  "appearance": "Darstellung",
+  "tools": "Werkzeuge",
+  "update": "Updates",
+  "benchmarkSubtitle": "Geräteleistung ausführlich testen",
+  "storageSubtitle": "Speichernutzung prüfen",
+  "sensorSubtitle": "Sensoren untersuchen",
+  "networkSubtitle": "Netzwerkverbindung prüfen",
+  "batterySubtitle": "Akkustatus prüfen"
 }
