@@ -6,12 +6,21 @@
   "navNotes": "Notes",
   "navAbout": "À propos",
   "language": "Langue",
-  "languageSystem": "Suivre la langue de l’appareil",
+  "languageSystem": "Utiliser la langue de l’appareil",
   "languageTitle": "Langue de l’application",
   "appName": "Stellar Center",
   "unknown": "Inconnu",
   "batteryCharging": "En charge",
   "batteryFull": "Chargée",
   "batteryConnected": "Connecté",
-  "batteryInUse": "Sur batterie"
+  "batteryInUse": "Sur batterie",
+  "themeColor": "Couleur du thème",
+  "appearance": "Apparence",
+  "tools": "Outils",
+  "update": "Mises à jour",
+  "benchmarkSubtitle": "Tester les performances de l’appareil",
+  "storageSubtitle": "Examiner l’utilisation du stockage",
+  "sensorSubtitle": "Examiner les capteurs",
+  "networkSubtitle": "Examiner la connexion réseau",
+  "batterySubtitle": "Examiner l’état de la batterie"
 }
