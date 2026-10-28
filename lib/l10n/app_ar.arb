@@ -1,0 +1,17 @@
+{
+  "@@locale": "ar",
+  "navMenu": "القائمة",
+  "navSystem": "النظام",
+  "navMonitor": "المراقبة",
+  "navNotes": "الملاحظات",
+  "navAbout": "حول التطبيق",
+  "language": "اللغة",
+  "languageSystem": "اتباع لغة الجهاز",
+  "languageTitle": "لغة التطبيق",
+  "appName": "Stellar Center",
+  "unknown": "غير معروف",
+  "batteryCharging": "قيد الشحن",
+  "batteryFull": "ممتلئة",
+  "batteryConnected": "متصل",
+  "batteryInUse": "يعمل على البطارية"
+}
