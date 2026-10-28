@@ -47,6 +47,7 @@ class _NormalLinuxNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return SafeArea(
       child: Center(
