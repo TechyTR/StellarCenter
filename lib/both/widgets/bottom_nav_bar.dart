@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -18,35 +19,36 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (selectedStyle == AppThemeStyle.normal) {
       return NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: onDestinationSelected,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: 'Menü',
+            label: l10n.navMenu,
           ),
           NavigationDestination(
             icon: Icon(Icons.memory_outlined),
             selectedIcon: Icon(Icons.memory),
-            label: 'Sistem',
+            label: l10n.navSystem,
           ),
           NavigationDestination(
             icon: Icon(Icons.monitor_heart_outlined),
             selectedIcon: Icon(Icons.monitor_heart),
-            label: 'Monitör',
+            label: l10n.navMonitor,
           ),
           NavigationDestination(
             icon: Icon(Icons.note_outlined),
             selectedIcon: Icon(Icons.note),
-            label: 'Notlar',
+            label: l10n.navNotes,
           ),
           NavigationDestination(
             icon: Icon(Icons.info_outline),
             selectedIcon: Icon(Icons.info),
-            label: 'Hakkında',
+            label: l10n.navAbout,
           ),
         ],
       );
@@ -75,6 +77,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme =
         Theme.of(context).colorScheme;
 
