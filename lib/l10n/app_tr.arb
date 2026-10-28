@@ -13,5 +13,14 @@
   "batteryCharging": "Şarj oluyor",
   "batteryFull": "Tam dolu",
   "batteryConnected": "Bağlı",
-  "batteryInUse": "Pil kullanılıyor"
+  "batteryInUse": "Pil kullanılıyor",
+  "themeColor": "Tema rengi",
+  "appearance": "Görünüm",
+  "tools": "Araçlar",
+  "update": "Güncelleme",
+  "benchmarkSubtitle": "Cihaz performansını detaylı test et",
+  "storageSubtitle": "Depolama kullanımını incele",
+  "sensorSubtitle": "Cihaz sensörlerini incele",
+  "networkSubtitle": "Ağ bağlantısını incele",
+  "batterySubtitle": "Pil durumunu incele"
 }
