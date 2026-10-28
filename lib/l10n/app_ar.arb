@@ -6,12 +6,21 @@
   "navNotes": "الملاحظات",
   "navAbout": "حول التطبيق",
   "language": "اللغة",
-  "languageSystem": "اتباع لغة الجهاز",
+  "languageSystem": "استخدام لغة الجهاز",
   "languageTitle": "لغة التطبيق",
   "appName": "Stellar Center",
   "unknown": "غير معروف",
   "batteryCharging": "قيد الشحن",
   "batteryFull": "ممتلئة",
   "batteryConnected": "متصل",
-  "batteryInUse": "يعمل على البطارية"
+  "batteryInUse": "يعمل على البطارية",
+  "themeColor": "لون السمة",
+  "appearance": "المظهر",
+  "tools": "الأدوات",
+  "update": "التحديثات",
+  "benchmarkSubtitle": "اختبار أداء الجهاز بالتفصيل",
+  "storageSubtitle": "مراجعة استخدام التخزين",
+  "sensorSubtitle": "فحص المستشعرات",
+  "networkSubtitle": "فحص اتصال الشبكة",
+  "batterySubtitle": "فحص حالة البطارية"
 }
