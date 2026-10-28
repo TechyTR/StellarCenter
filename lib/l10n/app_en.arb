@@ -1,0 +1,17 @@
+{
+  "@@locale": "en",
+  "navMenu": "Menu",
+  "navSystem": "System",
+  "navMonitor": "Monitor",
+  "navNotes": "Notes",
+  "navAbout": "About",
+  "language": "Language",
+  "languageSystem": "Follow device language",
+  "languageTitle": "App language",
+  "appName": "Stellar Center",
+  "unknown": "Unknown",
+  "batteryCharging": "Charging",
+  "batteryFull": "Full",
+  "batteryConnected": "Connected",
+  "batteryInUse": "On battery"
+}
