@@ -6,12 +6,21 @@
   "navNotes": "Заметки",
   "navAbout": "О приложении",
   "language": "Язык",
-  "languageSystem": "Как на устройстве",
+  "languageSystem": "Использовать язык устройства",
   "languageTitle": "Язык приложения",
   "appName": "Stellar Center",
   "unknown": "Неизвестно",
   "batteryCharging": "Зарядка",
   "batteryFull": "Заряжено",
   "batteryConnected": "Подключено",
-  "batteryInUse": "Работа от батареи"
+  "batteryInUse": "Работа от батареи",
+  "themeColor": "Цвет темы",
+  "appearance": "Внешний вид",
+  "tools": "Инструменты",
+  "update": "Обновления",
+  "benchmarkSubtitle": "Подробная проверка производительности",
+  "storageSubtitle": "Проверить использование хранилища",
+  "sensorSubtitle": "Проверить датчики",
+  "networkSubtitle": "Проверить сетевое подключение",
+  "batterySubtitle": "Проверить состояние батареи"
 }
