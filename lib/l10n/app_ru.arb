@@ -1,0 +1,17 @@
+{
+  "@@locale": "ru",
+  "navMenu": "Меню",
+  "navSystem": "Система",
+  "navMonitor": "Монитор",
+  "navNotes": "Заметки",
+  "navAbout": "О приложении",
+  "language": "Язык",
+  "languageSystem": "Как на устройстве",
+  "languageTitle": "Язык приложения",
+  "appName": "Stellar Center",
+  "unknown": "Неизвестно",
+  "batteryCharging": "Зарядка",
+  "batteryFull": "Заряжено",
+  "batteryConnected": "Подключено",
+  "batteryInUse": "Работа от батареи"
+}
