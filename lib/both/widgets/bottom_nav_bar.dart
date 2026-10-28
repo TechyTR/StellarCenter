@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -18,35 +19,36 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (selectedStyle == AppThemeStyle.normal) {
       return NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: onDestinationSelected,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: 'Menü',
+            label: l10n.navMenu,
           ),
           NavigationDestination(
             icon: Icon(Icons.memory_outlined),
             selectedIcon: Icon(Icons.memory),
-            label: 'Sistem',
+            label: l10n.navSystem,
           ),
           NavigationDestination(
             icon: Icon(Icons.monitor_heart_outlined),
             selectedIcon: Icon(Icons.monitor_heart),
-            label: 'Monitör',
+            label: l10n.navMonitor,
           ),
           NavigationDestination(
             icon: Icon(Icons.note_outlined),
             selectedIcon: Icon(Icons.note),
-            label: 'Notlar',
+            label: l10n.navNotes,
           ),
           NavigationDestination(
             icon: Icon(Icons.info_outline),
             selectedIcon: Icon(Icons.info),
-            label: 'Hakkında',
+            label: l10n.navAbout,
           ),
         ],
       );
@@ -75,6 +77,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme =
         Theme.of(context).colorScheme;
 
@@ -263,7 +266,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               Icons
                                   .dashboard_outlined,
                               Icons.dashboard,
-                              'Home',
+                              l10n.navMenu,
                               0,
                               accent,
                             ),
@@ -271,7 +274,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               context,
                               Icons.memory_outlined,
                               Icons.memory,
-                              'System',
+                              l10n.navSystem,
                               1,
                               accent,
                             ),
@@ -280,7 +283,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               Icons
                                   .monitor_heart_outlined,
                               Icons.monitor_heart,
-                              'Monitor',
+                              l10n.navMonitor,
                               2,
                               accent,
                             ),
@@ -288,7 +291,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               context,
                               Icons.note_outlined,
                               Icons.note,
-                              'Notes',
+                              l10n.navNotes,
                               3,
                               accent,
                             ),
@@ -296,7 +299,7 @@ class _LiquidGlassNavigationBar extends StatelessWidget {
                               context,
                               Icons.info_outline,
                               Icons.info,
-                              'App',
+                              l10n.navAbout,
                               4,
                               accent,
                             ),

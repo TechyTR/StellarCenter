@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'stellar_animation_config.dart';
+import 'animation_config.dart';
 
 class StellarPressable extends StatefulWidget {
   final Widget child;

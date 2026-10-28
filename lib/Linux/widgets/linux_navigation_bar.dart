@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../both/theme/app_theme.dart';
 
 class LinuxNavigationBar extends StatelessWidget {
@@ -46,6 +47,7 @@ class _NormalLinuxNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return SafeArea(
       child: Center(
@@ -214,43 +216,43 @@ class _NavigationItems extends StatelessWidget {
     required this.isLight,
   });
 
-  static const _items = [
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = [
     (
       Icons.dashboard_outlined,
       Icons.dashboard,
-      'Menü',
+      l10n.navMenu,
     ),
     (
       Icons.memory_outlined,
       Icons.memory,
-      'Sistem',
+      l10n.navSystem,
     ),
     (
       Icons.monitor_heart_outlined,
       Icons.monitor_heart,
-      'Monitör',
+      l10n.navMonitor,
     ),
     (
       Icons.music_note_outlined,
       Icons.music_note,
-      'Müzik',
+      l10n.navNotes,
     ),
     (
       Icons.info_outline,
       Icons.info,
-      'Hakkında',
+      l10n.navAbout,
     ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
+    ];
     final scheme = Theme.of(context).colorScheme;
     final accent = scheme.primary;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final itemHeight =
-            constraints.maxHeight / _items.length;
+            constraints.maxHeight / items.length;
 
         return Stack(
           children: [
@@ -317,9 +319,9 @@ class _NavigationItems extends StatelessWidget {
             ),
             Column(
               children: List.generate(
-                _items.length,
+                items.length,
                 (index) {
-                  final item = _items[index];
+                  final item = items[index];
 
                   return Expanded(
                     child: _NavigationItem(

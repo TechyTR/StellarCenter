@@ -470,10 +470,7 @@ class MusicLibraryService {
           if (bytes.length >= 2 &&
               bytes[0] == 0xFF &&
               bytes[1] == 0xFE) {
-            return utf16
-                .decode(
-                  bytes.sublist(2),
-                )
+            return _decodeUtf16LittleEndian(bytes.sublist(2))
                 .replaceAll(
                   '\u0000',
                   '',
@@ -489,8 +486,7 @@ class MusicLibraryService {
             );
           }
 
-          return utf16
-              .decode(bytes)
+          return _decodeUtf16LittleEndian(bytes)
               .replaceAll(
                 '\u0000',
                 '',
@@ -498,11 +494,7 @@ class MusicLibraryService {
               .trim();
 
         case 2:
-          return utf16
-              .decode(
-                bytes,
-                allowInvalid: true,
-              )
+          return _decodeUtf16BigEndian(bytes)
               .replaceAll(
                 '\u0000',
                 '',
@@ -527,6 +519,17 @@ class MusicLibraryService {
     } catch (_) {
       return null;
     }
+  }
+
+
+  String _decodeUtf16LittleEndian(List<int> bytes) {
+    final units = <int>[];
+    for (var i = 0; i + 1 < bytes.length; i += 2) {
+      units.add(bytes[i] | (bytes[i + 1] << 8));
+    }
+    return String.fromCharCodes(units)
+        .replaceAll('\u0000', '')
+        .trim();
   }
 
   String _decodeUtf16BigEndian(

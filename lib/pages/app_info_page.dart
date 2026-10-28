@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../services/app_version.dart';
+import '../services/locale_service.dart';
+import '../l10n/app_localizations.dart';
 import '../both/theme/app_theme.dart';
 import '../both/widgets/update_button.dart';
 import 'battery_lab_page.dart';
@@ -210,6 +212,61 @@ class AppInfoPage extends StatelessWidget {
             child: child,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _languageCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final currentCode = LocaleService.selectedCode;
+    final currentName = currentCode == 'system'
+        ? l10n.languageSystem
+        : LocaleService.supportedLanguageNames[currentCode] ?? l10n.languageSystem;
+
+    return _glassCard(
+      context,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.language_rounded),
+        title: Text(l10n.languageTitle),
+        subtitle: Text(currentName),
+        trailing: const Icon(Icons.expand_more_rounded),
+        onTap: () async {
+          await showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            showDragHandle: true,
+            builder: (sheetContext) => SafeArea(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: Text(
+                      l10n.languageTitle,
+                      style: Theme.of(sheetContext).textTheme.titleLarge,
+                    ),
+                  ),
+                  ...LocaleService.supportedLanguageNames.entries.map((entry) {
+                    final selected = entry.key == currentCode;
+                    return ListTile(
+                      title: Text(entry.key == 'system' ? l10n.languageSystem : entry.value),
+                      trailing: selected
+                          ? const Icon(Icons.check_rounded)
+                          : null,
+                      onTap: () async {
+                        await LocaleService.setLanguage(entry.key);
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -732,8 +789,9 @@ class AppInfoPage extends StatelessWidget {
             ),
             children: [
               _hero(context),
+              _languageCard(context),
               Text(
-                'Tema Rengi',
+                AppLocalizations.of(context).themeColor,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -757,7 +815,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Görünüm',
+                AppLocalizations.of(context).appearance,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -793,7 +851,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Araçlar',
+                AppLocalizations.of(context).tools,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
@@ -808,7 +866,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.speed_rounded,
                 title: 'Benchmark',
                 subtitle:
-                    'Cihaz performansını detaylı test et',
+                    AppLocalizations.of(context).benchmarkSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -821,7 +879,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.storage_rounded,
                 title: 'Storage Manager',
                 subtitle:
-                    'Depolama kullanımını incele',
+                    AppLocalizations.of(context).storageSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -833,7 +891,7 @@ class AppInfoPage extends StatelessWidget {
                 context,
                 icon: Icons.sensors_rounded,
                 title: 'SensorLab',
-                subtitle: 'Sensörleri incele',
+                subtitle: AppLocalizations.of(context).sensorSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -846,7 +904,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.network_check_rounded,
                 title: 'Network Lab',
                 subtitle:
-                    'Ağ bağlantısını incele',
+                    AppLocalizations.of(context).networkSubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -859,7 +917,7 @@ class AppInfoPage extends StatelessWidget {
                 icon: Icons.battery_full_rounded,
                 title: 'Battery Lab',
                 subtitle:
-                    'Pil durumunu incele',
+                    AppLocalizations.of(context).batterySubtitle,
                 onTap: () {
                   _openPage(
                     context,
@@ -869,7 +927,7 @@ class AppInfoPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Güncelleme',
+                AppLocalizations.of(context).update,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight:
