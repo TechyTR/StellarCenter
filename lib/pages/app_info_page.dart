@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../services/app_version.dart';
+import '../services/locale_service.dart';
+import '../l10n/app_localizations.dart';
 import '../both/theme/app_theme.dart';
 import '../both/widgets/update_button.dart';
 import 'battery_lab_page.dart';
@@ -210,6 +212,61 @@ class AppInfoPage extends StatelessWidget {
             child: child,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _languageCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final currentCode = LocaleService.selectedCode;
+    final currentName =
+        LocaleService.supportedLanguageNames[currentCode] ??
+        LocaleService.supportedLanguageNames['system']!;
+
+    return _glassCard(
+      context,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.language_rounded),
+        title: Text(l10n.languageTitle),
+        subtitle: Text(currentName),
+        trailing: const Icon(Icons.expand_more_rounded),
+        onTap: () async {
+          await showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            showDragHandle: true,
+            builder: (sheetContext) => SafeArea(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: Text(
+                      l10n.languageTitle,
+                      style: Theme.of(sheetContext).textTheme.titleLarge,
+                    ),
+                  ),
+                  ...LocaleService.supportedLanguageNames.entries.map((entry) {
+                    final selected = entry.key == currentCode;
+                    return ListTile(
+                      title: Text(entry.value),
+                      trailing: selected
+                          ? const Icon(Icons.check_rounded)
+                          : null,
+                      onTap: () async {
+                        await LocaleService.setLanguage(entry.key);
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -732,6 +789,7 @@ class AppInfoPage extends StatelessWidget {
             ),
             children: [
               _hero(context),
+              _languageCard(context),
               Text(
                 'Tema Rengi',
                 style: TextStyle(
