@@ -1,0 +1,17 @@
+{
+  "@@locale": "zh",
+  "navMenu": "菜单",
+  "navSystem": "系统",
+  "navMonitor": "监视器",
+  "navNotes": "笔记",
+  "navAbout": "关于",
+  "language": "语言",
+  "languageSystem": "跟随设备语言",
+  "languageTitle": "应用语言",
+  "appName": "Stellar Center",
+  "unknown": "未知",
+  "batteryCharging": "正在充电",
+  "batteryFull": "已充满",
+  "batteryConnected": "已连接",
+  "batteryInUse": "正在使用电池"
+}
