@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'stellar_animation_config.dart';
+import 'animation_config.dart';
 
 class StellarPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
