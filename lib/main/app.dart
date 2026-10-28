@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/boot_screen.dart';
 import '../services/preferences_service.dart';
+import '../services/locale_service.dart';
 import '../both/theme/app_theme.dart';
 
 typedef HomeShellBuilder = Widget Function({
@@ -30,6 +31,7 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
   void initState() {
     super.initState();
     _loadPreferences();
+    LocaleService.load();
   }
 
   Future<void> _loadPreferences() async {
@@ -65,7 +67,10 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
       );
     }
 
-    return MaterialApp(
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: LocaleService.locale,
+      builder: (context, locale, child) => MaterialApp(
+      locale: locale,
       title: 'Stellar Center',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -78,6 +83,7 @@ class _StellarCenterAppState extends State<StellarCenterApp> {
         onStyleChanged: _changeStyle,
         homeShellBuilder: widget.homeShellBuilder,
       ),
+    ),
     );
   }
 }
