@@ -1,0 +1,17 @@
+{
+  "@@locale": "tr",
+  "navMenu": "Menü",
+  "navSystem": "Sistem",
+  "navMonitor": "Monitör",
+  "navNotes": "Notlar",
+  "navAbout": "Hakkında",
+  "language": "Dil",
+  "languageSystem": "Cihaz dilini kullan",
+  "languageTitle": "Uygulama dili",
+  "appName": "Stellar Center",
+  "unknown": "Bilinmiyor",
+  "batteryCharging": "Şarj oluyor",
+  "batteryFull": "Tam dolu",
+  "batteryConnected": "Bağlı",
+  "batteryInUse": "Pil kullanılıyor"
+}
