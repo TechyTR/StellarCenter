@@ -84,6 +84,7 @@ jobs:
           flutter clean
           flutter pub get
           flutter gen-l10n
+          test -f lib/l10n/app_localizations.dart
 
           dart run flutter_launcher_icons
 
@@ -221,6 +222,7 @@ jobs:
           flutter clean
           flutter pub get
           flutter gen-l10n
+          test -f lib/l10n/app_localizations.dart
 
           flutter build linux \
             --release \
