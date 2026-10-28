@@ -504,7 +504,7 @@ class _PlayerControlsArea extends StatelessWidget {
     final max =
         duration.inMilliseconds > 0
             ? duration.inMilliseconds.toDouble()
-            : 1;
+            : 1.0;
 
     final current = position.inMilliseconds
         .clamp(0, duration.inMilliseconds)
