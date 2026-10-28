@@ -3,40 +3,27 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../pages/boot_screen.dart';
 import '../services/preferences_service.dart';
 import '../both/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  if (Platform.isAndroid) {
-    await Firebase.initializeApp();
-  }
-
-  runApp(
-    const StellarCenterApp(),
-  );
+  if (Platform.isAndroid) await Firebase.initializeApp();
+  runApp(const StellarCenterApp());
 }
 
 class StellarCenterApp extends StatefulWidget {
-  const StellarCenterApp({
-    super.key,
-  });
+  const StellarCenterApp({super.key});
 
   @override
-  State<StellarCenterApp> createState() =>
-      _StellarCenterAppState();
+  State<StellarCenterApp> createState() => _StellarCenterAppState();
 }
 
-class _StellarCenterAppState
-    extends State<StellarCenterApp> {
-  AppThemeColor _selectedTheme =
-      AppThemeColor.purple;
-
-  AppThemeStyle _selectedStyle =
-      AppThemeStyle.normal;
-
+class _StellarCenterAppState extends State<StellarCenterApp> {
+  AppThemeColor _selectedTheme = AppThemeColor.purple;
+  AppThemeStyle _selectedStyle = AppThemeStyle.normal;
   bool _preferencesLoaded = false;
 
   @override
@@ -46,51 +33,26 @@ class _StellarCenterAppState
   }
 
   Future<void> _loadPreferences() async {
-    final colorValue =
-        await PreferencesService.getThemeColor();
-
-    final styleValue =
-        await PreferencesService.getThemeStyle();
-
+    final colorValue = await PreferencesService.getThemeColor();
+    final styleValue = await PreferencesService.getThemeStyle();
     if (!mounted) return;
-
     setState(() {
-      _selectedTheme =
-          AppTheme.colorFromString(colorValue);
-
-      _selectedStyle =
-          AppTheme.styleFromString(styleValue);
-
+      _selectedTheme = AppTheme.colorFromString(colorValue);
+      _selectedStyle = AppTheme.styleFromString(styleValue);
       _preferencesLoaded = true;
     });
   }
 
-  Future<void> _changeTheme(
-    AppThemeColor color,
-  ) async {
+  Future<void> _changeTheme(AppThemeColor color) async {
     if (_selectedTheme == color) return;
-
-    setState(() {
-      _selectedTheme = color;
-    });
-
-    await PreferencesService.saveThemeColor(
-      AppTheme.colorToString(color),
-    );
+    setState(() => _selectedTheme = color);
+    await PreferencesService.saveThemeColor(AppTheme.colorToString(color));
   }
 
-  Future<void> _changeStyle(
-    AppThemeStyle style,
-  ) async {
+  Future<void> _changeStyle(AppThemeStyle style) async {
     if (_selectedStyle == style) return;
-
-    setState(() {
-      _selectedStyle = style;
-    });
-
-    await PreferencesService.saveThemeStyle(
-      AppTheme.styleToString(style),
-    );
+    setState(() => _selectedStyle = style);
+    await PreferencesService.saveThemeStyle(AppTheme.styleToString(style));
   }
 
   @override
@@ -100,27 +62,21 @@ class _StellarCenterAppState
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           backgroundColor: Colors.black,
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
+          body: Center(child: CircularProgressIndicator()),
         ),
       );
     }
 
-    final theme = AppTheme.build(
-      _selectedTheme,
-      _selectedStyle,
-    );
-
+    final theme = AppTheme.build(_selectedTheme, _selectedStyle);
     return MaterialApp(
       title: 'Stellar Center',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: theme,
       home: AnimatedTheme(
         data: theme,
-        duration: const Duration(
-          milliseconds: 650,
-        ),
+        duration: const Duration(milliseconds: 650),
         curve: Curves.easeInOutCubic,
         child: BootScreen(
           selectedTheme: _selectedTheme,
