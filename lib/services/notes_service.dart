@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/note_item.dart';
+import '../both/models/note_item.dart';
 
 class NotesService {
   static const String _notesKey = 'notes_list';
