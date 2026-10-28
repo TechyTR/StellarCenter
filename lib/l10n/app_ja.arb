@@ -1,0 +1,17 @@
+{
+  "@@locale": "ja",
+  "navMenu": "メニュー",
+  "navSystem": "システム",
+  "navMonitor": "モニター",
+  "navNotes": "メモ",
+  "navAbout": "アプリについて",
+  "language": "言語",
+  "languageSystem": "端末の言語に従う",
+  "languageTitle": "アプリの言語",
+  "appName": "Stellar Center",
+  "unknown": "不明",
+  "batteryCharging": "充電中",
+  "batteryFull": "充電完了",
+  "batteryConnected": "接続中",
+  "batteryInUse": "バッテリー使用中"
+}
