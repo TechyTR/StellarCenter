@@ -114,7 +114,15 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
             const SizedBox(height: 3),
             Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Colors.white54, fontSize: 11)),
-            SizedBox(height: 10, child: _progress(compact: true)),
+            const SizedBox(height: 5),
+            LinearProgressIndicator(
+              minHeight: 2,
+              value: _duration.inMilliseconds > 0
+                  ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
+                  : 0,
+              backgroundColor: Colors.white12,
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4CDB85)),
+            ),
           ],
         )),
         IconButton(onPressed: service.previous, tooltip: 'Önceki', icon: const Icon(Icons.skip_previous_rounded, color: Colors.white70)),
