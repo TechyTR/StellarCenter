@@ -385,8 +385,10 @@ class _InformationAndLyrics extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 29,
+            fontSize: 33,
             fontWeight: FontWeight.w800,
+            letterSpacing: -.7,
+            height: 1.12,
           ),
         ),
 
@@ -443,13 +445,26 @@ class _InformationAndLyrics extends StatelessWidget {
             vertical: 12,
           ),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(.18),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(.08),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0x442B3B30), Color(0x22101411)],
             ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(.09)),
           ),
-          child: track.hasLyrics
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Row(children: [
+                  Icon(Icons.lyrics_rounded, size: 15, color: Color(0xFF75F0A5)),
+                  SizedBox(width: 8),
+                  Text('ŞARKI SÖZLERİ', style: TextStyle(color: Colors.white54, fontSize: 10, letterSpacing: 1.8, fontWeight: FontWeight.w800)),
+                ]),
+              ),
+              Expanded(child: track.hasLyrics
               ? StellarLyricsOverlay(
                   track: track,
                   position: position,
@@ -463,7 +478,9 @@ class _InformationAndLyrics extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
-                ),
+                )),
+            ],
+          ),
         ),
       ],
     );
@@ -491,8 +508,12 @@ class _FullLyricsSection extends StatelessWidget {
           border: Border.all(color: Colors.white.withOpacity(.08)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('ŞARKI SÖZLERİ',
-              style: TextStyle(color: Color(0xFF75F0A5), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800)),
+          Row(children: [
+            const Icon(Icons.lyrics_rounded, size: 15, color: Color(0xFF75F0A5)),
+            const SizedBox(width: 8),
+            const Text('ŞARKI SÖZLERİ',
+              style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800)),
+          ]),
           const SizedBox(height: 8),
           Expanded(child: StellarLyricsOverlay(track: track, position: position)),
         ]),
