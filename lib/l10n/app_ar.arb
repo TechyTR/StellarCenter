@@ -65,5 +65,15 @@
   "noMusicMatches": "لم يتم العثور على موسيقى مطابقة",
   "addToQueue": "أضف إلى قائمة الانتظار",
   "addFavorite": "أضف إلى المفضلة",
-  "noMusicFound": "لم يتم العثور على موسيقى بعد"
+  "noMusicFound": "لم يتم العثور على موسيقى بعد",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass فاتح",
+  "liquidGlassDark": "Liquid Glass داكن",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "اختبار الأداء",
+  "storageManager": "مدير التخزين",
+  "sensorLab": "مختبر المستشعرات",
+  "networkLab": "مختبر الشبكة",
+  "batteryLab": "مختبر البطارية",
+  "versionLabel": "الإصدار"
 }
