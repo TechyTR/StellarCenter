@@ -327,8 +327,13 @@ class _ArtistSection
         albums.values.first.first;
 
     return Card(
-      margin:
-          const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF151D18),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withOpacity(.065)),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Theme(
         data:
@@ -414,9 +419,9 @@ class _AlbumSection
       margin:
           const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.045),
-        borderRadius:
-            BorderRadius.circular(16),
+        color: Colors.white.withOpacity(.035),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white.withOpacity(.055)),
       ),
       child: Theme(
         data:
@@ -446,6 +451,7 @@ class _AlbumSection
                 TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
+              fontSize: 13,
             ),
           ),
           subtitle: Text(
@@ -485,10 +491,9 @@ class _SongTile
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
-      contentPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 10,
-      ),
+      minVerticalPadding: 9,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
       leading: StellarMusicCover(
         artwork: track.artwork,
         size: 44,
