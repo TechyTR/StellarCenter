@@ -135,8 +135,8 @@ class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
 
     final activeIndex = StellarLrcParser.activeIndex(_lines, widget.position);
     final visibleIndex = activeIndex < 0 ? 0 : activeIndex;
-    final start = (visibleIndex - 2).clamp(0, _lines.length).toInt();
-    final end = (visibleIndex + 4).clamp(start, _lines.length).toInt();
+    final start = (visibleIndex - 1).clamp(0, _lines.length).toInt();
+    final end = (visibleIndex + 3).clamp(start, _lines.length).toInt();
 
     return ClipRect(
       child: AnimatedSize(
