@@ -75,5 +75,8 @@
   "sensorLab": "Лаборатория датчиков",
   "networkLab": "Сетевая лаборатория",
   "batteryLab": "Лаборатория батареи",
-  "versionLabel": "Версия"
+  "versionLabel": "Версия",
+  "app": "Приложение",
+  "unknownArtist": "Неизвестный исполнитель",
+  "unknownAlbum": "Неизвестный альбом"
 }
