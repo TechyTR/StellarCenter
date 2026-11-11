@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'music_colors.dart';
 
-class StellarMusicBackground
-    extends StatefulWidget {
+class StellarMusicBackground extends StatefulWidget {
   final Widget child;
   final Uint8List? artwork;
 
@@ -20,72 +19,42 @@ class StellarMusicBackground
       _StellarMusicBackgroundState();
 }
 
-class _StellarMusicBackgroundState
-    extends State<StellarMusicBackground>
+class _StellarMusicBackgroundState extends State<StellarMusicBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  List<Color> _colors =
-      StellarMusicColors.defaultColors;
+  List<Color> _colors = StellarMusicColors.defaultColors;
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 18),
+      duration: const Duration(seconds: 28),
     )..repeat();
-
     _loadColors();
   }
 
   @override
-  void didUpdateWidget(
-    covariant StellarMusicBackground oldWidget,
-  ) {
+  void didUpdateWidget(covariant StellarMusicBackground oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    if (!_sameArtwork(
-      oldWidget.artwork,
-      widget.artwork,
-    )) {
+    if (!_sameArtwork(oldWidget.artwork, widget.artwork)) {
       _loadColors();
     }
   }
 
   Future<void> _loadColors() async {
-    final colors =
-        await StellarMusicColors
-            .fromArtworkAsync(
-      widget.artwork,
-    );
-
+    final colors = await StellarMusicColors.fromArtworkAsync(widget.artwork);
     if (!mounted) return;
-
-    setState(() {
-      _colors = colors;
-    });
+    setState(() => _colors = colors);
   }
 
-  bool _sameArtwork(
-    Uint8List? a,
-    Uint8List? b,
-  ) {
+  bool _sameArtwork(Uint8List? a, Uint8List? b) {
     if (identical(a, b)) return true;
-
-    if (a == null || b == null) {
-      return a == b;
-    }
-
-    if (a.length != b.length) {
-      return false;
-    }
-
+    if (a == null || b == null) return a == b;
+    if (a.length != b.length) return false;
     if (a.isEmpty) return true;
-
     final middle = a.length ~/ 2;
-
     return a.first == b.first &&
         a[middle] == b[middle] &&
         a.last == b.last;
@@ -99,100 +68,46 @@ class _StellarMusicBackgroundState
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final t = _controller.value;
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment(
-                      -1 + t * 2,
-                      -1,
+    // Keep the animated layer isolated. The player controls and lyrics must
+    // not rebuild on every animation frame (important on low-power boards).
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final t = _controller.value;
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment(-1 + t * 2, -1),
+                      end: Alignment(1, 1 - t * 2),
+                      colors: _colors,
                     ),
-                    end: Alignment(
-                      1,
-                      1 - t * 2,
-                    ),
-                    colors: _colors,
                   ),
-                ),
-              ),
-              _Glow(
-                color: _colors[0],
-                alignment: Alignment(
-                  -0.8 + t * 1.6,
-                  -0.65,
-                ),
-                size: 500,
-              ),
-              _Glow(
-                color: _colors[
-                    _colors.length > 1 ? 1 : 0],
-                alignment: Alignment(
-                  0.75,
-                  0.35 - t * .7,
-                ),
-                size: 460,
-              ),
-              _Glow(
-                color: _colors[
-                    _colors.length > 2 ? 2 : 0],
-                alignment: Alignment(
-                  -0.2,
-                  0.9 - t * .4,
-                ),
-                size: 380,
-              ),
-              Container(
-                color: Colors.black.withOpacity(.38),
-              ),
-              widget.child,
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Glow extends StatelessWidget {
-  final Color color;
-  final Alignment alignment;
-  final double size;
-
-  const _Glow({
-    required this.color,
-    required this.alignment,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: alignment,
-      child: IgnorePointer(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withOpacity(.24),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(.18),
-                blurRadius: 100,
-                spreadRadius: 35,
-              ),
-            ],
+                );
+              },
+            ),
           ),
         ),
-      ),
+        const Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x55000000),
+                  Color(0x99000000),
+                ],
+              ),
+            ),
+          ),
+        ),
+        RepaintBoundary(child: widget.child),
+      ],
     );
   }
 }
