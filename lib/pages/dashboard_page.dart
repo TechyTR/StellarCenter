@@ -981,7 +981,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 _quickAction(
                   context: context,
                   icon: Icons.apps_rounded,
-                  title: AppLocalizations.of(context)!.appName,
+                  title: AppLocalizations.of(context)!.app,
                   subtitle:
                       AppLocalizations.of(context)!.appSettings,
                   onTap: widget.onAppInfo,
