@@ -65,5 +65,15 @@
   "noMusicMatches": "No se encontró música coincidente",
   "addToQueue": "Añadir a la cola",
   "addFavorite": "Añadir a favoritos",
-  "noMusicFound": "Aún no se encontró música"
+  "noMusicFound": "Aún no se encontró música",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass Claro",
+  "liquidGlassDark": "Liquid Glass Oscuro",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "Prueba de rendimiento",
+  "storageManager": "Administrador de almacenamiento",
+  "sensorLab": "Laboratorio de sensores",
+  "networkLab": "Laboratorio de red",
+  "batteryLab": "Laboratorio de batería",
+  "versionLabel": "Versión"
 }
