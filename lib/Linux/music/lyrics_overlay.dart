@@ -50,7 +50,6 @@ class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
       });
     }
 
-    // 1. Prefer the external, synchronized .lrc file.
     if (path != null && path.trim().isNotEmpty) {
       try {
         final document = await StellarLyricsLoader.loadDocument(path);
@@ -63,11 +62,10 @@ class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
           return;
         }
       } catch (_) {
-        // Continue with embedded lyrics when the sidecar cannot be read.
+        // Fall back to embedded lyrics if the sidecar cannot be read.
       }
     }
 
-    // 2. Fall back to lyrics embedded in the audio metadata.
     final embedded = widget.track.lyricsText;
     if (embedded != null && embedded.trim().isNotEmpty) {
       final parsed = StellarLrcParser.parse(embedded);
@@ -90,7 +88,6 @@ class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
   List<StellarLrcLine> _plainTextToLines(String content) {
     final result = <StellarLrcLine>[];
     var index = 0;
-
     for (final raw in content.split(RegExp(r'\r?\n'))) {
       final text = raw.trim();
       if (text.isEmpty) continue;
@@ -136,16 +133,10 @@ class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
       );
     }
 
-    final activeIndex = StellarLrcParser.activeIndex(
-      _lines,
-      widget.position,
-    );
-
-    // Before the first timestamp, preview the opening lines without
-    // falsely advancing the synchronized playback position.
+    final activeIndex = StellarLrcParser.activeIndex(_lines, widget.position);
     final visibleIndex = activeIndex < 0 ? 0 : activeIndex;
-    final start = (visibleIndex - 2).clamp(0, _lines.length);
-    final end = (visibleIndex + 4).clamp(start, _lines.length);
+    final start = (visibleIndex - 2).clamp(0, _lines.length).toInt();
+    final end = (visibleIndex + 4).clamp(start, _lines.length).toInt();
 
     return ClipRect(
       child: AnimatedSize(
@@ -183,10 +174,7 @@ class _LyricLine extends StatelessWidget {
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: active ? 9 : 5,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: active ? 9 : 5),
       child: AnimatedDefaultTextStyle(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
