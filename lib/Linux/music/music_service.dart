@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'music_track.dart';
 import 'repeat_mode.dart';
@@ -29,6 +31,11 @@ class StellarMusicService {
       StreamController<StellarRepeatMode>.broadcast();
 
   final List<StellarMusicTrack> _tracks = [];
+  final List<String> _queuePaths = [];
+  final Set<String> _favoritePaths = {};
+  final List<String> _historyPaths = [];
+  bool _shuffle = false;
+  final Random _random = Random();
 
   StellarMusicTrack? _currentTrack;
 
@@ -74,6 +81,67 @@ class StellarMusicService {
 
   StellarRepeatMode get repeatMode =>
       _repeatMode;
+
+  List<StellarMusicTrack> get queue => _queuePaths.map(_trackForPath).whereType<StellarMusicTrack>().toList(growable: false);
+  List<StellarMusicTrack> get history => _historyPaths.map(_trackForPath).whereType<StellarMusicTrack>().toList(growable: false);
+  Set<String> get favoritePaths => Set.unmodifiable(_favoritePaths);
+  bool isFavorite(StellarMusicTrack track) => _favoritePaths.contains(track.path);
+  bool get shuffleEnabled => _shuffle;
+
+  StellarMusicTrack? _trackForPath(String path) {
+    for (final track in _tracks) { if (track.path == path) return track; }
+    return null;
+  }
+
+  Future<void> loadLibraryState() async {
+    final prefs = await SharedPreferences.getInstance();
+    _favoritePaths
+      ..clear()
+      ..addAll(prefs.getStringList('stellar_music_favorites') ?? const []);
+    _historyPaths
+      ..clear()
+      ..addAll(prefs.getStringList('stellar_music_history') ?? const []);
+    _queuePaths
+      ..clear()
+      ..addAll(prefs.getStringList('stellar_music_queue') ?? const []);
+  }
+
+  Future<void> toggleFavorite(StellarMusicTrack track) async {
+    if (!_favoritePaths.add(track.path)) _favoritePaths.remove(track.path);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('stellar_music_favorites', _favoritePaths.toList());
+  }
+
+  Future<void> addToQueue(StellarMusicTrack track) async {
+    if (_queuePaths.contains(track.path)) return;
+    _queuePaths.add(track.path);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('stellar_music_queue', _queuePaths);
+  }
+
+  Future<void> removeFromQueue(StellarMusicTrack track) async {
+    _queuePaths.remove(track.path);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('stellar_music_queue', _queuePaths);
+  }
+
+  Future<void> clearQueue() async {
+    _queuePaths.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('stellar_music_queue');
+  }
+
+  Future<void> toggleShuffle() async {
+    _shuffle = !_shuffle;
+  }
+
+  Future<void> _recordHistory(StellarMusicTrack track) async {
+    _historyPaths.remove(track.path);
+    _historyPaths.insert(0, track.path);
+    if (_historyPaths.length > 100) _historyPaths.removeRange(100, _historyPaths.length);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('stellar_music_history', _historyPaths);
+  }
 
   List<StellarMusicTrack> get tracks =>
       List.unmodifiable(_tracks);
@@ -167,6 +235,7 @@ class StellarMusicService {
       _duration = Duration.zero;
 
       _trackController.add(track);
+      await _recordHistory(track);
       _positionController.add(Duration.zero);
       _durationController.add(Duration.zero);
 
@@ -241,9 +310,26 @@ class StellarMusicService {
       return;
     }
 
+    if (_queuePaths.isNotEmpty) {
+      final nextPath = _shuffle
+          ? _queuePaths[_random.nextInt(_queuePaths.length)]
+          : _queuePaths.first;
+      final queuedIndex = _tracks.indexWhere((track) => track.path == nextPath);
+      _queuePaths.remove(nextPath);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('stellar_music_queue', _queuePaths);
+      if (queuedIndex >= 0) { await playIndex(queuedIndex); return; }
+    }
+
     final indexes = _activeIndexes();
 
     if (indexes.isEmpty) return;
+
+    if (_shuffle && indexes.length > 1) {
+      final candidates = indexes.where((index) => index != _currentIndex).toList();
+      await playIndex(candidates[_random.nextInt(candidates.length)]);
+      return;
+    }
 
     final local =
         indexes.indexOf(_currentIndex);
