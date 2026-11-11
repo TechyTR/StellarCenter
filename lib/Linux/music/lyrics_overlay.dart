@@ -15,16 +15,13 @@ class StellarLyricsOverlay extends StatefulWidget {
   });
 
   @override
-  State<StellarLyricsOverlay> createState() =>
-      _StellarLyricsOverlayState();
+  State<StellarLyricsOverlay> createState() => _StellarLyricsOverlayState();
 }
 
-class _StellarLyricsOverlayState
-    extends State<StellarLyricsOverlay> {
+class _StellarLyricsOverlayState extends State<StellarLyricsOverlay> {
   List<StellarLrcLine> _lines = const [];
-
-  String? _loadedPath;
   bool _loading = true;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -33,21 +30,19 @@ class _StellarLyricsOverlayState
   }
 
   @override
-  void didUpdateWidget(
-    covariant StellarLyricsOverlay oldWidget,
-  ) {
+  void didUpdateWidget(covariant StellarLyricsOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.track.path != widget.track.path ||
-        oldWidget.track.lyricsPath !=
-            widget.track.lyricsPath ||
-        oldWidget.track.lyricsText !=
-            widget.track.lyricsText) {
+        oldWidget.track.lyricsPath != widget.track.lyricsPath ||
+        oldWidget.track.lyricsText != widget.track.lyricsText) {
       _load();
     }
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
+    final path = widget.track.lyricsPath;
+
     if (mounted) {
       setState(() {
         _loading = true;
@@ -55,118 +50,65 @@ class _StellarLyricsOverlayState
       });
     }
 
-    /*
-     * 1. Harici .lrc dosyası.
-     */
-    final path = widget.track.lyricsPath;
-
+    // 1. Prefer the external, synchronized .lrc file.
     if (path != null && path.trim().isNotEmpty) {
       try {
-        final document =
-            await StellarLyricsLoader.loadDocument(path);
-
+        final document = await StellarLyricsLoader.loadDocument(path);
+        if (!mounted || generation != _loadGeneration) return;
         if (document.lines.isNotEmpty) {
-          if (!mounted) {
-            return;
-          }
-
           setState(() {
             _lines = document.lines;
-            _loadedPath = path;
             _loading = false;
           });
-
           return;
         }
       } catch (_) {
-        // Embedded lyrics'e geç.
+        // Continue with embedded lyrics when the sidecar cannot be read.
       }
     }
 
-    /*
-     * 2. MP3 metadata içindeki lyrics.
-     */
+    // 2. Fall back to lyrics embedded in the audio metadata.
     final embedded = widget.track.lyricsText;
-
-    if (embedded != null &&
-        embedded.trim().isNotEmpty) {
-      final parsed =
-          StellarLrcParser.parse(embedded);
-
-      if (parsed.isNotEmpty) {
-        if (!mounted) {
-          return;
-        }
-
-        setState(() {
-          _lines = parsed;
-          _loadedPath = null;
-          _loading = false;
-        });
-
-        return;
-      }
-
-      /*
-       * Timestamp yoksa düz sözleri satır satır göster.
-       */
-      final plain =
-          _plainTextToLines(embedded);
-
-      if (!mounted) {
-        return;
-      }
-
+    if (embedded != null && embedded.trim().isNotEmpty) {
+      final parsed = StellarLrcParser.parse(embedded);
+      final lines = parsed.isNotEmpty ? parsed : _plainTextToLines(embedded);
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
-        _lines = plain;
-        _loadedPath = null;
+        _lines = lines;
         _loading = false;
       });
-
       return;
     }
 
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted || generation != _loadGeneration) return;
     setState(() {
       _lines = const [];
-      _loadedPath = null;
       _loading = false;
     });
   }
 
-  List<StellarLrcLine> _plainTextToLines(
-    String content,
-  ) {
+  List<StellarLrcLine> _plainTextToLines(String content) {
     final result = <StellarLrcLine>[];
-
-    final rawLines =
-        content.split(RegExp(r'\r?\n'));
-
     var index = 0;
 
-    for (final raw in rawLines) {
+    for (final raw in content.split(RegExp(r'\r?\n'))) {
       final text = raw.trim();
-
-      if (text.isEmpty) {
-        continue;
-      }
-
+      if (text.isEmpty) continue;
       result.add(
         StellarLrcLine(
-          timestamp: Duration(
-            seconds: index,
-          ),
+          timestamp: Duration(seconds: index),
           text: text,
         ),
       );
-
       index++;
     }
-
     return List.unmodifiable(result);
+  }
+
+  @override
+  void dispose() {
+    _loadGeneration++;
+    super.dispose();
   }
 
   @override
@@ -189,81 +131,39 @@ class _StellarLyricsOverlayState
         child: Text(
           'Şarkı sözü bulunamadı',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white38,
-            fontSize: 13,
-          ),
+          style: TextStyle(color: Colors.white38, fontSize: 13),
         ),
       );
     }
 
-    final activeIndex =
-        StellarLrcParser.activeIndex(
+    final activeIndex = StellarLrcParser.activeIndex(
       _lines,
       widget.position,
     );
 
-    final visibleIndex =
-        activeIndex < 0 ? 0 : activeIndex;
-
-    /*
-     * Aktif satırın etrafında birkaç satır göster.
-     */
-    final start = _clamp(
-      visibleIndex - 2,
-      0,
-      _lines.length,
-    );
-
-    final end = _clamp(
-      visibleIndex + 4,
-      start,
-      _lines.length,
-    );
+    // Before the first timestamp, preview the opening lines without
+    // falsely advancing the synchronized playback position.
+    final visibleIndex = activeIndex < 0 ? 0 : activeIndex;
+    final start = (visibleIndex - 2).clamp(0, _lines.length);
+    final end = (visibleIndex + 4).clamp(start, _lines.length);
 
     return ClipRect(
       child: AnimatedSize(
-        duration: const Duration(
-          milliseconds: 220,
-        ),
-        curve: Curves.easeOutCubic,
-        child: SingleChildScrollView(
-          physics:
-              const NeverScrollableScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = start; i < end; i++)
-                _LyricLine(
-                  key: ValueKey(
-                    '${_loadedPath ?? widget.track.path}-$i',
-                  ),
-                  text: _lines[i].text,
-                  active:
-                      i == activeIndex ||
-                      (activeIndex < 0 && i == 0),
-                ),
-            ],
-          ),
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = start; i < end; i++)
+              _LyricLine(
+                key: ValueKey('${widget.track.path}-$i'),
+                text: _lines[i].text,
+                active: i == activeIndex || (activeIndex < 0 && i == 0),
+              ),
+          ],
         ),
       ),
     );
-  }
-
-  int _clamp(
-    int value,
-    int min,
-    int max,
-  ) {
-    if (value < min) {
-      return min;
-    }
-
-    if (value > max) {
-      return max;
-    }
-
-    return value;
   }
 }
 
@@ -280,42 +180,33 @@ class _LyricLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(
-        milliseconds: 220,
-      ),
-      curve: Curves.easeOutCubic,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16,
         vertical: active ? 9 : 5,
       ),
       child: AnimatedDefaultTextStyle(
-        duration: const Duration(
-          milliseconds: 220,
-        ),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         style: TextStyle(
-          color: active
-              ? Colors.white
-              : Colors.white.withOpacity(.32),
+          color: active ? Colors.white : Colors.white.withOpacity(.32),
           fontSize: active ? 20 : 14,
-          fontWeight: active
-              ? FontWeight.w800
-              : FontWeight.w500,
+          fontWeight: active ? FontWeight.w800 : FontWeight.w500,
           height: 1.35,
           shadows: active
               ? [
                   Shadow(
-                    color:
-                        Colors.black.withOpacity(.45),
-                    blurRadius: 9,
+                    color: Colors.black.withOpacity(.35),
+                    blurRadius: 6,
                   ),
                 ]
               : null,
         ),
         child: Text(
           text,
-          textAlign: TextAlign.left,
+          textAlign: TextAlign.center,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
