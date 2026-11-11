@@ -829,25 +829,25 @@ class AppInfoPage extends StatelessWidget {
                 context,
                 AppThemeStyle.normal,
                 Icons.palette_outlined,
-                'Material Design',
+                AppLocalizations.of(context)!.materialDesign,
               ),
               _styleButton(
                 context,
                 AppThemeStyle.liquidGlassLight,
                 Icons.light_mode_rounded,
-                'Liquid Glass Light',
+                AppLocalizations.of(context)!.liquidGlassLight,
               ),
               _styleButton(
                 context,
                 AppThemeStyle.liquidGlassDark,
                 Icons.dark_mode_rounded,
-                'Liquid Glass Dark',
+                AppLocalizations.of(context)!.liquidGlassDark,
               ),
               _styleButton(
                 context,
                 AppThemeStyle.stellarAurora,
                 Icons.auto_awesome_rounded,
-                'Stellar Aurora',
+                AppLocalizations.of(context)!.stellarAurora,
               ),
               const SizedBox(height: 12),
               Text(
@@ -864,7 +864,7 @@ class AppInfoPage extends StatelessWidget {
               _toolButton(
                 context,
                 icon: Icons.speed_rounded,
-                title: 'Benchmark',
+                title: AppLocalizations.of(context)!.benchmark,
                 subtitle:
                     AppLocalizations.of(context).benchmarkSubtitle,
                 onTap: () {
@@ -877,7 +877,7 @@ class AppInfoPage extends StatelessWidget {
               _toolButton(
                 context,
                 icon: Icons.storage_rounded,
-                title: 'Storage Manager',
+                title: AppLocalizations.of(context)!.storageManager,
                 subtitle:
                     AppLocalizations.of(context).storageSubtitle,
                 onTap: () {
@@ -890,7 +890,7 @@ class AppInfoPage extends StatelessWidget {
               _toolButton(
                 context,
                 icon: Icons.sensors_rounded,
-                title: 'SensorLab',
+                title: AppLocalizations.of(context)!.sensorLab,
                 subtitle: AppLocalizations.of(context).sensorSubtitle,
                 onTap: () {
                   _openPage(
@@ -902,7 +902,7 @@ class AppInfoPage extends StatelessWidget {
               _toolButton(
                 context,
                 icon: Icons.network_check_rounded,
-                title: 'Network Lab',
+                title: AppLocalizations.of(context)!.networkLab,
                 subtitle:
                     AppLocalizations.of(context).networkSubtitle,
                 onTap: () {
@@ -915,7 +915,7 @@ class AppInfoPage extends StatelessWidget {
               _toolButton(
                 context,
                 icon: Icons.battery_full_rounded,
-                title: 'Battery Lab',
+                title: AppLocalizations.of(context)!.batteryLab,
                 subtitle:
                     AppLocalizations.of(context).batterySubtitle,
                 onTap: () {
@@ -959,7 +959,7 @@ class AppInfoPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Linux • v${AppVersion.current}',
+                      'Linux • ${AppLocalizations.of(context)!.versionLabel} ${AppVersion.current}',
                       style: TextStyle(
                         color:
                             scheme.onSurfaceVariant,
