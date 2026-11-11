@@ -65,5 +65,15 @@
   "noMusicMatches": "Nessuna musica corrispondente",
   "addToQueue": "Aggiungi alla coda",
   "addFavorite": "Aggiungi ai preferiti",
-  "noMusicFound": "Nessuna musica trovata"
+  "noMusicFound": "Nessuna musica trovata",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass Chiaro",
+  "liquidGlassDark": "Liquid Glass Scuro",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "Benchmark",
+  "storageManager": "Gestione archiviazione",
+  "sensorLab": "Laboratorio sensori",
+  "networkLab": "Laboratorio di rete",
+  "batteryLab": "Laboratorio batteria",
+  "versionLabel": "Versione"
 }
