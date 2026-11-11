@@ -75,5 +75,8 @@
   "sensorLab": "センサーラボ",
   "networkLab": "ネットワークラボ",
   "batteryLab": "バッテリーラボ",
-  "versionLabel": "バージョン"
+  "versionLabel": "バージョン",
+  "app": "アプリ",
+  "unknownArtist": "不明なアーティスト",
+  "unknownAlbum": "不明なアルバム"
 }
