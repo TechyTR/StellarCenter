@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../music/edge_player.dart';
@@ -28,6 +31,8 @@ class _LinuxMusicPageState
   bool _loading = true;
   String _searchQuery = '';
   bool _favoritesOnly = false;
+  StreamSubscription<FileSystemEvent>? _folderWatcher;
+  Timer? _scanDebounce;
 
   @override
   void initState() {
@@ -39,6 +44,28 @@ class _LinuxMusicPageState
     await service.initialize();
     await service.loadLibraryState();
     await _scan();
+    _startFolderWatcher();
+  }
+
+  void _startFolderWatcher() {
+    final home = Platform.environment['HOME'];
+    if (home == null || home.isEmpty) return;
+    final directory = Directory('$home/StellarCenter/Music');
+    if (!directory.existsSync()) return;
+    _folderWatcher?.cancel();
+    _folderWatcher = directory.watch(recursive: true).listen((_) {
+      _scanDebounce?.cancel();
+      _scanDebounce = Timer(const Duration(milliseconds: 900), () {
+        if (mounted && !_loading) _scan();
+      });
+    }, onError: (_) {});
+  }
+
+  @override
+  void dispose() {
+    _folderWatcher?.cancel();
+    _scanDebounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _scan() async {
@@ -196,7 +223,9 @@ class _LinuxMusicPageState
                       )
                     : _tracks.isEmpty
                         ? const _EmptyMusic()
-                        : ListView.builder(
+                        : groups.isEmpty
+                            ? const Center(child: Text('Eşleşen müzik bulunamadı', style: TextStyle(color: Colors.white54)))
+                            : ListView.builder(
                             padding:
                                 const EdgeInsets
                                     .fromLTRB(
