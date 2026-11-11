@@ -297,6 +297,8 @@ class _WidePlayer extends StatelessWidget {
           repeat: repeat,
           service: service,
         ),
+        const SizedBox(height: 34),
+        _FullLyricsSection(track: track, position: position),
       ],
     );
   }
@@ -466,6 +468,37 @@ class _InformationAndLyrics extends StatelessWidget {
   }
 }
 
+
+class _FullLyricsSection extends StatelessWidget {
+  final StellarMusicTrack track;
+  final Duration position;
+
+  const _FullLyricsSection({required this.track, required this.position});
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1050),
+      child: Container(
+        width: double.infinity,
+        height: 300,
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(.22),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white.withOpacity(.08)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('ŞARKI SÖZLERİ',
+              style: TextStyle(color: Color(0xFF75F0A5), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Expanded(child: StellarLyricsOverlay(track: track, position: position)),
+        ]),
+      ),
+    );
+  }
+}
+
 class _PlayerControlsArea extends StatelessWidget {
   final Duration position;
   final Duration duration;
@@ -516,19 +549,23 @@ class _PlayerControlsArea extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Slider(
-            value: current,
-            max: max,
-            onChanged:
-                duration.inMilliseconds > 0
-                    ? (value) {
-                        service.seek(
-                          Duration(
-                            milliseconds: value.round(),
-                          ),
-                        );
-                      }
-                    : null,
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              activeTrackColor: const Color(0xFF4CDB85),
+              inactiveTrackColor: Colors.white.withOpacity(.16),
+              thumbColor: const Color(0xFF75F0A5),
+              overlayColor: const Color(0x224CDB85),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 17),
+            ),
+            child: Slider(
+              value: current,
+              max: max,
+              onChanged: duration.inMilliseconds > 0
+                  ? (value) => service.seek(Duration(milliseconds: value.round()))
+                  : null,
+            ),
           ),
 
           Row(
