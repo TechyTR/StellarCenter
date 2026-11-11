@@ -65,5 +65,15 @@
   "noMusicMatches": "一致する音楽が見つかりません",
   "addToQueue": "キューに追加",
   "addFavorite": "お気に入りに追加",
-  "noMusicFound": "音楽がまだ見つかりません"
+  "noMusicFound": "音楽がまだ見つかりません",
+  "materialDesign": "マテリアルデザイン",
+  "liquidGlassLight": "Liquid Glass Light",
+  "liquidGlassDark": "Liquid Glass Dark",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "ベンチマーク",
+  "storageManager": "ストレージ管理",
+  "sensorLab": "センサーラボ",
+  "networkLab": "ネットワークラボ",
+  "batteryLab": "バッテリーラボ",
+  "versionLabel": "バージョン"
 }
