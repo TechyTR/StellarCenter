@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../music/edge_player.dart';
 import '../music/music_cover.dart';
@@ -33,6 +34,7 @@ class _LinuxMusicPageState
   bool _favoritesOnly = false;
   StreamSubscription<FileSystemEvent>? _folderWatcher;
   Timer? _scanDebounce;
+  final FocusNode _searchFocus = FocusNode();
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class _LinuxMusicPageState
   void dispose() {
     _folderWatcher?.cancel();
     _scanDebounce?.cancel();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -139,7 +142,16 @@ class _LinuxMusicPageState
   Widget build(BuildContext context) {
     final groups = _buildGroups();
 
-    return Scaffold(
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.space): service.togglePlayPause,
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () => service.seek(service.position + const Duration(seconds: 5)),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () => service.seek(service.position - const Duration(seconds: 5)),
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocus.requestFocus(),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
@@ -204,6 +216,7 @@ class _LinuxMusicPageState
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: TextField(
+                  focusNode: _searchFocus,
                   onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
                     hintText: 'Şarkı, sanatçı veya albüm ara...',
@@ -272,6 +285,8 @@ class _LinuxMusicPageState
         ],
       );
         },
+      ),
+        ),
       ),
     );
   }
