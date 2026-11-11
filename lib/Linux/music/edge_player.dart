@@ -28,6 +28,7 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
   bool _playing = false;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  bool _minimized = false;
 
   @override
   void initState() {
@@ -95,7 +96,7 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
     );
   }
 
-  Widget _mini(StellarMusicTrack track) {
+  Widget _mini(StellarMusicTrack track, {bool showRestore = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -129,6 +130,9 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
         IconButton(onPressed: service.previous, tooltip: 'Önceki', icon: const Icon(Icons.skip_previous_rounded, color: Colors.white70)),
         IconButton(onPressed: service.togglePlayPause, tooltip: _playing ? 'Duraklat' : 'Oynat',
             icon: Icon(_playing ? Icons.pause_rounded : Icons.play_arrow_rounded, color: const Color(0xFF75F0A5), size: 29)),
+        if (showRestore)
+          IconButton(onPressed: () => setState(() => _minimized = false), tooltip: 'Oynatıcıyı genişlet',
+              icon: const Icon(Icons.expand_less_rounded, color: Colors.white70, size: 20)),
         IconButton(onPressed: _openFullscreen, tooltip: 'Tam ekran', icon: const Icon(Icons.open_in_full_rounded, color: Colors.white70, size: 19)),
       ]),
     );
@@ -144,6 +148,8 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
             child: Row(children: [
               const Expanded(child: Text('ŞİMDİ ÇALIYOR',
                   style: TextStyle(color: Color(0xFF75F0A5), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800))),
+              IconButton(tooltip: 'Mini Player', onPressed: () => setState(() => _minimized = true),
+                  icon: const Icon(Icons.remove_rounded, color: Colors.white70, size: 19)),
               IconButton(tooltip: 'Tam ekran aç', onPressed: _openFullscreen,
                   icon: const Icon(Icons.open_in_full_rounded, color: Colors.white70, size: 19)),
             ]),
@@ -258,6 +264,9 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
       final track = _track;
       if (track == null) {
         return const Center(child: Text('Bir şarkı seç', style: TextStyle(color: Colors.white38)));
+      }
+      if (_minimized) {
+        return Align(alignment: Alignment.topCenter, child: _mini(track, showRestore: true));
       }
       if (constraints.maxHeight < 180) {
         return _mini(track);
