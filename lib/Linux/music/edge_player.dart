@@ -7,6 +7,7 @@ import 'lyrics_overlay.dart';
 import 'music_cover.dart';
 import 'music_service.dart';
 import 'music_track.dart';
+import 'lyrics_editor.dart';
 
 class StellarEdgePlayer extends StatefulWidget {
   final List<StellarMusicTrack> tracks;
@@ -170,6 +171,17 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
                 const SizedBox(height: 5),
                 Text(track.album, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                Row(children: [
+                  IconButton(tooltip: 'Şarkı sözlerini düzenle', onPressed: () => StellarLyricsEditor.show(context, track),
+                      icon: const Icon(Icons.lyrics_outlined, color: Colors.white54, size: 19)),
+                  IconButton(tooltip: service.isFavorite(track) ? 'Favorilerden çıkar' : 'Favorilere ekle',
+                      onPressed: () async { await service.toggleFavorite(track); if (mounted) setState(() {}); },
+                      icon: Icon(service.isFavorite(track) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: service.isFavorite(track) ? const Color(0xFF75F0A5) : Colors.white54, size: 19)),
+                  IconButton(tooltip: service.shuffleEnabled ? 'Karışık çalma açık' : 'Karışık çalma',
+                      onPressed: () async { await service.toggleShuffle(); if (mounted) setState(() {}); },
+                      icon: Icon(Icons.shuffle_rounded, color: service.shuffleEnabled ? const Color(0xFF75F0A5) : Colors.white54, size: 19)),
+                ]),
                 const SizedBox(height: 18),
                 Container(
                   height: 176,
@@ -215,6 +227,23 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
                 const SizedBox(height: 6),
                 Center(child: Text(track.hasLyrics ? 'Sözler zamanlamayla eşleşir' : 'Bu parça için söz bulunamadı',
                     style: const TextStyle(color: Colors.white30, fontSize: 10))),
+                if (service.queue.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  const Text('SIRADAKİLER', style: TextStyle(color: Color(0xFF75F0A5), fontSize: 10, letterSpacing: 1.6, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  for (final queued in service.queue.take(8))
+                    ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: StellarMusicCover(artwork: queued.artwork, size: 34, radius: 6),
+                      title: Text(queued.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      subtitle: Text(queued.artist, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                      trailing: IconButton(icon: const Icon(Icons.close_rounded, size: 17, color: Colors.white38),
+                          onPressed: () async { await service.removeFromQueue(queued); if (mounted) setState(() {}); }),
+                    ),
+                ],
               ]),
             ),
           ),
