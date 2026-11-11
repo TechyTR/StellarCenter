@@ -65,5 +65,15 @@
   "noMusicMatches": "Eşleşen müzik bulunamadı",
   "addToQueue": "Kuyruğa ekle",
   "addFavorite": "Favorilere ekle",
-  "noMusicFound": "Henüz müzik bulunamadı"
+  "noMusicFound": "Henüz müzik bulunamadı",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass Açık",
+  "liquidGlassDark": "Liquid Glass Koyu",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "Performans Testi",
+  "storageManager": "Depolama Yöneticisi",
+  "sensorLab": "Sensör Laboratuvarı",
+  "networkLab": "Ağ Laboratuvarı",
+  "batteryLab": "Pil Laboratuvarı",
+  "versionLabel": "Sürüm"
 }
