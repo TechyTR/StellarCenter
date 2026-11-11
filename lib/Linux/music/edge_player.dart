@@ -118,8 +118,8 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
             LinearProgressIndicator(
               minHeight: 2,
               value: _duration.inMilliseconds > 0
-                  ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
-                  : 0,
+                  ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0).toDouble()
+                  : 0.0,
               backgroundColor: Colors.white12,
               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4CDB85)),
             ),
