@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/app_version.dart';
+import '../l10n/app_localizations.dart';
 import 'account_page.dart';
 import '../both/theme/app_theme.dart';
 
@@ -792,7 +793,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Hesap',
+            tooltip: AppLocalizations.of(context)!.account,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -805,7 +806,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: AppLocalizations.of(context)!.refresh,
             onPressed: () {
               _loadDeviceInfo();
               _loadBattery();
@@ -882,7 +883,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                 _sectionTitle(
                   context,
-                  'Sistem özeti',
+                  AppLocalizations.of(context)!.systemSummary,
                 ),
 
                 const SizedBox(height: 8),
@@ -909,7 +910,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       _statCard(
                         context: context,
                         icon: Icons.memory_rounded,
-                        title: 'İşlemci',
+                        title: AppLocalizations.of(context)!.processor,
                         value: cpuCount == null
                             ? '? çekirdek'
                             : '$cpuCount çekirdek',
@@ -917,19 +918,19 @@ class _DashboardPageState extends State<DashboardPage> {
                       _statCard(
                         context: context,
                         icon: Icons.memory_outlined,
-                        title: 'RAM',
+                        title: AppLocalizations.of(context)!.ram,
                         value: _ram(totalRam),
                       ),
                       _statCard(
                         context: context,
                         icon: Icons.storage_rounded,
-                        title: 'Depolama',
+                        title: AppLocalizations.of(context)!.storage,
                         value: storageText,
                       ),
                       _statCard(
                         context: context,
                         icon: Icons.display_settings_rounded,
-                        title: 'Ekran',
+                        title: AppLocalizations.of(context)!.display,
                         value: resolutionText,
                       ),
                     ],
@@ -939,7 +940,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                 _sectionTitle(
                   context,
-                  'Hızlı erişim',
+                  AppLocalizations.of(context)!.quickAccess,
                 ),
 
                 const SizedBox(height: 8),
@@ -947,9 +948,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _quickAction(
                   context: context,
                   icon: Icons.info_outline_rounded,
-                  title: 'Sistem bilgisi',
+                  title: AppLocalizations.of(context)!.systemInfo,
                   subtitle:
-                      'Cihazın tüm teknik bilgilerini görüntüle',
+                      AppLocalizations.of(context)!.viewSystemInfo,
                   onTap: widget.onSystemInfo,
                 ),
 
@@ -958,9 +959,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _quickAction(
                   context: context,
                   icon: Icons.monitor_heart_outlined,
-                  title: 'Sistem monitörü',
+                  title: AppLocalizations.of(context)!.systemMonitor,
                   subtitle:
-                      'CPU, RAM, pil ve sıcaklıkları izle',
+                      AppLocalizations.of(context)!.monitorMetrics,
                   onTap: widget.onSystemMonitor,
                 ),
 
@@ -969,9 +970,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _quickAction(
                   context: context,
                   icon: Icons.notes_rounded,
-                  title: 'Notlar',
+                  title: AppLocalizations.of(context)!.notes,
                   subtitle:
-                      'Kendi notlarını oluştur ve yönet',
+                      AppLocalizations.of(context)!.manageNotes,
                   onTap: widget.onNotes,
                 ),
 
@@ -980,9 +981,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _quickAction(
                   context: context,
                   icon: Icons.apps_rounded,
-                  title: 'Uygulama',
+                  title: AppLocalizations.of(context)!.appName,
                   subtitle:
-                      'Stellar Center ayarları ve sürüm bilgisi',
+                      AppLocalizations.of(context)!.appSettings,
                   onTap: widget.onAppInfo,
                 ),
               ],
