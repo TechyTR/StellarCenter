@@ -116,12 +116,12 @@ class _LinuxMusicPageState
 
       final artist =
           track.artist.trim().isEmpty
-              ? 'Bilinmeyen Sanatçı'
+              ? AppLocalizations.of(context)!.unknownArtist
               : track.artist.trim();
 
       final album =
           track.album.trim().isEmpty
-              ? 'Bilinmeyen Albüm'
+              ? AppLocalizations.of(context)!.unknownAlbum
               : track.album.trim();
 
       groups
