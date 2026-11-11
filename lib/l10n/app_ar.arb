@@ -75,5 +75,8 @@
   "sensorLab": "مختبر المستشعرات",
   "networkLab": "مختبر الشبكة",
   "batteryLab": "مختبر البطارية",
-  "versionLabel": "الإصدار"
+  "versionLabel": "الإصدار",
+  "app": "التطبيق",
+  "unknownArtist": "فنان غير معروف",
+  "unknownAlbum": "ألبوم غير معروف"
 }
