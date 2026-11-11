@@ -202,6 +202,18 @@ class _LinuxMusicPageState
                       icon: Icon(_favoritesOnly ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                           color: _favoritesOnly ? const Color(0xFF75F0A5) : null),
                     ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Dinleme geçmişi',
+                      icon: const Icon(Icons.history_rounded),
+                      itemBuilder: (context) => service.history.take(8).map((track) => PopupMenuItem<String>(
+                        value: track.path,
+                        child: Text('${track.title} · ${track.artist}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      )).toList(),
+                      onSelected: (path) {
+                        final index = _tracks.indexWhere((track) => track.path == path);
+                        if (index >= 0) _play(index);
+                      },
+                    ),
                     IconButton(
                       tooltip: 'Yenile',
                       onPressed:
@@ -262,6 +274,7 @@ class _LinuxMusicPageState
                                 albums: entry.value,
                                 tracks: _tracks,
                                 onPlay: _play,
+                                onLibraryChanged: () => setState(() {}),
                               );
                             },
                           ),
@@ -298,12 +311,14 @@ class _ArtistSection
   final Map<String, List<int>> albums;
   final List<StellarMusicTrack> tracks;
   final Future<void> Function(int) onPlay;
+  final VoidCallback onLibraryChanged;
 
   const _ArtistSection({
     required this.artist,
     required this.albums,
     required this.tracks,
     required this.onPlay,
+    required this.onLibraryChanged,
   });
 
   @override
@@ -365,6 +380,7 @@ class _ArtistSection
                 indexes: entry.value,
                 tracks: tracks,
                 onPlay: onPlay,
+                onLibraryChanged: onLibraryChanged,
               ),
           ],
         ),
@@ -379,12 +395,14 @@ class _AlbumSection
   final List<int> indexes;
   final List<StellarMusicTrack> tracks;
   final Future<void> Function(int) onPlay;
+  final VoidCallback onLibraryChanged;
 
   const _AlbumSection({
     required this.album,
     required this.indexes,
     required this.tracks,
     required this.onPlay,
+    required this.onLibraryChanged,
   });
 
   @override
@@ -441,8 +459,8 @@ class _AlbumSection
             for (final index in indexes)
               _SongTile(
                 track: tracks[index],
-                onTap: () =>
-                    onPlay(index),
+                onTap: () => onPlay(index),
+                onLibraryChanged: onLibraryChanged,
               ),
           ],
         ),
@@ -455,10 +473,12 @@ class _SongTile
     extends StatelessWidget {
   final StellarMusicTrack track;
   final VoidCallback onTap;
+  final VoidCallback onLibraryChanged;
 
   const _SongTile({
     required this.track,
     required this.onTap,
+    required this.onLibraryChanged,
   });
 
   @override
@@ -501,7 +521,7 @@ class _SongTile
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
         IconButton(tooltip: 'Kuyruğa ekle', onPressed: () => StellarMusicService.instance.addToQueue(track),
             icon: const Icon(Icons.playlist_add_rounded, size: 21)),
-        IconButton(tooltip: 'Favorilere ekle', onPressed: () => StellarMusicService.instance.toggleFavorite(track),
+        IconButton(tooltip: 'Favorilere ekle', onPressed: () async { await StellarMusicService.instance.toggleFavorite(track); onLibraryChanged(); },
             icon: Icon(StellarMusicService.instance.isFavorite(track) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                 size: 19, color: StellarMusicService.instance.isFavorite(track) ? const Color(0xFF75F0A5) : null)),
         const Icon(Icons.play_circle_outline_rounded, size: 24),
