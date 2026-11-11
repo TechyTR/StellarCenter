@@ -271,6 +271,7 @@ jobs:
             "debian-package/DEBIAN" \
             "debian-package/opt/stellarcenter" \
             "debian-package/usr/share/applications" \
+            "debian-package/usr/share/pixmaps" \
             "debian-package/usr/share/icons/hicolor/16x16/apps" \
             "debian-package/usr/share/icons/hicolor/24x24/apps" \
             "debian-package/usr/share/icons/hicolor/32x32/apps" \
@@ -303,6 +304,11 @@ jobs:
               "debian-package/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/stellarcenter.png"
           done
 
+          # Direct-path fallback for desktop environments that do not
+          # resolve the hicolor icon theme correctly.
+          install -m 0644 assets/icon.png \
+            debian-package/usr/share/pixmaps/stellarcenter.png
+
           # ------------------------------------------------------
           # Desktop launcher
           # ------------------------------------------------------
@@ -315,7 +321,7 @@ jobs:
           GenericName=Stellar Center
           Comment=Stellar Center system utility application
           Exec=/opt/stellarcenter/stellarcenter
-          Icon=stellarcenter
+          Icon=/usr/share/pixmaps/stellarcenter.png
           Terminal=false
           Type=Application
           Categories=Utility;System;
