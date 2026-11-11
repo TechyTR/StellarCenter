@@ -75,5 +75,8 @@
   "sensorLab": "Laboratorio sensori",
   "networkLab": "Laboratorio di rete",
   "batteryLab": "Laboratorio batteria",
-  "versionLabel": "Versione"
+  "versionLabel": "Versione",
+  "app": "App",
+  "unknownArtist": "Artista sconosciuto",
+  "unknownAlbum": "Album sconosciuto"
 }
