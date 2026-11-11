@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({
@@ -136,7 +137,7 @@ class _NotesPageState extends State<NotesPage> {
                   )
                 : BorderSide.none,
           ),
-          title: const Text('Yeni Not'),
+          title: Text(AppLocalizations.of(context)!.newNote),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -146,8 +147,8 @@ class _NotesPageState extends State<NotesPage> {
                   autofocus: true,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Başlık',
-                    hintText: 'Not başlığı',
+                    labelText: AppLocalizations.of(context)!.noteTitle,
+                    hintText: AppLocalizations.of(context)!.noteTitle,
                     filled: _isGlass,
                     fillColor: _isGlass
                         ? Colors.white.withOpacity(
@@ -179,8 +180,8 @@ class _NotesPageState extends State<NotesPage> {
                   controller: _contentController,
                   maxLines: 6,
                   decoration: InputDecoration(
-                    labelText: 'İçerik',
-                    hintText: 'Not içeriği',
+                    labelText: AppLocalizations.of(context)!.noteContent,
+                    hintText: AppLocalizations.of(context)!.noteContent,
                     filled: _isGlass,
                     fillColor: _isGlass
                         ? Colors.white.withOpacity(
@@ -209,7 +210,7 @@ class _NotesPageState extends State<NotesPage> {
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text('İptal'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () async {
@@ -221,7 +222,7 @@ class _NotesPageState extends State<NotesPage> {
 
                 Navigator.pop(dialogContext);
               },
-              child: const Text('Kaydet'),
+              child: Text(AppLocalizations.of(context)!.save),
             ),
           ],
         );
@@ -418,7 +419,7 @@ class _NotesPageState extends State<NotesPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Henüz not yok.',
+              AppLocalizations.of(context)!.noNotes,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -427,7 +428,7 @@ class _NotesPageState extends State<NotesPage> {
             ),
             const SizedBox(height: 7),
             Text(
-              'Yeni bir not oluşturmak için + düğmesine dokun.',
+              AppLocalizations.of(context)!.createNoteHint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -486,7 +487,7 @@ class _NotesPageState extends State<NotesPage> {
                 Expanded(
                   child: Text(
                     title.isEmpty
-                        ? 'Başlıksız Not'
+                        ? AppLocalizations.of(context)!.untitledNote
                         : title,
                     style: TextStyle(
                       fontSize: 19,
@@ -535,7 +536,7 @@ class _NotesPageState extends State<NotesPage> {
             const SizedBox(height: 11),
             Text(
               content.isEmpty
-                  ? 'Boş not'
+                  ? AppLocalizations.of(context)!.emptyNote
                   : content,
               style: TextStyle(
                 fontSize: 15,
@@ -593,7 +594,7 @@ class _NotesPageState extends State<NotesPage> {
 
       appBar: AppBar(
         title: const Text(
-          'Notlar',
+          AppLocalizations.of(context)!.notes,
           style: TextStyle(
             fontWeight: FontWeight.w700,
           ),
