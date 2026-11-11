@@ -65,5 +65,15 @@
   "noMusicMatches": "Подходящая музыка не найдена",
   "addToQueue": "Добавить в очередь",
   "addFavorite": "Добавить в избранное",
-  "noMusicFound": "Музыка пока не найдена"
+  "noMusicFound": "Музыка пока не найдена",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass Светлый",
+  "liquidGlassDark": "Liquid Glass Тёмный",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "Тест производительности",
+  "storageManager": "Диспетчер хранилища",
+  "sensorLab": "Лаборатория датчиков",
+  "networkLab": "Сетевая лаборатория",
+  "batteryLab": "Лаборатория батареи",
+  "versionLabel": "Версия"
 }
