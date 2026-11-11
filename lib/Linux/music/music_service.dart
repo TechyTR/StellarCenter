@@ -207,6 +207,7 @@ class StellarMusicService {
     if (index >= 0) {
       _currentIndex = index;
       _currentTrack = _tracks[index];
+      _trackController.add(_currentTrack);
     } else {
       _currentIndex = -1;
       _currentTrack = null;
