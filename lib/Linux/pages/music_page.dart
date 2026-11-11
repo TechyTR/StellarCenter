@@ -26,6 +26,8 @@ class _LinuxMusicPageState
       const [];
 
   bool _loading = true;
+  String _searchQuery = '';
+  bool _favoritesOnly = false;
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _LinuxMusicPageState
 
   Future<void> _initialize() async {
     await service.initialize();
+    await service.loadLibraryState();
     await _scan();
   }
 
@@ -76,6 +79,9 @@ class _LinuxMusicPageState
         i < _tracks.length;
         i++) {
       final track = _tracks[i];
+      final query = _searchQuery.trim().toLowerCase();
+      if (_favoritesOnly && !service.isFavorite(track)) continue;
+      if (query.isNotEmpty && !('${track.title} ${track.artist} ${track.album}'.toLowerCase().contains(query))) continue;
 
       final artist =
           track.artist.trim().isEmpty
@@ -152,6 +158,12 @@ class _LinuxMusicPageState
                       ),
                     ),
                     IconButton(
+                      tooltip: _favoritesOnly ? 'Tüm şarkılar' : 'Favoriler',
+                      onPressed: () => setState(() => _favoritesOnly = !_favoritesOnly),
+                      icon: Icon(_favoritesOnly ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          color: _favoritesOnly ? const Color(0xFF75F0A5) : null),
+                    ),
+                    IconButton(
                       tooltip: 'Yenile',
                       onPressed:
                           _loading ? null : _scan,
@@ -160,6 +172,20 @@ class _LinuxMusicPageState
                       ),
                     ),
                   ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: InputDecoration(
+                    hintText: 'Şarkı, sanatçı veya albüm ara...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(.055),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  ),
                 ),
               ),
               Expanded(
@@ -426,10 +452,16 @@ class _SongTile
             ),
         ],
       ),
-      trailing: const Icon(
-        Icons.play_circle_outline_rounded,
-        size: 26,
-      ),
+      subtitle: Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton(tooltip: 'Kuyruğa ekle', onPressed: () => StellarMusicService.instance.addToQueue(track),
+            icon: const Icon(Icons.playlist_add_rounded, size: 21)),
+        IconButton(tooltip: 'Favorilere ekle', onPressed: () => StellarMusicService.instance.toggleFavorite(track),
+            icon: Icon(StellarMusicService.instance.isFavorite(track) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                size: 19, color: StellarMusicService.instance.isFavorite(track) ? const Color(0xFF75F0A5) : null)),
+        const Icon(Icons.play_circle_outline_rounded, size: 24),
+      ]),
       onTap: onTap,
     );
   }
