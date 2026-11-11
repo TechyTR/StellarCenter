@@ -107,9 +107,15 @@ class _LinuxMusicPageState
     final groups = _buildGroups();
 
     return Scaffold(
-      body: Stack(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+          return Stack(
         children: [
-          Column(
+          Positioned(
+            left: 0, top: 0, bottom: 0,
+            right: wide ? 360 : 0,
+            child: Column(
             children: [
               Padding(
                 padding:
@@ -193,8 +199,13 @@ class _LinuxMusicPageState
                           ),
               ),
             ],
-          ),
-          if (_tracks.isNotEmpty)
+          )),
+          if (wide && _tracks.isNotEmpty)
+            Positioned(
+              top: 0, right: 0, bottom: 0, width: 360,
+              child: StellarEdgePlayer(tracks: _tracks),
+            ),
+          if (!wide && _tracks.isNotEmpty)
             Positioned(
               left: 0,
               right: 0,
@@ -204,6 +215,8 @@ class _LinuxMusicPageState
               ),
             ),
         ],
+      );
+        },
       ),
     );
   }
@@ -386,13 +399,10 @@ class _SongTile
           const EdgeInsets.symmetric(
         horizontal: 10,
       ),
-      leading: const SizedBox(
-        width: 28,
-        child: Icon(
-          Icons.music_note_rounded,
-          size: 19,
-          color: Colors.white54,
-        ),
+      leading: StellarMusicCover(
+        artwork: track.artwork,
+        size: 44,
+        radius: 9,
       ),
       title: Row(
         children: [
