@@ -222,7 +222,7 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
       if (track == null) {
         return const Center(child: Text('Bir şarkı seç', style: TextStyle(color: Colors.white38)));
       }
-      if (constraints.maxHeight < 180 || constraints.maxWidth < 500) {
+      if (constraints.maxHeight < 180) {
         return _mini(track);
       }
       return _expanded(track);
