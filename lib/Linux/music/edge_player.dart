@@ -140,14 +140,23 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
 
   Widget _expanded(StellarMusicTrack track) {
     return Container(
-      color: const Color(0xFF111713),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2920), Color(0xFF111713), Color(0xFF0C110E)],
+        ),
+        border: Border(left: BorderSide(color: Color(0x1FFFFFFF))),
+      ),
       child: SafeArea(
         child: Column(children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 12, 8),
+            padding: const EdgeInsets.fromLTRB(18, 16, 12, 10),
             child: Row(children: [
+              Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFF75F0A5), shape: BoxShape.circle)),
+              const SizedBox(width: 9),
               const Expanded(child: Text('ŞİMDİ ÇALIYOR',
-                  style: TextStyle(color: Color(0xFF75F0A5), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800))),
+                  style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.w800))),
               IconButton(tooltip: 'Mini Player', onPressed: () => setState(() => _minimized = true),
                   icon: const Icon(Icons.remove_rounded, color: Colors.white70, size: 19)),
               IconButton(tooltip: 'Tam ekran aç', onPressed: _openFullscreen,
@@ -159,18 +168,22 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
               padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Center(child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 270, maxHeight: 270),
+                  constraints: const BoxConstraints(maxWidth: 238, maxHeight: 238),
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: Hero(
                       tag: 'stellar-cover-${track.path}',
-                      child: StellarMusicCover(artwork: track.artwork, size: 260, radius: 18),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(.035), borderRadius: BorderRadius.circular(22), border: Border.all(color: Colors.white.withOpacity(.09))),
+                        child: StellarMusicCover(artwork: track.artwork, size: 220, radius: 17),
+                      ),
                     ),
                   ),
                 )),
                 const SizedBox(height: 22),
                 Text(track.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w800, height: 1.15)),
+                    style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w800, height: 1.16, letterSpacing: -.4)),
                 const SizedBox(height: 6),
                 Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white60, fontSize: 13)),
@@ -190,12 +203,12 @@ class _StellarEdgePlayerState extends State<StellarEdgePlayer> {
                 ]),
                 const SizedBox(height: 18),
                 Container(
-                  height: 176,
+                  height: 184,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(.045),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.white.withOpacity(.07)),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white.withOpacity(.08)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     const Padding(
