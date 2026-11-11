@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/app_version.dart';
+import '../l10n/app_localizations.dart';
 import '../both/theme/app_theme.dart';
 
 class SystemInfoPage extends StatefulWidget {
@@ -699,7 +700,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.android_rounded,
-          title: 'Android sürümü',
+          title: AppLocalizations.of(context)!.androidVersion,
           value: _androidValue(info?.version.release),
         ),
 
@@ -711,7 +712,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.memory_rounded,
-          title: 'Donanım',
+          title: AppLocalizations.of(context)!.hardware,
           value: _androidValue(info?.hardware),
         ),
 
@@ -753,7 +754,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.laptop_rounded,
-          title: 'Dağıtım',
+          title: AppLocalizations.of(context)!.distribution,
           value: _linuxInfo['os'] ?? 'Bilinmiyor',
         ),
 
@@ -765,14 +766,14 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.computer_rounded,
-          title: 'Mimari',
+          title: AppLocalizations.of(context)!.architecture,
           value: _linuxInfo['architecture'] ??
               'Bilinmiyor',
         ),
 
         _infoCard(
           icon: Icons.dns_rounded,
-          title: 'Hostname',
+          title: AppLocalizations.of(context)!.hostname,
           value: _linuxInfo['hostname'] ??
               'Bilinmiyor',
         ),
@@ -786,7 +787,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.developer_board_rounded,
-          title: 'CPU çekirdekleri',
+          title: AppLocalizations.of(context)!.cpuCores,
           value: _linuxInfo['cpu_count'] ??
               'Bilinmiyor',
         ),
@@ -809,7 +810,7 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
         _infoCard(
           icon: Icons.timer_outlined,
-          title: 'Çalışma süresi',
+          title: AppLocalizations.of(context)!.uptime,
           value: _linuxInfo['uptime'] ??
               'Bilinmiyor',
         ),
@@ -823,10 +824,10 @@ class _SystemInfoPageState extends State<SystemInfoPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sistem Bilgisi'),
+        title: Text(AppLocalizations.of(context)!.systemInfoTitle),
         actions: [
           IconButton(
-            tooltip: 'Yenile',
+            tooltip: AppLocalizations.of(context)!.refresh,
             onPressed: _loading ? null : _loadAll,
             icon: const Icon(Icons.refresh_rounded),
           ),
