@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:io';
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -236,6 +237,18 @@ class StellarMusicService {
 
       _trackController.add(track);
       await _recordHistory(track);
+      if (Platform.isLinux) {
+        try {
+          await Process.run('notify-send', [
+            '--app-name=Stellar Center',
+            '--icon=audio-x-generic',
+            'Şimdi çalıyor',
+            '${track.title} — ${track.artist}',
+          ]);
+        } catch (_) {
+          // Desktop notifications are optional; playback must continue.
+        }
+      }
       _positionController.add(Duration.zero);
       _durationController.add(Duration.zero);
 
