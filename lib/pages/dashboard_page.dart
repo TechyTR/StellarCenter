@@ -660,7 +660,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Cihazını kontrol et, sistemini izle.',
+                  AppLocalizations.of(context)!.dashboardSubtitle,
                   style: TextStyle(
                     fontSize: 13,
                   ),
