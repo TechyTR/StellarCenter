@@ -65,5 +65,15 @@
   "noMusicMatches": "未找到匹配的音乐",
   "addToQueue": "添加到队列",
   "addFavorite": "添加到收藏",
-  "noMusicFound": "尚未找到音乐"
+  "noMusicFound": "尚未找到音乐",
+  "materialDesign": "Material Design",
+  "liquidGlassLight": "Liquid Glass 浅色",
+  "liquidGlassDark": "Liquid Glass 深色",
+  "stellarAurora": "Stellar Aurora",
+  "benchmark": "性能测试",
+  "storageManager": "存储管理器",
+  "sensorLab": "传感器实验室",
+  "networkLab": "网络实验室",
+  "batteryLab": "电池实验室",
+  "versionLabel": "版本"
 }
