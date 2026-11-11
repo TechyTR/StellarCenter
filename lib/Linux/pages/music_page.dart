@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 
 import '../music/edge_player.dart';
 import '../music/music_cover.dart';
@@ -178,7 +179,7 @@ class _LinuxMusicPageState
                             CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Müzik',
+                            AppLocalizations.of(context)!.music,
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight:
@@ -197,13 +198,13 @@ class _LinuxMusicPageState
                       ),
                     ),
                     IconButton(
-                      tooltip: _favoritesOnly ? 'Tüm şarkılar' : 'Favoriler',
+                      tooltip: _favoritesOnly ? AppLocalizations.of(context)!.allSongs : AppLocalizations.of(context)!.favorites,
                       onPressed: () => setState(() => _favoritesOnly = !_favoritesOnly),
                       icon: Icon(_favoritesOnly ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                           color: _favoritesOnly ? const Color(0xFF75F0A5) : null),
                     ),
                     PopupMenuButton<String>(
-                      tooltip: 'Dinleme geçmişi',
+                      tooltip: AppLocalizations.of(context)!.listeningHistory,
                       icon: const Icon(Icons.history_rounded),
                       itemBuilder: (context) => service.history.take(8).map((track) => PopupMenuItem<String>(
                         value: track.path,
@@ -215,7 +216,7 @@ class _LinuxMusicPageState
                       },
                     ),
                     IconButton(
-                      tooltip: 'Yenile',
+                      tooltip: AppLocalizations.of(context)!.refresh,
                       onPressed:
                           _loading ? null : _scan,
                       icon: const Icon(
@@ -231,7 +232,7 @@ class _LinuxMusicPageState
                   focusNode: _searchFocus,
                   onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
-                    hintText: 'Şarkı, sanatçı veya albüm ara...',
+                    hintText: AppLocalizations.of(context)!.searchMusic,
                     prefixIcon: const Icon(Icons.search_rounded),
                     isDense: true,
                     filled: true,
@@ -247,9 +248,9 @@ class _LinuxMusicPageState
                             CircularProgressIndicator(),
                       )
                     : _tracks.isEmpty
-                        ? const _EmptyMusic()
+                        ? _EmptyMusic()
                         : groups.isEmpty
-                            ? const Center(child: Text('Eşleşen müzik bulunamadı', style: TextStyle(color: Colors.white54)))
+                            ? Center(child: Text(AppLocalizations.of(context)!.noMusicMatches, style: const TextStyle(color: Colors.white54)))
                             : ListView.builder(
                             padding:
                                 const EdgeInsets
@@ -524,9 +525,9 @@ class _SongTile
       subtitle: Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: Colors.white54, fontSize: 11)),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        IconButton(tooltip: 'Kuyruğa ekle', onPressed: () => StellarMusicService.instance.addToQueue(track),
+        IconButton(tooltip: AppLocalizations.of(context)!.addToQueue, onPressed: () => StellarMusicService.instance.addToQueue(track),
             icon: const Icon(Icons.playlist_add_rounded, size: 21)),
-        IconButton(tooltip: 'Favorilere ekle', onPressed: () async { await StellarMusicService.instance.toggleFavorite(track); onLibraryChanged(); },
+        IconButton(tooltip: AppLocalizations.of(context)!.addFavorite, onPressed: () async { await StellarMusicService.instance.toggleFavorite(track); onLibraryChanged(); },
             icon: Icon(StellarMusicService.instance.isFavorite(track) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                 size: 19, color: StellarMusicService.instance.isFavorite(track) ? const Color(0xFF75F0A5) : null)),
         const Icon(Icons.play_circle_outline_rounded, size: 24),
@@ -542,7 +543,7 @@ class _EmptyMusic
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize:
             MainAxisSize.min,
@@ -554,7 +555,7 @@ class _EmptyMusic
           ),
           SizedBox(height: 15),
           Text(
-            'Henüz müzik bulunamadı',
+            AppLocalizations.of(context)!.noMusicFound,
             style: TextStyle(
               fontSize: 18,
             ),
