@@ -75,5 +75,8 @@
   "sensorLab": "Sensör Laboratuvarı",
   "networkLab": "Ağ Laboratuvarı",
   "batteryLab": "Pil Laboratuvarı",
-  "versionLabel": "Sürüm"
+  "versionLabel": "Sürüm",
+  "app": "Uygulama",
+  "unknownArtist": "Bilinmeyen sanatçı",
+  "unknownAlbum": "Bilinmeyen albüm"
 }
