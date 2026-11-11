@@ -358,6 +358,8 @@ class _CompactPlayer extends StatelessWidget {
           repeat: repeat,
           service: service,
         ),
+        const SizedBox(height: 30),
+        _FullLyricsSection(track: track, position: position),
       ],
     );
   }
